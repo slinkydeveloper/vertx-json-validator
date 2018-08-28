@@ -158,6 +158,11 @@ public class JsonPointerImpl implements JsonPointer {
     return write(input, value);
   }
 
+  @Override
+  public JsonPointer copy() {
+    return new JsonPointerImpl(this.undecodedTokens);
+  }
+
   private boolean write(Object input, Object value) {
     if (isRootPointer())
       throw new IllegalStateException("writeObject() doesn't support root pointers");
