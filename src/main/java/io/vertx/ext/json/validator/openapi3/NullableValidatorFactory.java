@@ -26,7 +26,7 @@ public class NullableValidatorFactory implements ValidatorFactory {
 
     @Override
     public boolean canCreateValidator(JsonObject schema) {
-        return schema.containsKey("nullable");
+        return true;
     }
 
 }

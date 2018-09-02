@@ -6,7 +6,9 @@ import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.Validator;
 import io.vertx.ext.json.validator.ValidatorFactory;
 import io.vertx.ext.json.validator.generic.ExclusiveMaximumValidator;
+import io.vertx.ext.json.validator.generic.ExclusiveMinimumValidator;
 import io.vertx.ext.json.validator.generic.MaximumValidator;
+import io.vertx.ext.json.validator.generic.MinimumValidator;
 
 import java.net.URI;
 
@@ -17,8 +19,8 @@ public class MinimumValidatorFactory implements ValidatorFactory {
         try {
             Number maximum = (Number) schema.getValue("minimum");
             if (schema.containsKey("exclusiveMinimum") && schema.getBoolean("exclusiveMinimum"))
-                return new ExclusiveMaximumValidator(maximum.doubleValue());
-            return new MaximumValidator(maximum.doubleValue());
+                return new ExclusiveMinimumValidator(maximum.doubleValue());
+            return new MinimumValidator(maximum.doubleValue());
         } catch (ClassCastException e) {
             throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for minimum or exclusiveMinimum keyword");
         } catch (NullPointerException e) {

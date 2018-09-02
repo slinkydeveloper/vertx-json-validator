@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -35,7 +36,8 @@ public class PatternValidatorFactory implements ValidatorFactory {
         @Override
         public void validate(Object value) throws ValidationException {
             if (value instanceof String) {
-                if (!pattern.matcher((String)value).matches()) {
+                Matcher m = pattern.matcher((String)value);
+                if (!(m.matches() || m.lookingAt())) {
                     throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
                 }
             }

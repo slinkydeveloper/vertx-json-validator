@@ -13,7 +13,7 @@ import java.util.regex.PatternSyntaxException;
 
 public class PropertiesValidatorFactory implements ValidatorFactory {
 
-    private Schema parseAdditionalProperties(JsonObject obj, URI scope, SchemaParser parser) {
+    private Schema parseAdditionalProperties(Object obj, URI scope, SchemaParser parser) {
         try {
             return parser.parse(obj, URIUtils.replaceFragment(scope, JsonPointer.fromURI(scope.toString()).append("additionalProperties").buildURI()));
         } catch (ClassCastException e) {
@@ -29,7 +29,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
         for (Map.Entry<String, Object> entry : obj) {
             try {
                 parsedSchemas.put(entry.getKey(), parser.parse(
-                        (JsonObject) entry.getValue(),
+                        entry.getValue(),
                         URIUtils.replaceFragment(scope, basePointer.copy().append(entry.getKey()).buildURI())
                 ));
             } catch (ClassCastException | NullPointerException e) {
@@ -45,7 +45,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
         for (Map.Entry<String, Object> entry : obj) {
             try {
                 parsedSchemas.put(Pattern.compile(entry.getKey()), parser.parse(
-                        (JsonObject) entry.getValue(),
+                        entry.getValue(),
                         URIUtils.replaceFragment(scope, basePointer.copy().append(entry.getKey()).buildURI())
                 ));
             } catch (PatternSyntaxException e) {
@@ -110,7 +110,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
             else {
                 if (patternProperties != null)
                     for (Map.Entry<Pattern, Schema> patternProperty : patternProperties.entrySet()) {
-                        if (patternProperty.getKey().matcher(key).matches()) return patternProperty.getValue();
+                        if (patternProperty.getKey().matcher(key).lookingAt()) return patternProperty.getValue();
                     }
                 return null;
             }

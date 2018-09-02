@@ -7,6 +7,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.validator.Schema;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
@@ -22,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -49,6 +51,7 @@ public abstract class BaseIntegrationTest {
     Vertx vertx;
     HttpServer schemaServer;
     String testName;
+    public String testFileName;
     JsonObject test;
 
     public static Iterable<Object[]> buildParameters(List<String> tests) {
@@ -68,7 +71,7 @@ public abstract class BaseIntegrationTest {
                 .flatMap(t -> t.getValue()
                         .stream()
                         .map(JsonObject.class::cast)
-                        .map(o -> new Object[]{t.getKey() + ": " + o.getString("description"), o})
+                        .map(o -> new Object[]{t.getKey() + ": " + o.getString("description"), t.getKey(), o})
                 )
                 .collect(Collectors.toList());
     }
@@ -94,8 +97,9 @@ public abstract class BaseIntegrationTest {
         }
     }
 
-    public BaseIntegrationTest(Object testName, Object testObject) {
+    public BaseIntegrationTest(Object testName, Object testFileName, Object testObject) {
         this.testName = (String) testName;
+        this.testFileName = (String) testFileName;
         this.test = (JsonObject) testObject;
     }
 
@@ -110,7 +114,7 @@ public abstract class BaseIntegrationTest {
         //stopSchemaServer(context);
     }
 
-    private Optional<Schema> buildSchema(String testName, JsonObject schema) {
+    private Optional<Schema> buildSchema(Object schema) {
         try {
             return Optional.of(buildSchemaFunction(schema));
         } catch (Exception e) {
@@ -147,7 +151,7 @@ public abstract class BaseIntegrationTest {
 
     @Test
     public void test(TestContext context) {
-        buildSchema(testName, test.getJsonObject("schema"))
+        buildSchema(test.getValue("schema"))
                 .ifPresent(schema -> {
                     for (Object tc : test.getJsonArray("tests").stream().collect(Collectors.toList())) {
                         JsonObject testCase = (JsonObject)tc;
@@ -159,7 +163,7 @@ public abstract class BaseIntegrationTest {
                 });
     }
 
-    public abstract Schema buildSchemaFunction(JsonObject schema);
+    public abstract Schema buildSchemaFunction(Object schema) throws URISyntaxException;
 
     public abstract String getSchemasPath();
 

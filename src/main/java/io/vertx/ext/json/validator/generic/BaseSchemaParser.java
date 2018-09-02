@@ -1,12 +1,11 @@
 package io.vertx.ext.json.validator.generic;
 
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
@@ -14,13 +13,16 @@ import java.util.concurrent.ConcurrentSkipListSet;
  */
 public abstract class BaseSchemaParser implements SchemaParser {
 
-    protected final JsonObject schemaRoot;
+    private final static Schema TRUE_SCHEMA = (in) -> Future.succeededFuture();
+    private final static Schema FALSE_SCHEMA = (in) -> Future.failedFuture(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO
+
+    protected final Object schemaRoot;
     protected final URI scope;
     protected final SchemaParserOptions options;
     protected final List<ValidatorFactory> validatorFactories;
     protected final SchemaRouter router;
 
-    protected BaseSchemaParser(JsonObject schemaRoot, URI scope, SchemaParserOptions options, SchemaRouter router) {
+    protected BaseSchemaParser(Object schemaRoot, URI scope, SchemaParserOptions options, SchemaRouter router) {
         this.schemaRoot = schemaRoot;
         this.scope = scope;
         this.options = options;
@@ -39,24 +41,31 @@ public abstract class BaseSchemaParser implements SchemaParser {
         return this.parse(schemaRoot, scope);
     }
 
-    public Schema parse(JsonObject json, URI scope) {
-        ConcurrentSkipListSet<Validator> validators = new ConcurrentSkipListSet<>();
-        URI parsedRelativeId = null;
-        if (json.containsKey("$id")) parsedRelativeId = URI.create(json.getString("$id"));
+    public Schema parse(Object schema, URI scope) {
+        if (schema instanceof JsonObject) {
+            JsonObject json = (JsonObject)schema;
+            ConcurrentSkipListSet<Validator> validators = new ConcurrentSkipListSet<>(ValidatorPriority.VALIDATOR_COMPARATOR);
+            URI parsedRelativeId = null;
+            if (json.containsKey("$id")) parsedRelativeId = URI.create(json.getString("$id"));
 
-        for (ValidatorFactory factory : validatorFactories) {
-            if (factory.canCreateValidator(json)) {
-                Validator v = factory.createValidator(json, scope, this);
-                if (v != null) validators.add(v);
+            for (ValidatorFactory factory : validatorFactories) {
+                if (factory.canCreateValidator(json)) {
+                    Validator v = factory.createValidator(json, scope, this);
+                    if (v != null) validators.add(v);
+                }
             }
-        }
 
-        Schema s = createSchema(json, validators);
-        router.addSchema(s, scope, parsedRelativeId);
-        return s;
+            Schema s = createSchema(json, validators);
+            router.addSchema(s, scope, parsedRelativeId);
+            return s;
+        } else if (schema instanceof Boolean) {
+            Schema s = ((Boolean)schema) ? TRUE_SCHEMA : FALSE_SCHEMA;
+            router.addSchema(s, scope, null);
+            return s;
+        } else throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Schema should be a JsonObject or a Boolean");
     }
 
-    protected abstract Schema createSchema(JsonObject schema, ConcurrentSkipListSet<Validator> validators);
+    protected abstract Schema createSchema(Object schema, ConcurrentSkipListSet<Validator> validators);
 
     protected abstract List<ValidatorFactory> initValidatorFactories();
 

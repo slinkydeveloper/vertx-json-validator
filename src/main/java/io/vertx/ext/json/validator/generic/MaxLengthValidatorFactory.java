@@ -22,7 +22,7 @@ public class MaxLengthValidatorFactory implements ValidatorFactory {
 
     @Override
     public boolean canCreateValidator(JsonObject schema) {
-        return schema.containsKey("maxLength;");
+        return schema.containsKey("maxLength");
     }
 
     public class MaxLengthValidator implements SyncValidator {

@@ -17,7 +17,7 @@ public class ItemsValidatorFactory implements ValidatorFactory {
     @Override
     public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
         try {
-            JsonObject itemsSchema = schema.getJsonObject("items");
+            Object itemsSchema = schema.getValue("items");
             Schema parsedSchema = parser.parse(itemsSchema, URIUtils.replaceFragment(scope, JsonPointer.fromURI(scope.toString()).append("items").buildURI()));
             return new ItemsValidator(parsedSchema);
         } catch (ClassCastException e) {

@@ -1,37 +1,36 @@
 package io.vertx.ext.json.validator.schema.oas3;
 
-import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.validator.Schema;
+import io.vertx.ext.json.validator.SchemaParserOptions;
+import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
 import io.vertx.ext.json.validator.schema.BaseIntegrationTest;
-import io.vertx.ext.json.validator.schema.Schema;
+import io.vertx.ext.json.validator.schema.SchemaRouterMock;
 import org.assertj.core.util.Lists;
 import org.junit.runners.Parameterized;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
  */
 public class OAS3IntegrationTest extends BaseIntegrationTest {
-    public OAS3IntegrationTest(Object testName, Object testObject) {
-        super(testName, testObject);
+    public OAS3IntegrationTest(Object testName, Object testFileName, Object testObject) {
+        super(testName, testFileName, testObject);
     }
 
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<Object[]> data() throws Exception {
         List<String> tests = Lists.newArrayList(
-                "additionalItems",
                 "additionalProperties",
                 "allOf",
                 "anyOf",
-                "boolean_schema",
-                "const",
-                "contains",
-                "default",
-                "definitions",
-                "dependencies",
+                "discriminator",
                 "enum",
                 "exclusiveMaximum",
                 "exclusiveMinimum",
+                "format",
                 "items",
                 "maximum",
                 "maxItems",
@@ -43,11 +42,10 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
                 "minProperties",
                 "multipleOf",
                 "not",
+                "nullable",
                 "oneOf",
                 "pattern",
-                "patternProperties",
                 "properties",
-                "propertyNames",
                 "ref",
                 "refRemote",
                 "required",
@@ -59,8 +57,8 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
 
 
     @Override
-    public Schema buildSchemaFunction(JsonObject schema) {
-        return Schema.parseOAS3Schema(schema, getSchemasPath());
+    public Schema buildSchemaFunction(Object schema) throws URISyntaxException {
+        return OpenAPI3SchemaParser.create(schema, URI.create("./" + this.testFileName + "/" + testFileName + ".json"), new SchemaParserOptions(), new SchemaRouterMock()).parse();
     }
 
     @Override

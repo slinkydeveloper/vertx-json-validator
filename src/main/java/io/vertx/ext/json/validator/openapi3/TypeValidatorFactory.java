@@ -14,7 +14,7 @@ public class TypeValidatorFactory implements ValidatorFactory {
             String type = schema.getString("type");
             String format = schema.getString("format");
             Boolean nullable = schema.getBoolean("nullable");
-            if (type != null) throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null type keyword");
+            if (type == null) throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null type keyword");
             return new TypeValidator(parseType(type, format, schema), (nullable == null) ? false : nullable);
         } catch (ClassCastException e) {
             throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for type/format/nullable keyword");

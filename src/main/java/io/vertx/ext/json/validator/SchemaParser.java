@@ -9,7 +9,7 @@ public interface SchemaParser {
 
     Schema parse();
 
-    Schema parse(JsonObject json, URI scope);
+    Schema parse(Object json, URI scope);
 
     SchemaRouter getSchemaRouter();
 

@@ -60,7 +60,7 @@ public class OneOfValidatorFactory implements ValidatorFactory {
         }
     }
 
-    private static Future oneOf(List<Future<?>> results) {
+    private static Future oneOf(List<Future> results) {
         final Future res = Future.future();
         final AtomicInteger processed = new AtomicInteger(0);
         final AtomicBoolean atLeastOneOk = new AtomicBoolean(false);
@@ -68,7 +68,7 @@ public class OneOfValidatorFactory implements ValidatorFactory {
         for (int i = 0; i < len; i++) {
             results.get(i).setHandler(ar -> {
                 int p = processed.incrementAndGet();
-                if (ar.succeeded()) {
+                if (((AsyncResult)ar).succeeded()) {
                     if (atLeastOneOk.get()) res.fail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO
                     else atLeastOneOk.set(true);
                 }

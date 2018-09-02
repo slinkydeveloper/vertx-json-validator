@@ -6,7 +6,7 @@ public enum SchemaErrorType {
     WRONG_KEYWORD_VALUE,
     NULL_KEYWORD_VALUE;
 
-    public SchemaException createException(JsonObject schema, String message) {
+    public SchemaException createException(Object schema, String message) {
         return new SchemaException(message, schema, this);
     }
 }

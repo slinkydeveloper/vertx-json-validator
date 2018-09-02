@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
 
@@ -50,6 +52,13 @@ public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
 
     public void addStringFormatValidator(String formatName, Predicate<String> validator){
         this.formats.put(formatName, validator);
+    }
+
+    protected Predicate<String> createPredicateFromPattern(final Pattern pattern) {
+        return (in) -> {
+            Matcher m = pattern.matcher(in);
+            return m.matches() || m.lookingAt(); //TODO ?!?
+        };
     }
 
     @Override

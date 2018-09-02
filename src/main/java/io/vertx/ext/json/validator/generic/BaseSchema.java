@@ -15,10 +15,10 @@ public abstract class BaseSchema implements Schema {
 
     private static final Logger log = LoggerFactory.getLogger(BaseSchema.class);
 
-    private final JsonObject schema;
+    private final Object schema;
     private final ConcurrentSkipListSet<Validator> validators;
 
-    public BaseSchema(JsonObject schema, ConcurrentSkipListSet<Validator> validators) {
+    public BaseSchema(Object schema, ConcurrentSkipListSet<Validator> validators) {
         this.schema = schema;
         this.validators = validators;
     }

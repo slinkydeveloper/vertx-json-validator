@@ -22,7 +22,7 @@ public class AnyOfValidatorFactory implements ValidatorFactory {
             JsonPointer basePointer = JsonPointer.fromURI(scope.toString()).append("anyOf");
             Set<Schema> parsedSchemas = new HashSet<>();
             for (int i = 0; i < anyOfSchemas.size(); i++) {
-                parsedSchemas.add(parser.parse(anyOfSchemas.getJsonObject(i), URIUtils.replaceFragment(scope, basePointer.copy().append(Integer.toString(i)).buildURI())));
+                parsedSchemas.add(parser.parse(anyOfSchemas.getValue(i), URIUtils.replaceFragment(scope, basePointer.copy().append(Integer.toString(i)).buildURI())));
             }
             return new AnyOfValidator(parsedSchemas);
         } catch (ClassCastException e) {
