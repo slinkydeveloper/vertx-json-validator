@@ -5,7 +5,7 @@ import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -17,8 +17,7 @@ public abstract class BaseSchemaParser implements SchemaParser {
     protected final JsonObject schemaRoot;
     protected final URI scope;
     protected final SchemaParserOptions options;
-    protected final Map<String, ValidatorFactory> validatorFactoryMap;
-    protected final Set<String> keywordsToIgnore;
+    protected final List<ValidatorFactory> validatorFactories;
     protected final SchemaRouter router;
 
     protected BaseSchemaParser(JsonObject schemaRoot, URI scope, SchemaParserOptions options, SchemaRouter router) {
@@ -26,8 +25,7 @@ public abstract class BaseSchemaParser implements SchemaParser {
         this.scope = scope;
         this.options = options;
         this.router = router;
-        this.keywordsToIgnore = initKeywordsToIgnore();
-        this.validatorFactoryMap = initValidatorFactoryMap();
+        this.validatorFactories = initValidatorFactories();
         loadOptions();
     }
 
@@ -41,17 +39,14 @@ public abstract class BaseSchemaParser implements SchemaParser {
         return this.parse(schemaRoot, scope);
     }
 
-    protected Schema parse(JsonObject json, URI scope) {
+    public Schema parse(JsonObject json, URI scope) {
         ConcurrentSkipListSet<Validator> validators = new ConcurrentSkipListSet<>();
         URI parsedRelativeId = null;
         if (json.containsKey("$id")) parsedRelativeId = URI.create(json.getString("$id"));
 
-        Set<String> keywords = new HashSet<>(json.getMap().keySet());
-        keywords.removeAll(this.keywordsToIgnore);
-        for (String keyword : keywords) {
-            ValidatorFactory f = validatorFactoryMap.get(keyword);
-            if (f != null) {
-                Validator v = f.createValidator(json, scope, this);
+        for (ValidatorFactory factory : validatorFactories) {
+            if (factory.canCreateValidator(json)) {
+                Validator v = factory.createValidator(json, scope, this);
                 if (v != null) validators.add(v);
             }
         }
@@ -63,17 +58,18 @@ public abstract class BaseSchemaParser implements SchemaParser {
 
     protected abstract Schema createSchema(JsonObject schema, ConcurrentSkipListSet<Validator> validators);
 
-    protected abstract Map<String, ValidatorFactory> initValidatorFactoryMap();
-
-    protected abstract Set<String> initKeywordsToIgnore();
+    protected abstract List<ValidatorFactory> initValidatorFactories();
 
     protected void loadOptions() {
         // Load additional validators
-        this.validatorFactoryMap.putAll(this.options.getAdditionalValidatorFactories());
+        this.validatorFactories.addAll(this.options.getAdditionalValidatorFactories());
 
         // Load additional string formats
-        ValidatorFactory f = validatorFactoryMap.get("format");
-        if (f == null) throw new IllegalStateException("This json schema version doesn't support format keyword");
+        ValidatorFactory f = validatorFactories
+                .stream()
+                .filter(factory -> factory instanceof BaseFormatValidatorFactory)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("This json schema version doesn't support format keyword"));
         this.options.getAdditionalStringFormatValidators().forEach(((BaseFormatValidatorFactory)f)::addStringFormatValidator);
     }
 }

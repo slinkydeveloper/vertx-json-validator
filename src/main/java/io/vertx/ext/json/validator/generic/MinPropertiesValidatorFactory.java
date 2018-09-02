@@ -21,6 +21,11 @@ public class MinPropertiesValidatorFactory implements ValidatorFactory {
         }
     }
 
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("minProperties");
+    }
+
     public class MinPropertiesValidator implements SyncValidator {
         private final int minimum;
         public MinPropertiesValidator(int minimum) { this.minimum = minimum; }

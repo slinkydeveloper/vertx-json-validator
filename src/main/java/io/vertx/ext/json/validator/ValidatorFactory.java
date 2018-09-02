@@ -5,7 +5,6 @@ import io.vertx.ext.json.pointer.JsonPointer;
 
 import java.net.URI;
 
-@FunctionalInterface
 public interface ValidatorFactory {
     /**
      * This method can return null!
@@ -16,4 +15,7 @@ public interface ValidatorFactory {
      * @return
      */
     Validator createValidator(JsonObject schema, URI scope, SchemaParser parser);
+
+    //TODO change name in something better...
+    boolean canCreateValidator(JsonObject schema);
 }

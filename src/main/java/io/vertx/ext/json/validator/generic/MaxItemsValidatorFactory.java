@@ -21,6 +21,11 @@ public class MaxItemsValidatorFactory implements ValidatorFactory {
         }
     }
 
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("maxItems");
+    }
+
     public class MaxItemsValidator implements SyncValidator {
         private final int maximum;
         public MaxItemsValidator(int maximum) { this.maximum = maximum; }

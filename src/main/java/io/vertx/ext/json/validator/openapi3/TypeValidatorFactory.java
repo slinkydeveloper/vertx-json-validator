@@ -21,6 +21,11 @@ public class TypeValidatorFactory implements ValidatorFactory {
         }
     }
 
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("type");
+    }
+
     private static JsonSchemaType parseType(String type, String format, JsonObject schema) {
         switch (type) {
             case "integer": return JsonSchemaType.INTEGER;

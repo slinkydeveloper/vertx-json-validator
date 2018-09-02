@@ -20,6 +20,11 @@ public class MaxPropertiesValidatorFactory implements ValidatorFactory {
         }
     }
 
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("maxProperties");
+    }
+
     public class MaxPropertiesValidator implements SyncValidator {
         private final int maximum;
         public MaxPropertiesValidator(int maximum) { this.maximum = maximum; }

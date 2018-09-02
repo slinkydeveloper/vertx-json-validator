@@ -58,8 +58,13 @@ public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
         if (ignoringFormats.contains(format)) return null;
         else {
             Predicate<String> v = formats.get(format);
-            if (v == null) throw new SchemaException("No format");
+            if (v == null) throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Format not supported");
             else return new FormatValidator(v);
         }
+    }
+
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("format");
     }
 }

@@ -22,6 +22,11 @@ public class RequiredValidatorFactory implements ValidatorFactory {
         }
     }
 
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("required");
+    }
+
     public class RequiredValidator implements SyncValidator {
         private final Set<String> requiredKeys;
 

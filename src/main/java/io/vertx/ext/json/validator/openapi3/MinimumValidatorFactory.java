@@ -26,4 +26,9 @@ public class MinimumValidatorFactory implements ValidatorFactory {
         }
     }
 
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("minimum");
+    }
+
 }

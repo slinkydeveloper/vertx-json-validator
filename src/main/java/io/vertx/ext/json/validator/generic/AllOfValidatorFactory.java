@@ -18,6 +18,7 @@ public class AllOfValidatorFactory implements ValidatorFactory {
     public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
         try {
             JsonArray allOfSchemas = schema.getJsonArray("allOf");
+            if (allOfSchemas.size() == 0) throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "allOf must have at least one element");
             JsonPointer basePointer = JsonPointer.fromURI(scope.toString()).append("allOf");
             Set<Schema> parsedSchemas = new HashSet<>();
             for (int i = 0; i < allOfSchemas.size(); i++) {
@@ -29,6 +30,11 @@ public class AllOfValidatorFactory implements ValidatorFactory {
         } catch (NullPointerException e) {
             throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null allOf keyword");
         }
+    }
+
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("allOf");
     }
 
     class AllOfValidator implements AsyncValidator {

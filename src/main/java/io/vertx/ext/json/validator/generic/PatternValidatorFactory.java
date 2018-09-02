@@ -23,6 +23,11 @@ public class PatternValidatorFactory implements ValidatorFactory {
         }
     }
 
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("pattern");
+    }
+
     public class PatternValidator implements SyncValidator {
         private final Pattern pattern;
         public PatternValidator(Pattern pattern) { this.pattern = pattern; }

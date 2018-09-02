@@ -21,6 +21,11 @@ public class MinItemsValidatorFactory implements ValidatorFactory {
         }
     }
 
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("minItems");
+    }
+
     public class MinItemsValidator implements SyncValidator {
         private final int minimum;
         public MinItemsValidator(int minimum) { this.minimum = minimum; }

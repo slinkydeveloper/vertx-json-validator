@@ -19,6 +19,11 @@ public class MultipleOfValidatorFactory implements ValidatorFactory {
         }
     }
 
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("multipleOf");
+    }
+
     class MultipleOfValidator implements SyncValidator {
         private final double multipleOf;
         public MultipleOfValidator(double multipleOf) { this.multipleOf = multipleOf; }

@@ -23,4 +23,9 @@ public class MaximumValidatorFactory implements ValidatorFactory {
         }
     }
 
+    @Override
+    public boolean canCreateValidator(JsonObject schema) {
+        return schema.containsKey("maximum");
+    }
+
 }
