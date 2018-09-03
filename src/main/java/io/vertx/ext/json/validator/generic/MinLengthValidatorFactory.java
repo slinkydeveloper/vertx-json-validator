@@ -32,7 +32,7 @@ public class MinLengthValidatorFactory implements ValidatorFactory {
         @Override
         public void validate(Object value) throws ValidationException {
             if (value instanceof String) {
-                if (((String)value).length() < minimum) {
+                if (((String)value).codePointCount(0, ((String)value).length()) < minimum) {
                     throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
                 }
             }

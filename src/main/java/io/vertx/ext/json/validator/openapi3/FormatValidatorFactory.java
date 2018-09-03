@@ -3,6 +3,8 @@ package io.vertx.ext.json.validator.openapi3;
 import io.vertx.ext.json.validator.generic.BaseFormatValidatorFactory;
 import io.vertx.ext.json.validator.generic.RegularExpressions;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -18,6 +20,8 @@ public class FormatValidatorFactory extends BaseFormatValidatorFactory {
         predicates.put("ipv6", createPredicateFromPattern(RegularExpressions.IPV6));
         predicates.put("hostname", createPredicateFromPattern(RegularExpressions.HOSTNAME));
         predicates.put("email", createPredicateFromPattern(RegularExpressions.EMAIL));
+        predicates.put("uri", URI_VALIDATOR);
+        predicates.put("uriref", URI_REFERENCE_VALIDATOR);
         return predicates;
     }
 }

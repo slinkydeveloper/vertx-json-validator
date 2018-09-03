@@ -32,7 +32,7 @@ public class MaxLengthValidatorFactory implements ValidatorFactory {
         @Override
         public void validate(Object value) throws ValidationException {
             if (value instanceof String) {
-                if (((String)value).length() > maximum) {
+                if (((String)value).codePointCount(0, ((String)value).length()) > maximum) {
                     throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
                 }
             }

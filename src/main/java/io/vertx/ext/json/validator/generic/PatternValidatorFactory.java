@@ -37,7 +37,7 @@ public class PatternValidatorFactory implements ValidatorFactory {
         public void validate(Object value) throws ValidationException {
             if (value instanceof String) {
                 Matcher m = pattern.matcher((String)value);
-                if (!(m.matches() || m.lookingAt())) {
+                if (!(m.matches() || m.lookingAt() || m.find())) {
                     throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
                 }
             }

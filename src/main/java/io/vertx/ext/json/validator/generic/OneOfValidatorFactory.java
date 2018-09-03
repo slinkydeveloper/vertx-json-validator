@@ -42,7 +42,7 @@ public class OneOfValidatorFactory implements ValidatorFactory {
 
     @Override
     public boolean canCreateValidator(JsonObject schema) {
-        return schema.containsKey("not");
+        return schema.containsKey("oneOf");
     }
 
     class OneOfValidator implements AsyncValidator {
@@ -69,12 +69,12 @@ public class OneOfValidatorFactory implements ValidatorFactory {
             results.get(i).setHandler(ar -> {
                 int p = processed.incrementAndGet();
                 if (((AsyncResult)ar).succeeded()) {
-                    if (atLeastOneOk.get()) res.fail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO
+                    if (atLeastOneOk.get()) res.tryFail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO
                     else atLeastOneOk.set(true);
                 }
                 if (p == len) {
-                    if (atLeastOneOk.get()) res.complete();
-                    else res.fail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO
+                    if (atLeastOneOk.get()) res.tryComplete();
+                    else res.tryFail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO
                 }
             });
         }

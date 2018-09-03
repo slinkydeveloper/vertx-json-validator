@@ -13,6 +13,23 @@ import java.util.regex.Pattern;
 
 public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
 
+    protected final static Predicate<String> URI_VALIDATOR = in -> {
+        try {
+            return URI.create(in).isAbsolute();
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    };
+
+    protected final static Predicate<String> URI_REFERENCE_VALIDATOR = in -> {
+        try {
+            URI.create(in);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    };
+
     class FormatValidator implements SyncValidator {
 
         Predicate<String> validator;

@@ -17,7 +17,7 @@ public class NotValidatorFactory implements ValidatorFactory {
     @Override
     public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
         try {
-            JsonObject notSchema = schema.getJsonObject("not");
+            Object notSchema = schema.getJsonObject("not");
             Schema parsedSchema = parser.parse(notSchema, URIUtils.replaceFragment(scope, JsonPointer.fromURI(scope.toString()).append("not").buildURI()));
             return new NotValidator(parsedSchema);
         } catch (ClassCastException e) {
