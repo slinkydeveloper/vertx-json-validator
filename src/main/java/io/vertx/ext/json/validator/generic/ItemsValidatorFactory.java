@@ -1,24 +1,22 @@
 package io.vertx.ext.json.validator.generic;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ItemsValidatorFactory implements ValidatorFactory {
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             Object itemsSchema = schema.getValue("items");
-            Schema parsedSchema = parser.parse(itemsSchema, URIUtils.replaceFragment(scope, JsonPointer.fromURI(scope.toString()).append("items").buildURI()));
+            Schema parsedSchema = parser.parse(itemsSchema, scope.appendToAllPointers("items"));
             return new ItemsValidator(parsedSchema);
         } catch (ClassCastException e) {
             throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for items keyword");

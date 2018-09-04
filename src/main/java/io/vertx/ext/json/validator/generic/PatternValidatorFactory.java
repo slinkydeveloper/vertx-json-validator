@@ -1,6 +1,8 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
@@ -11,7 +13,7 @@ import java.util.regex.PatternSyntaxException;
 public class PatternValidatorFactory implements ValidatorFactory {
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             String pattern = (String) schema.getValue("pattern");
             return new PatternValidator(Pattern.compile(pattern));

@@ -1,6 +1,7 @@
 package io.vertx.ext.json.validator.openapi3;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.JsonSchemaType;
 
@@ -9,7 +10,7 @@ import java.net.URI;
 public class TypeValidatorFactory implements ValidatorFactory {
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             String type = schema.getString("type");
             String format = schema.getString("format");

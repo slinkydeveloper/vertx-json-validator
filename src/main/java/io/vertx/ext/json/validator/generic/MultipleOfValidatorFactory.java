@@ -1,6 +1,7 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
@@ -8,7 +9,7 @@ import java.net.URI;
 public class MultipleOfValidatorFactory implements ValidatorFactory {
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             Number multipleOf = (Number) schema.getValue("multipleOf");
             return new MultipleOfValidator(multipleOf.doubleValue());

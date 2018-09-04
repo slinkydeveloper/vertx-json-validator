@@ -1,15 +1,12 @@
 package io.vertx.ext.json.validator;
 
-import io.vertx.core.json.JsonObject;
-
-import java.net.URI;
-import java.util.Map;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 
 public interface SchemaParser {
 
     Schema parse();
 
-    Schema parse(Object json, URI scope);
+    Schema parse(Object json, JsonPointerList scope);
 
     SchemaRouter getSchemaRouter();
 

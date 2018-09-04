@@ -22,6 +22,7 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -37,18 +38,30 @@ public class JsonPointerImpl implements JsonPointer {
   // Empty means a pointer to root
   List<String> undecodedTokens;
 
+  private JsonPointerImpl(URI startingUri, List<String> undecodedTokens) {
+      this.startingUri = startingUri;
+      this.undecodedTokens = new ArrayList<>(undecodedTokens);
+  }
+
   public JsonPointerImpl(List<String> tokens) {
     this.startingUri = URI.create("#");
-    if (tokens.size() == 0 || tokens.size() == 1 && "".equals(tokens.get(0)))
-      undecodedTokens = null;
-    else
+    if (tokens == null || tokens.size() == 0 || tokens.size() == 1 && "".equals(tokens.get(0))) {
+        undecodedTokens = new ArrayList<>();
+        undecodedTokens.add(""); // Root
+    } else
       undecodedTokens = new ArrayList<>(tokens);
   }
 
   public JsonPointerImpl(URI uri) {
-    this.startingUri = uri;
-    if (uri.getFragment() != null) undecodedTokens = new ArrayList<String>(Arrays.asList(uri.getFragment().split("/", -1)));
-    else undecodedTokens = null;
+    this.startingUri = URIUtils.replaceFragment(uri, null);
+    if (uri.getFragment() != null && !uri.getFragment().isEmpty()) {
+        undecodedTokens = new ArrayList<String>(Arrays.asList(uri.getFragment().split("/", -1)));
+        if (undecodedTokens.size() == 0) undecodedTokens.add("");
+    }
+    else {
+        undecodedTokens = new ArrayList<>();
+        undecodedTokens.add(""); // Root
+    }
   }
 
   public JsonPointerImpl(String pointer) {
@@ -63,9 +76,11 @@ public class JsonPointerImpl implements JsonPointer {
   }
 
   private List<String> parse(String pointer) {
-    if ("".equals(pointer))
-      return null;
-    if (VALID_POINTER_PATTERN.matcher(pointer).matches()) {
+    if ("".equals(pointer)) {
+        List<String> newList = new ArrayList<>();
+        newList.add("");
+        return newList;
+    } if (VALID_POINTER_PATTERN.matcher(pointer).matches()) {
       return Arrays
         .stream(pointer.split("/", -1))
         .map(this::unescape)
@@ -177,8 +192,10 @@ public class JsonPointerImpl implements JsonPointer {
 
   @Override
   public JsonPointer copy() {
-    return new JsonPointerImpl(this.undecodedTokens);
+    return new JsonPointerImpl(this.startingUri, this.undecodedTokens);
   }
+
+  public URI getStartingUri() { return this.startingUri; }
 
   private boolean write(Object input, Object value) {
     if (isRootPointer())
@@ -241,6 +258,20 @@ public class JsonPointerImpl implements JsonPointer {
 
   @Override
   public String toString() {
-    return this.build();
+    return this.buildURI();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    JsonPointerImpl that = (JsonPointerImpl) o;
+    return Objects.equals(startingUri, that.startingUri) &&
+            Objects.equals(undecodedTokens, that.undecodedTokens);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(startingUri, undecodedTokens);
   }
 }

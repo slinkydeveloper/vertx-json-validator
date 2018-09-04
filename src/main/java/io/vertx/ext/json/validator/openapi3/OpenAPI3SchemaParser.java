@@ -1,6 +1,6 @@
 package io.vertx.ext.json.validator.openapi3;
 
-import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.*;
 
@@ -15,8 +15,8 @@ public class OpenAPI3SchemaParser extends BaseSchemaParser {
     }
 
     @Override
-    protected Schema createSchema(Object schema, ConcurrentSkipListSet<Validator> validators) {
-        return new OpenAPI3Schema(schema, validators);
+    protected Schema createSchema(Object schema, JsonPointerList scope, ConcurrentSkipListSet<Validator> validators) {
+        return new OpenAPI3Schema(schema, scope, validators);
     }
 
     @Override

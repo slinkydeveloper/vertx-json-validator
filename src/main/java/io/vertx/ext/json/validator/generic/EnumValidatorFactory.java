@@ -2,22 +2,19 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 
-import java.net.URI;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 public class EnumValidatorFactory implements ValidatorFactory {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             JsonArray allowedValues = (JsonArray) schema.getValue("enum");
             Set allowedValuesParsed = (Set) allowedValues

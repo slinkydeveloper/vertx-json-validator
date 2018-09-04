@@ -1,6 +1,7 @@
 package io.vertx.ext.json.validator.openapi3;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.SchemaErrorType;
 import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.Validator;
@@ -15,7 +16,7 @@ import java.net.URI;
 public class MinimumValidatorFactory implements ValidatorFactory {
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             Number maximum = (Number) schema.getValue("minimum");
             if (schema.containsKey("exclusiveMinimum") && schema.getBoolean("exclusiveMinimum"))

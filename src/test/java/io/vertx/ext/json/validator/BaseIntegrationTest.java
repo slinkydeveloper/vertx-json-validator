@@ -1,4 +1,4 @@
-package io.vertx.ext.json.validator.schema;
+package io.vertx.ext.json.validator;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -56,7 +56,7 @@ public abstract class BaseIntegrationTest {
 
     public static Iterable<Object[]> buildParameters(List<String> tests) {
         return tests.stream()
-                .map(f -> new AbstractMap.SimpleImmutableEntry<>(f, Paths.get("src", "test", "resources", "openapi3", f + ".json")))
+                .map(f -> new AbstractMap.SimpleImmutableEntry<>(f, Paths.get("src", "test", "resources", "tck", "openapi3", f + ".json"))) //TODO
                 .map(p -> {
                     try {
                         return new AbstractMap.SimpleImmutableEntry<>(p.getKey(), Files.readAllLines(p.getValue(), Charset.forName("UTF8")));

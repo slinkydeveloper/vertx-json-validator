@@ -8,12 +8,11 @@ import io.vertx.core.impl.CompositeFutureImpl;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerArray;
@@ -23,14 +22,14 @@ import java.util.stream.Collectors;
 public class OneOfValidatorFactory implements ValidatorFactory {
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             JsonArray oneOfSchemas = schema.getJsonArray("oneOf");
             if (oneOfSchemas.size() == 0) throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "oneOf must have at least one element");
-            JsonPointer basePointer = JsonPointer.fromURI(scope.toString()).append("oneOf");
-            Set<Schema> parsedSchemas = new HashSet<>();
+            scope.appendToAllPointers("oneOf");
+            List<Schema> parsedSchemas = new ArrayList<>();
             for (int i = 0; i < oneOfSchemas.size(); i++) {
-                parsedSchemas.add(parser.parse(oneOfSchemas.getJsonObject(i), URIUtils.replaceFragment(scope, basePointer.copy().append(Integer.toString(i)).buildURI())));
+                parsedSchemas.add(parser.parse(oneOfSchemas.getJsonObject(i), scope.copyList().appendToAllPointers(Integer.toString(i))));
             }
             return new OneOfValidator(parsedSchemas);
         } catch (ClassCastException e) {
@@ -47,16 +46,16 @@ public class OneOfValidatorFactory implements ValidatorFactory {
 
     class OneOfValidator implements AsyncValidator {
 
-        private Set<Schema> schemas;
+        private Schema[] schemas;
 
-        public OneOfValidator(Set<Schema> schemas) {
-            this.schemas = schemas;
+        public OneOfValidator(List<Schema> schemas) {
+            this.schemas = schemas.toArray(new Schema[schemas.size()]);
         }
 
         @SuppressWarnings("unchecked")
         @Override
         public Future validate(Object in) {
-            return oneOf(schemas.stream().map(s -> s.validate(in)).collect(Collectors.toList()));
+            return oneOf(Arrays.stream(schemas).map(s -> s.validate(in)).collect(Collectors.toList()));
         }
     }
 

@@ -1,10 +1,10 @@
-package io.vertx.ext.json.validator.schema.oas3;
+package io.vertx.ext.json.validator.oas3;
 
 import io.vertx.ext.json.validator.Schema;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
-import io.vertx.ext.json.validator.schema.BaseIntegrationTest;
-import io.vertx.ext.json.validator.schema.SchemaRouterMock;
+import io.vertx.ext.json.validator.BaseIntegrationTest;
+import io.vertx.ext.json.validator.SchemaRouterMock;
 import org.assertj.core.util.Lists;
 import org.junit.runners.Parameterized;
 
@@ -63,6 +63,6 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
 
     @Override
     public String getSchemasPath() {
-        return "src/test/resources/openapi3";
+        return "src/test/resources/tck/openapi3";
     }
 }

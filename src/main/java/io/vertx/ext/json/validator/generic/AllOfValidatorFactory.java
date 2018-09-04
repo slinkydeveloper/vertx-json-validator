@@ -4,25 +4,23 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 
-import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AllOfValidatorFactory implements ValidatorFactory {
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             JsonArray allOfSchemas = schema.getJsonArray("allOf");
             if (allOfSchemas.size() == 0) throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "allOf must have at least one element");
-            JsonPointer basePointer = JsonPointer.fromURI(scope.toString()).append("allOf");
-            Set<Schema> parsedSchemas = new HashSet<>();
+            scope.appendToAllPointers("allOf");
+            List<Schema> parsedSchemas = new ArrayList<>();
             for (int i = 0; i < allOfSchemas.size(); i++) {
-                parsedSchemas.add(parser.parse(allOfSchemas.getValue(i), URIUtils.replaceFragment(scope, basePointer.copy().append(Integer.toString(i)).buildURI())));
+                parsedSchemas.add(parser.parse(allOfSchemas.getValue(i), scope.copyList().appendToAllPointers(Integer.toString(i))));
             }
             return new AllOfValidator(parsedSchemas);
         } catch (ClassCastException e) {
@@ -39,15 +37,15 @@ public class AllOfValidatorFactory implements ValidatorFactory {
 
     class AllOfValidator implements AsyncValidator {
 
-        private Set<Schema> schemas;
+        private final Schema[] schemas;
 
-        public AllOfValidator(Set<Schema> schemas) {
-            this.schemas = schemas;
+        public AllOfValidator(List<Schema> schemas) {
+            this.schemas = schemas.toArray(new Schema[schemas.size()]);
         }
 
         @Override
         public Future validate(Object in) {
-            return CompositeFuture.all(schemas.stream().map(s -> s.validate(in)).collect(Collectors.toList())).compose(cf -> Future.succeededFuture());
+            return CompositeFuture.all(Arrays.stream(schemas).map(s -> s.validate(in)).collect(Collectors.toList())).compose(cf -> Future.succeededFuture());
         }
     }
 

@@ -1,6 +1,7 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
@@ -8,7 +9,7 @@ import java.net.URI;
 public class MaxPropertiesValidatorFactory implements ValidatorFactory {
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             Number maximum = (Number) schema.getValue("maxProperties");
             if (maximum.intValue() < 0) throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "maxProperties must be >= 0");

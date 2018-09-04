@@ -1,6 +1,7 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
@@ -8,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
@@ -72,14 +72,11 @@ public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
     }
 
     protected Predicate<String> createPredicateFromPattern(final Pattern pattern) {
-        return (in) -> {
-            Matcher m = pattern.matcher(in);
-            return m.matches() || m.lookingAt(); //TODO ?!?
-        };
+        return (in) -> pattern.matcher(in).matches();
     }
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         String format = schema.getString("format");
         if (ignoringFormats.contains(format)) return null;
         else {

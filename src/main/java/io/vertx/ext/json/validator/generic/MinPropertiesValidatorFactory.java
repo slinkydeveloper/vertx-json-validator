@@ -2,6 +2,7 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
@@ -9,7 +10,7 @@ import java.net.URI;
 public class MinPropertiesValidatorFactory implements ValidatorFactory {
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             Number minimum = (Number) schema.getValue("minProperties");
             if (minimum.intValue() < 0) throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "minProperties must be >= 0");

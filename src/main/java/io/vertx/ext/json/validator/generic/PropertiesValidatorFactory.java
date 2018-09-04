@@ -4,6 +4,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
@@ -13,9 +14,9 @@ import java.util.regex.PatternSyntaxException;
 
 public class PropertiesValidatorFactory implements ValidatorFactory {
 
-    private Schema parseAdditionalProperties(Object obj, URI scope, SchemaParser parser) {
+    private Schema parseAdditionalProperties(Object obj, JsonPointerList scope, SchemaParser parser) {
         try {
-            return parser.parse(obj, URIUtils.replaceFragment(scope, JsonPointer.fromURI(scope.toString()).append("additionalProperties").buildURI()));
+            return parser.parse(obj, scope.copyList().appendToAllPointers("additionalProperties"));
         } catch (ClassCastException e) {
             throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(obj, "Wrong type for additionalProperties keyword");
         } catch (NullPointerException e) {
@@ -23,14 +24,14 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
         }
     }
 
-    private Map<String, Schema> parseProperties(JsonObject obj, URI scope, SchemaParser parser) {
-        JsonPointer basePointer = JsonPointer.fromURI(scope.toString()).append("properties");
+    private Map<String, Schema> parseProperties(JsonObject obj, JsonPointerList scope, SchemaParser parser) {
+        JsonPointerList basePointerList = scope.copyList().appendToAllPointers("properties");
         Map<String, Schema> parsedSchemas = new HashMap<>();
         for (Map.Entry<String, Object> entry : obj) {
             try {
                 parsedSchemas.put(entry.getKey(), parser.parse(
                         entry.getValue(),
-                        URIUtils.replaceFragment(scope, basePointer.copy().append(entry.getKey()).buildURI())
+                        basePointerList.copyList().appendToAllPointers(entry.getKey())
                 ));
             } catch (ClassCastException | NullPointerException e) {
                 throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(obj, "Property descriptor " + entry.getKey() + " should be a not null JsonObject");
@@ -39,14 +40,14 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
         return parsedSchemas;
     }
 
-    private Map<Pattern, Schema> parsePatternProperties(JsonObject obj, URI scope, SchemaParser parser) {
-        JsonPointer basePointer = JsonPointer.fromURI(scope.toString()).append("patternProperties");
+    private Map<Pattern, Schema> parsePatternProperties(JsonObject obj, JsonPointerList scope, SchemaParser parser) {
+        JsonPointerList basePointerList = scope.copyList().appendToAllPointers("patternProperties");
         Map<Pattern, Schema> parsedSchemas = new HashMap<>();
         for (Map.Entry<String, Object> entry : obj) {
             try {
                 parsedSchemas.put(Pattern.compile(entry.getKey()), parser.parse(
                         entry.getValue(),
-                        URIUtils.replaceFragment(scope, basePointer.copy().append(entry.getKey()).buildURI())
+                        basePointerList.copyList().appendToAllPointers(entry.getKey())
                 ));
             } catch (PatternSyntaxException e) {
                 throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(obj, "Invalid pattern for pattern keyword");
@@ -58,7 +59,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public Validator createValidator(JsonObject schema, URI scope, SchemaParser parser) {
+    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
         try {
             JsonObject properties = schema.getJsonObject("properties");
             JsonObject patternProperties = schema.getJsonObject("patternProperties");
