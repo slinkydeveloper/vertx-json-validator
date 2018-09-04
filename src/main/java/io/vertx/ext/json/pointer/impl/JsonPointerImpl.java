@@ -14,8 +14,10 @@ package io.vertx.ext.json.pointer.impl;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.ext.json.validator.generic.URIUtils;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,21 +32,32 @@ public class JsonPointerImpl implements JsonPointer {
 
   final public static Pattern VALID_POINTER_PATTERN = Pattern.compile("([0-9]*|-)(\\/([\\u0000-\\u002E]|[\\u0030-\\u007D]|[\\u007F-\\u10FFFF]|\\~0|\\~1)*)*");
 
+  URI startingUri;
+
   // Empty means a pointer to root
   List<String> undecodedTokens;
 
   public JsonPointerImpl(List<String> tokens) {
+    this.startingUri = URI.create("#");
     if (tokens.size() == 0 || tokens.size() == 1 && "".equals(tokens.get(0)))
       undecodedTokens = null;
     else
       undecodedTokens = new ArrayList<>(tokens);
   }
 
+  public JsonPointerImpl(URI uri) {
+    this.startingUri = uri;
+    if (uri.getFragment() != null) undecodedTokens = new ArrayList<String>(Arrays.asList(uri.getFragment().split("/", -1)));
+    else undecodedTokens = null;
+  }
+
   public JsonPointerImpl(String pointer) {
+    this.startingUri = URI.create("#");
     undecodedTokens = parse(pointer);
   }
 
   public JsonPointerImpl() {
+    this.startingUri = URI.create("#");
     undecodedTokens = new ArrayList<>();
     undecodedTokens.add(""); // Root
   }
@@ -87,32 +100,36 @@ public class JsonPointerImpl implements JsonPointer {
   @Override
   public String buildURI() {
     if (isRootPointer()) {
-      return "#";
+      return URIUtils.replaceFragment(this.startingUri,  "").toString();
     } else if (undecodedTokens.size() >= 1 && "".equals(undecodedTokens.get(0))) {
       // If the first token is the empty token we should remove it!
-      return "#" + undecodedTokens.subList(1, undecodedTokens.size())
-        .stream()
-        .map(s -> {
-          try {
-            return "/" + URLEncoder.encode(s, "UTF-8");
-          } catch (UnsupportedEncodingException e) {
-            e.printStackTrace(); //WHY THAT
-            throw new AssertionError("UTF-8 is unknown");
-          }
-        })
-        .reduce("", String::concat);
+      return URIUtils.replaceFragment(this.startingUri,
+              undecodedTokens.subList(1, undecodedTokens.size())
+          .stream()
+          .map(s -> {
+            try {
+              return "/" + URLEncoder.encode(s, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+              e.printStackTrace(); //WHY THAT
+              throw new AssertionError("UTF-8 is unknown");
+            }
+          })
+          .reduce("", String::concat)
+      ).toString();
     } else
-      return "#" + undecodedTokens
-        .stream()
-        .map(s -> {
-          try {
-            return "/" + URLEncoder.encode(s, "UTF-8");
-          } catch (UnsupportedEncodingException e) {
-            e.printStackTrace(); //WHY THAT
-            throw new AssertionError("UTF-8 is unknown");
-          }
-        })
-        .reduce("", String::concat);
+      return URIUtils.replaceFragment(this.startingUri,
+              undecodedTokens
+          .stream()
+          .map(s -> {
+            try {
+              return "/" + URLEncoder.encode(s, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+              e.printStackTrace(); //WHY THAT
+              throw new AssertionError("UTF-8 is unknown");
+            }
+          })
+          .reduce("", String::concat)
+      ).toString();
   }
 
   @Override

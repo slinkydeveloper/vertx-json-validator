@@ -134,9 +134,7 @@ public interface JsonPointer {
    * @return new instance of JsonPointer
    */
   static JsonPointer fromURI(String uri) {
-    URI parsedUri = URI.create(uri);
-    if (parsedUri.getFragment() != null) return new JsonPointerImpl(Arrays.asList(parsedUri.getFragment().split("/", -1)));
-    else return JsonPointer.create();
+    return new JsonPointerImpl(URI.create(uri));
   }
 
 }

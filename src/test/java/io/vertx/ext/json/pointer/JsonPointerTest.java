@@ -45,8 +45,9 @@ public class JsonPointerTest {
 
   @Test
   public void testURIParsing() {
-    JsonPointer pointer = JsonPointer.fromURI("#/hello/world");
+    JsonPointer pointer = JsonPointer.fromURI("http://www.example.org#/hello/world");
     assertEquals("/hello/world", pointer.build());
+    assertEquals("http://www.example.org#/hello/world", pointer.buildURI());
   }
 
   @Test
