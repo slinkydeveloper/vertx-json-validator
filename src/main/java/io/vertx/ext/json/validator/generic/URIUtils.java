@@ -8,7 +8,9 @@ public class URIUtils {
 
     public static URI replaceFragment(URI oldURI, String fragment) {
         try {
-            return new URI(oldURI.getScheme(), oldURI.getSchemeSpecificPart(), fragment);
+            if (oldURI != null) {
+                return new URI(oldURI.getScheme(), oldURI.getSchemeSpecificPart(), fragment);
+            } else return new URI(null, null, fragment);
         } catch (URISyntaxException e) {
             e.printStackTrace();
             return null;

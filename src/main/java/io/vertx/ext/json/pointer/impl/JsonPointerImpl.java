@@ -113,9 +113,9 @@ public class JsonPointerImpl implements JsonPointer {
   }
 
   @Override
-  public String buildURI() {
+  public URI buildURI() {
     if (isRootPointer()) {
-      return URIUtils.replaceFragment(this.startingUri,  "").toString();
+      return URIUtils.replaceFragment(this.startingUri,  "");
     } else if (undecodedTokens.size() >= 1 && "".equals(undecodedTokens.get(0))) {
       // If the first token is the empty token we should remove it!
       return URIUtils.replaceFragment(this.startingUri,
@@ -130,7 +130,7 @@ public class JsonPointerImpl implements JsonPointer {
             }
           })
           .reduce("", String::concat)
-      ).toString();
+      );
     } else
       return URIUtils.replaceFragment(this.startingUri,
               undecodedTokens
@@ -144,7 +144,7 @@ public class JsonPointerImpl implements JsonPointer {
             }
           })
           .reduce("", String::concat)
-      ).toString();
+      );
   }
 
   @Override
@@ -258,7 +258,7 @@ public class JsonPointerImpl implements JsonPointer {
 
   @Override
   public String toString() {
-    return this.buildURI();
+    return this.buildURI().toString();
   }
 
   @Override

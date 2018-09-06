@@ -50,4 +50,11 @@ public abstract class BaseSchema implements Schema {
         return CompositeFuture.all(futures).compose(cf -> Future.succeededFuture());
     }
 
+    public ConcurrentSkipListSet<Validator> getValidators() {
+        return validators;
+    }
+
+    public JsonPointerList getScope() {
+        return scope;
+    }
 }

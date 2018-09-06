@@ -49,7 +49,7 @@ public interface JsonPointer {
    *
    * @return
    */
-  String buildURI();
+  URI buildURI();
 
   /**
    * Append unescaped path to JsonPointer. <br/>

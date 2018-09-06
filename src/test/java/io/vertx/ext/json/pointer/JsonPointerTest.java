@@ -47,7 +47,7 @@ public class JsonPointerTest {
   public void testURIParsing() {
     JsonPointer pointer = JsonPointer.fromURI("http://www.example.org#/hello/world");
     assertEquals("/hello/world", pointer.build());
-    assertEquals("http://www.example.org#/hello/world", pointer.buildURI());
+    assertEquals(URI.create("http://www.example.org#/hello/world"), pointer.buildURI());
   }
 
   @Test
@@ -63,14 +63,14 @@ public class JsonPointerTest {
   @Test
   public void testURIBuilding() {
     JsonPointer pointer = JsonPointer.create().append("hello").append("world");
-    assertEquals(URI.create("#/hello/world"), URI.create(pointer.buildURI()));
+    assertEquals(URI.create("#/hello/world"), pointer.buildURI());
   }
 
   @Test
   public void testEmptyBuilding() {
     JsonPointer pointer = JsonPointer.create();
     assertEquals("", pointer.build());
-    assertEquals(URI.create("#"), URI.create(pointer.buildURI()));
+    assertEquals(URI.create("#"), pointer.buildURI());
   }
 
   @Test
