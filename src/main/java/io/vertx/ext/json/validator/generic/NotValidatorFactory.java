@@ -15,42 +15,43 @@ import java.util.stream.Collectors;
 
 public class NotValidatorFactory implements ValidatorFactory {
 
+  @Override
+  public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
+    try {
+      Object notSchema = schema.getJsonObject("not");
+      Schema parsedSchema = parser.parse(notSchema, scope.appendToAllPointers("not"));
+      return new NotValidator(parsedSchema);
+    } catch (ClassCastException e) {
+      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for not keyword");
+    } catch (NullPointerException e) {
+      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null not keyword");
+    }
+  }
+
+  @Override
+  public boolean canCreateValidator(JsonObject schema) {
+    return schema.containsKey("not");
+  }
+
+  class NotValidator implements AsyncValidator {
+
+    private Schema schema;
+
+    public NotValidator(Schema schema) {
+      this.schema = schema;
+    }
+
+    @SuppressWarnings("unchecked")
     @Override
-    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
-        try {
-            Object notSchema = schema.getJsonObject("not");
-            Schema parsedSchema = parser.parse(notSchema, scope.appendToAllPointers("not"));
-            return new NotValidator(parsedSchema);
-        } catch (ClassCastException e) {
-            throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for not keyword");
-        } catch (NullPointerException e) {
-            throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null not keyword");
-        }
+    public Future validate(Object in) {
+      Future future = Future.future();
+      schema.validate(in).setHandler(ar -> {
+        if (((AsyncResult) ar).succeeded())
+          future.fail(ValidationExceptionFactory.generateNotMatchValidationException(""));
+        else future.complete();
+      });
+      return future;
     }
-
-    @Override
-    public boolean canCreateValidator(JsonObject schema) {
-        return schema.containsKey("not");
-    }
-
-    class NotValidator implements AsyncValidator {
-
-        private Schema schema;
-
-        public NotValidator(Schema schema) {
-            this.schema = schema;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public Future validate(Object in) {
-            Future future = Future.future();
-            schema.validate(in).setHandler(ar -> {
-                if (((AsyncResult)ar).succeeded()) future.fail(ValidationExceptionFactory.generateNotMatchValidationException(""));
-                else future.complete();
-            });
-            return future;
-        }
-    }
+  }
 
 }

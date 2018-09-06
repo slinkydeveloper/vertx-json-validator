@@ -16,42 +16,53 @@ public class ValidationException extends VertxException {
     /**
      * The provided priority not match with ParameterTypeValidator rules
      */
-    NO_MATCH, /**
+    NO_MATCH,
+    /**
      * Parameter not found in request
      */
-    NOT_FOUND, /**
+    NOT_FOUND,
+    /**
      * It was expected a single priority, but found in request an array
      */
-    UNEXPECTED_ARRAY, /**
+    UNEXPECTED_ARRAY,
+    /**
      * It was expected an array, but found in request a single priority
      */
     UNEXPECTED_SINGLE_STRING,
     /**
      * Expected file not found
      */
-    FILE_NOT_FOUND, /**
+    FILE_NOT_FOUND,
+    /**
      * Wrong Content-Type header
      */
-    WRONG_CONTENT_TYPE, /**
+    WRONG_CONTENT_TYPE,
+    /**
      * Parameter found but with empty priority
      */
-    EMPTY_VALUE, /**
+    EMPTY_VALUE,
+    /**
      * Expected an array size between parameters configured in
      * {@link io.vertx.ext.web.api.validation.impl.ArrayTypeValidator}
      */
-    UNEXPECTED_ARRAY_SIZE, /**
+    UNEXPECTED_ARRAY_SIZE,
+    /**
      * Error during deserializaton with rule provided
      */
-    DESERIALIZATION_ERROR, /**
+    DESERIALIZATION_ERROR,
+    /**
      * Object field declared as required in {@link io.vertx.ext.web.api.validation.impl.ObjectTypeValidator} not found
      */
-    OBJECT_FIELD_NOT_FOUND, /**
+    OBJECT_FIELD_NOT_FOUND,
+    /**
      * Json can't be parsed
      */
-    JSON_NOT_PARSABLE, /**
+    JSON_NOT_PARSABLE,
+    /**
      * Json doesn't match the provided schema
      */
-    JSON_INVALID, /**
+    JSON_INVALID,
+    /**
      * XML doesn't match the provided schema
      */
     XML_INVALID
@@ -63,7 +74,7 @@ public class ValidationException extends VertxException {
 
   private ValidationException(String message, String parameterName, String value, ErrorType errorType) {
     super((message != null && message.length() != 0) ? message : "ValidationException{" + "parameterName='" +
-      parameterName + '\'' + ", priority='" + value + '\'' + ", errorType=" + errorType + '}');
+        parameterName + '\'' + ", priority='" + value + '\'' + ", errorType=" + errorType + '}');
     this.parameterName = parameterName;
     this.value = value;
     this.errorType = errorType;
@@ -104,7 +115,7 @@ public class ValidationException extends VertxException {
   @Override
   public String toString() {
     return "ValidationException{" + "parameterName='" + parameterName + '\'' + ", priority='" + value + '\'' + ", " +
-      "errorType=" + errorType + ", message='" + getMessage() + "'}";
+        "errorType=" + errorType + ", message='" + getMessage() + "'}";
   }
 
 

@@ -8,22 +8,22 @@ import java.util.stream.Collectors;
 
 public class JsonPointerList extends ArrayList<JsonPointer> {
 
-    public JsonPointerList() {
-        super();
-    }
+  public JsonPointerList() {
+    super();
+  }
 
-    public JsonPointerList(Collection<? extends JsonPointer> c) {
-        super(c);
-    }
+  public JsonPointerList(Collection<? extends JsonPointer> c) {
+    super(c);
+  }
 
-    public JsonPointerList copyList() {
-        return new JsonPointerList(
-                this.stream().filter(jp -> ((JsonPointerImpl)jp).undecodedTokens.get(0).isEmpty()).map(JsonPointer::copy).collect(Collectors.toList())
-        );
-    }
+  public JsonPointerList copyList() {
+    return new JsonPointerList(
+        this.stream().filter(jp -> ((JsonPointerImpl) jp).decodedTokens.get(0).isEmpty()).map(JsonPointer::copy).collect(Collectors.toList())
+    );
+  }
 
-    public JsonPointerList appendToAllPointers(final String path) {
-        this.forEach(j -> j.append(path));
-        return this;
-    }
+  public JsonPointerList appendToAllPointers(final String path) {
+    this.forEach(j -> j.append(path));
+    return this;
+  }
 }

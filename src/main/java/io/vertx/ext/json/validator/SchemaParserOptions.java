@@ -11,29 +11,29 @@ import java.util.function.Predicate;
 @DataObject
 public class SchemaParserOptions {
 
-    private List<ValidatorFactory> additionalValidatorFactories; //TODO put
-    private Map<String, Predicate<String>> additionalStringFormatValidators;
-    private boolean applyDefault;
+  private List<ValidatorFactory> additionalValidatorFactories; //TODO put
+  private Map<String, Predicate<String>> additionalStringFormatValidators;
+  private boolean applyDefault;
 
-    public SchemaParserOptions() {
-        this.additionalValidatorFactories = new ArrayList<>();
-        this.additionalStringFormatValidators = new HashMap<>();
-        this.applyDefault = false;
-    }
+  public SchemaParserOptions() {
+    this.additionalValidatorFactories = new ArrayList<>();
+    this.additionalStringFormatValidators = new HashMap<>();
+    this.applyDefault = false;
+  }
 
-    public List<ValidatorFactory> getAdditionalValidatorFactories() {
-        return additionalValidatorFactories;
-    }
+  public List<ValidatorFactory> getAdditionalValidatorFactories() {
+    return additionalValidatorFactories;
+  }
 
-    public Map<String, Predicate<String>> getAdditionalStringFormatValidators() {
-        return additionalStringFormatValidators;
-    }
+  public Map<String, Predicate<String>> getAdditionalStringFormatValidators() {
+    return additionalStringFormatValidators;
+  }
 
-    public boolean isApplyDefault() {
-        return applyDefault;
-    }
+  public boolean isApplyDefault() {
+    return applyDefault;
+  }
 
-    public void setApplyDefault(boolean applyDefault) {
-        this.applyDefault = applyDefault;
-    }
+  public void setApplyDefault(boolean applyDefault) {
+    this.applyDefault = applyDefault;
+  }
 }

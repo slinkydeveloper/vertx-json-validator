@@ -4,10 +4,10 @@ import io.vertx.ext.json.pointer.impl.JsonPointerList;
 
 public interface SchemaParser {
 
-    Schema parse();
+  Schema parse();
 
-    Schema parse(Object json, JsonPointerList scope);
+  Schema parse(Object json, JsonPointerList scope);
 
-    SchemaRouter getSchemaRouter();
+  SchemaRouter getSchemaRouter();
 
 }

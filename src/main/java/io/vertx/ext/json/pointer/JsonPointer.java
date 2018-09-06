@@ -58,7 +58,8 @@ public interface JsonPointer {
    * @param path unescaped path
    * @return
    */
-  @Fluent JsonPointer append(String path);
+  @Fluent
+  JsonPointer append(String path);
 
   /**
    * Append unescaped list of paths to JsonPointer <br/>
@@ -67,7 +68,8 @@ public interface JsonPointer {
    * @param paths unescaped paths
    * @return
    */
-  @Fluent JsonPointer append(List<String> paths);
+  @Fluent
+  JsonPointer append(List<String> paths);
 
   /**
    * Query the provided object. <br/>
@@ -83,7 +85,7 @@ public interface JsonPointer {
    * This function does not support root pointers.
    *
    * @param object object to query and write
-   * @param value object to insert
+   * @param value  object to insert
    * @return true if the write is completed, false otherwise
    * @throws IllegalStateException if the pointer is a root pointer
    */
@@ -133,8 +135,8 @@ public interface JsonPointer {
    * @param uri uri representing a json pointer
    * @return new instance of JsonPointer
    */
-  static JsonPointer fromURI(String uri) {
-    return new JsonPointerImpl(URI.create(uri));
+  static JsonPointer fromURI(URI uri) {
+    return new JsonPointerImpl(uri);
   }
 
 }

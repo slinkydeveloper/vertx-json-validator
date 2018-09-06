@@ -5,8 +5,8 @@ import io.vertx.ext.json.pointer.impl.JsonPointerList;
 
 public interface SchemaRouter {
 
-    Schema resolveCachedSchema(JsonPointer pointer, JsonPointerList scope);
+  Schema resolveCachedSchema(JsonPointer pointer, JsonPointerList scope);
 
-    void addSchema(Schema schema, JsonPointerList scope);
+  void addSchema(Schema schema, JsonPointerList scope);
 
 }

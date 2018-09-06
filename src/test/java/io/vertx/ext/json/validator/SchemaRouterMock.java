@@ -11,23 +11,23 @@ import java.util.Map;
 
 public class SchemaRouterMock implements SchemaRouter {
 
-    Map<JsonPointer, Schema> schemas;
+  Map<JsonPointer, Schema> schemas;
 
-    public SchemaRouterMock() {
-        this.schemas = new HashMap<>();
-    }
+  public SchemaRouterMock() {
+    this.schemas = new HashMap<>();
+  }
 
-    public Map<JsonPointer, Schema> getSchemas() {
-        return schemas;
-    }
+  public Map<JsonPointer, Schema> getSchemas() {
+    return schemas;
+  }
 
-    @Override
-    public Schema resolveCachedSchema(JsonPointer pointer, JsonPointerList scope) {
-        return null;
-    }
+  @Override
+  public Schema resolveCachedSchema(JsonPointer pointer, JsonPointerList scope) {
+    return null;
+  }
 
-    @Override
-    public void addSchema(Schema schema, JsonPointerList scope) {
-        scope.forEach(p -> schemas.put(p, schema));
-    }
+  @Override
+  public void addSchema(Schema schema, JsonPointerList scope) {
+    scope.forEach(p -> schemas.put(p, schema));
+  }
 }

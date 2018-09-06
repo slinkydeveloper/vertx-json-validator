@@ -6,9 +6,9 @@ package io.vertx.ext.json.validator;
 public class ValidationExceptionFactory {
 
   public static ValidationException generateUnexpectedArraySizeValidationException(Integer maxItems, Integer
-          minItems, Integer actualSize) {
+      minItems, Integer actualSize) {
     return new ValidationException("Array parameter have unexpected size: " + minItems + "<=" + actualSize + "<=" +
-            maxItems, ValidationException.ErrorType.UNEXPECTED_ARRAY_SIZE);
+        maxItems, ValidationException.ErrorType.UNEXPECTED_ARRAY_SIZE);
   }
 
   public static ValidationException generateDeserializationError(String message) {

@@ -45,9 +45,16 @@ public class JsonPointerTest {
 
   @Test
   public void testURIParsing() {
-    JsonPointer pointer = JsonPointer.fromURI("http://www.example.org#/hello/world");
+    JsonPointer pointer = JsonPointer.fromURI(URI.create("http://www.example.org#/hello/world"));
     assertEquals("/hello/world", pointer.build());
     assertEquals(URI.create("http://www.example.org#/hello/world"), pointer.buildURI());
+  }
+
+  @Test
+  public void testURIEncodedParsing() {
+    JsonPointer pointer = JsonPointer.fromURI(URI.create("http://www.example.org#/hello/world/%5Ea"));
+    assertEquals("/hello/world/^a", pointer.build());
+    assertEquals(URI.create("http://www.example.org#/hello/world/%5Ea"), pointer.buildURI());
   }
 
   @Test
@@ -76,11 +83,11 @@ public class JsonPointerTest {
   @Test
   public void testJsonObjectQuerying() {
     JsonObject obj = new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 1).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      );
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        );
     JsonPointer pointer = JsonPointer.from("/hello/world");
     assertEquals(1, pointer.query(obj));
   }
@@ -89,20 +96,20 @@ public class JsonPointerTest {
   public void testJsonArrayQuerying() {
     JsonArray array = new JsonArray();
     array.add(new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 2).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      ));
+        .put("hello",
+            new JsonObject().put("world", 2).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        ));
     array.add(new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 1).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      ));
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        ));
     assertEquals(1, JsonPointer.from("1/hello/world").query(array));
     assertEquals(1, JsonPointer.from("/1/hello/world").query(array));
-    assertEquals(1, JsonPointer.fromURI("#1/hello/world").query(array));
+    assertEquals(1, JsonPointer.fromURI(URI.create("#1/hello/world")).query(array));
   }
 
   @Test
@@ -110,18 +117,18 @@ public class JsonPointerTest {
     JsonPointer pointer = JsonPointer.create();
     JsonArray array = new JsonArray();
     JsonObject obj = new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 2).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      );
+        .put("hello",
+            new JsonObject().put("world", 2).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        );
     array.add(obj);
     array.add(new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 1).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      ));
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        ));
 
     assertEquals(array, pointer.query(array));
     assertEquals(obj, pointer.query(obj));
@@ -132,17 +139,17 @@ public class JsonPointerTest {
   public void testWrongUsageOfDashForQuerying() {
     JsonArray array = new JsonArray();
     array.add(new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 2).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      ));
+        .put("hello",
+            new JsonObject().put("world", 2).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        ));
     array.add(new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 1).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      ));
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        ));
     JsonPointer pointer = JsonPointer.from("/-/hello/world");
     assertNull(pointer.query(array));
   }
@@ -167,17 +174,17 @@ public class JsonPointerTest {
   @Test
   public void testRFCExample() {
     JsonObject obj = new JsonObject("   {\n" +
-      "      \"foo\": [\"bar\", \"baz\"],\n" +
-      "      \"\": 0,\n" +
-      "      \"a/b\": 1,\n" +
-      "      \"c%d\": 2,\n" +
-      "      \"e^f\": 3,\n" +
-      "      \"g|h\": 4,\n" +
-      "      \"i\\\\j\": 5,\n" +
-      "      \"k\\\"l\": 6,\n" +
-      "      \" \": 7,\n" +
-      "      \"m~n\": 8\n" +
-      "   }");
+        "      \"foo\": [\"bar\", \"baz\"],\n" +
+        "      \"\": 0,\n" +
+        "      \"a/b\": 1,\n" +
+        "      \"c%d\": 2,\n" +
+        "      \"e^f\": 3,\n" +
+        "      \"g|h\": 4,\n" +
+        "      \"i\\\\j\": 5,\n" +
+        "      \"k\\\"l\": 6,\n" +
+        "      \" \": 7,\n" +
+        "      \"m~n\": 8\n" +
+        "   }");
 
     assertEquals(obj, JsonPointer.from("").query(obj));
     assertEquals(obj.getJsonArray("foo"), JsonPointer.from("/foo").query(obj));
@@ -185,7 +192,7 @@ public class JsonPointerTest {
     assertEquals(obj.getInteger(""), JsonPointer.from("/").query(obj));
     assertEquals(obj.getInteger("a/b"), JsonPointer.from("/a~1b").query(obj));
     assertEquals(obj.getInteger("c%d"), JsonPointer.from("/c%d").query(obj));
-    assertEquals(obj.getInteger("e^f"), JsonPointer.from("/e^f" ).query(obj));
+    assertEquals(obj.getInteger("e^f"), JsonPointer.from("/e^f").query(obj));
     assertEquals(obj.getInteger("g|h"), JsonPointer.from("/g|h").query(obj));
     assertEquals(obj.getInteger("i\\\\j"), JsonPointer.from("/i\\\\j").query(obj));
     assertEquals(obj.getInteger("k\\\"l"), JsonPointer.from("/k\\\"l").query(obj));
@@ -196,11 +203,11 @@ public class JsonPointerTest {
   @Test
   public void testWriteJsonObject() {
     JsonObject obj = new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 1).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      );
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        );
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
     assertTrue(JsonPointer.from("/hello/francesco").writeObject(obj, toInsert));
     assertEquals(toInsert, JsonPointer.from("/hello/francesco").query(obj));
@@ -209,11 +216,11 @@ public class JsonPointerTest {
   @Test
   public void testWriteJsonObjectOverride() {
     JsonObject obj = new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 1).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      );
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        );
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
     assertTrue(JsonPointer.from("/hello/world").writeObject(obj, toInsert));
     assertEquals(toInsert, JsonPointer.from("/hello/world").query(obj));
@@ -222,11 +229,11 @@ public class JsonPointerTest {
   @Test
   public void testWriteJsonArray() {
     JsonObject obj = new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", new JsonObject()).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      );
+        .put("hello",
+            new JsonObject().put("world", new JsonObject()).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        );
     JsonArray array = new JsonArray();
     array.add(obj.copy());
     array.add(obj.copy());
@@ -239,11 +246,11 @@ public class JsonPointerTest {
   @Test
   public void testWriteJsonArrayAppend() {
     JsonObject obj = new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 1).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      );
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        );
     JsonArray array = new JsonArray();
     array.add(obj.copy());
     array.add(obj.copy());
@@ -256,11 +263,11 @@ public class JsonPointerTest {
   @Test
   public void testWriteJsonArraySubstitute() {
     JsonObject obj = new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 1).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      );
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        );
     JsonArray array = new JsonArray();
     array.add(obj.copy());
     array.add(obj.copy());
@@ -273,11 +280,11 @@ public class JsonPointerTest {
   @Test
   public void testNestedWriteJsonArraySubstitute() {
     JsonObject obj = new JsonObject()
-      .put("hello",
-        new JsonObject().put("world", 1).put("worl", "wrong")
-      ).put("helo",
-        new JsonObject().put("world", "wrong").put("worl", "wrong")
-      );
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        );
     JsonArray array = new JsonArray();
     array.add(obj.copy());
     array.add(obj.copy());

@@ -36,72 +36,72 @@ public class JsonPointerImpl implements JsonPointer {
   URI startingUri;
 
   // Empty means a pointer to root
-  List<String> undecodedTokens;
+  List<String> decodedTokens;
 
-  private JsonPointerImpl(URI startingUri, List<String> undecodedTokens) {
-      this.startingUri = startingUri;
-      this.undecodedTokens = new ArrayList<>(undecodedTokens);
+  private JsonPointerImpl(URI startingUri, List<String> decodedTokens) {
+    this.startingUri = startingUri;
+    this.decodedTokens = new ArrayList<>(decodedTokens);
   }
 
   public JsonPointerImpl(List<String> tokens) {
     this.startingUri = URI.create("#");
     if (tokens == null || tokens.size() == 0 || tokens.size() == 1 && "".equals(tokens.get(0))) {
-        undecodedTokens = new ArrayList<>();
-        undecodedTokens.add(""); // Root
+      decodedTokens = new ArrayList<>();
+      decodedTokens.add(""); // Root
     } else
-      undecodedTokens = new ArrayList<>(tokens);
+      decodedTokens = new ArrayList<>(tokens);
   }
 
   public JsonPointerImpl(URI uri) {
     this.startingUri = URIUtils.replaceFragment(uri, null);
     if (uri.getFragment() != null && !uri.getFragment().isEmpty()) {
-        undecodedTokens = new ArrayList<String>(Arrays.asList(uri.getFragment().split("/", -1)));
-        if (undecodedTokens.size() == 0) undecodedTokens.add("");
-    }
-    else {
-        undecodedTokens = new ArrayList<>();
-        undecodedTokens.add(""); // Root
+      decodedTokens = new ArrayList<String>(Arrays.asList(uri.getFragment().split("/", -1)));
+      if (decodedTokens.size() == 0) decodedTokens.add("");
+    } else {
+      decodedTokens = new ArrayList<>();
+      decodedTokens.add(""); // Root
     }
   }
 
   public JsonPointerImpl(String pointer) {
     this.startingUri = URI.create("#");
-    undecodedTokens = parse(pointer);
+    decodedTokens = parse(pointer);
   }
 
   public JsonPointerImpl() {
     this.startingUri = URI.create("#");
-    undecodedTokens = new ArrayList<>();
-    undecodedTokens.add(""); // Root
+    decodedTokens = new ArrayList<>();
+    decodedTokens.add(""); // Root
   }
 
   private List<String> parse(String pointer) {
     if ("".equals(pointer)) {
-        List<String> newList = new ArrayList<>();
-        newList.add("");
-        return newList;
-    } if (VALID_POINTER_PATTERN.matcher(pointer).matches()) {
+      List<String> newList = new ArrayList<>();
+      newList.add("");
+      return newList;
+    }
+    if (VALID_POINTER_PATTERN.matcher(pointer).matches()) {
       return Arrays
-        .stream(pointer.split("/", -1))
-        .map(this::unescape)
-        .collect(Collectors.toList());
+          .stream(pointer.split("\\/", -1))
+          .map(this::unescape)
+          .collect(Collectors.toList());
     } else
       throw new IllegalArgumentException("The provided pointer is not a valid JSON Pointer");
   }
 
   private String escape(String path) {
     return path.replace("~", "~0")
-      .replace("/", "~1");
+        .replace("/", "~1");
   }
 
   private String unescape(String path) {
     return path.replace("~1", "/") // https://tools.ietf.org/html/rfc6901#section-4
-      .replace("~0", "~");
+        .replace("~0", "~");
   }
 
   @Override
   public boolean isRootPointer() {
-    return undecodedTokens == null || undecodedTokens.size() == 0 || (undecodedTokens.size() == 1 && "".equals(undecodedTokens.get(0)));
+    return decodedTokens == null || decodedTokens.size() == 0 || (decodedTokens.size() == 1 && "".equals(decodedTokens.get(0)));
   }
 
   @Override
@@ -109,53 +109,29 @@ public class JsonPointerImpl implements JsonPointer {
     if (isRootPointer())
       return "";
     else
-      return String.join("/", undecodedTokens.stream().map(this::escape).collect(Collectors.toList()));
+      return String.join("/", decodedTokens.stream().map(this::escape).collect(Collectors.toList()));
   }
 
   @Override
   public URI buildURI() {
     if (isRootPointer()) {
-      return URIUtils.replaceFragment(this.startingUri,  "");
-    } else if (undecodedTokens.size() >= 1 && "".equals(undecodedTokens.get(0))) {
-      // If the first token is the empty token we should remove it!
-      return URIUtils.replaceFragment(this.startingUri,
-              undecodedTokens.subList(1, undecodedTokens.size())
-          .stream()
-          .map(s -> {
-            try {
-              return "/" + URLEncoder.encode(s, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-              e.printStackTrace(); //WHY THAT
-              throw new AssertionError("UTF-8 is unknown");
-            }
-          })
-          .reduce("", String::concat)
-      );
+      return URIUtils.replaceFragment(this.startingUri, "");
     } else
-      return URIUtils.replaceFragment(this.startingUri,
-              undecodedTokens
-          .stream()
-          .map(s -> {
-            try {
-              return "/" + URLEncoder.encode(s, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-              e.printStackTrace(); //WHY THAT
-              throw new AssertionError("UTF-8 is unknown");
-            }
-          })
-          .reduce("", String::concat)
+      return URIUtils.replaceFragment(
+          this.startingUri,
+          String.join("/", decodedTokens)
       );
   }
 
   @Override
   public JsonPointer append(String path) {
-    undecodedTokens.add(path);
+    decodedTokens.add(path);
     return this;
   }
 
   @Override
   public JsonPointer append(List<String> paths) {
-    undecodedTokens.addAll(paths);
+    decodedTokens.addAll(paths);
     return this;
   }
 
@@ -166,12 +142,12 @@ public class JsonPointerImpl implements JsonPointer {
       return input;
     else {
       Object v = walkTillLastElement(input);
-      String lastKey = undecodedTokens.get(undecodedTokens.size() - 1);
+      String lastKey = decodedTokens.get(decodedTokens.size() - 1);
       if (v instanceof JsonObject) {
-        return ((JsonObject)v).getValue(lastKey);
+        return ((JsonObject) v).getValue(lastKey);
       } else if (v instanceof JsonArray && !"-".equals(lastKey)) {
         try {
-          return ((JsonArray)v).getValue(Integer.parseInt(lastKey));
+          return ((JsonArray) v).getValue(Integer.parseInt(lastKey));
         } catch (Exception e) {
           return null;
         }
@@ -192,10 +168,12 @@ public class JsonPointerImpl implements JsonPointer {
 
   @Override
   public JsonPointer copy() {
-    return new JsonPointerImpl(this.startingUri, this.undecodedTokens);
+    return new JsonPointerImpl(this.startingUri, this.decodedTokens);
   }
 
-  public URI getStartingUri() { return this.startingUri; }
+  public URI getStartingUri() {
+    return this.startingUri;
+  }
 
   private boolean write(Object input, Object value) {
     if (isRootPointer())
@@ -207,8 +185,8 @@ public class JsonPointerImpl implements JsonPointer {
   }
 
   private Object walkTillLastElement(Object input) {
-    for (int i = 0; i < undecodedTokens.size() - 1; i++) {
-      String k = undecodedTokens.get(i);
+    for (int i = 0; i < decodedTokens.size() - 1; i++) {
+      String k = decodedTokens.get(i);
       if (i == 0 && "".equals(k)) {
         continue; // Avoid errors with root empty string
       } else if (input instanceof JsonObject) {
@@ -236,17 +214,17 @@ public class JsonPointerImpl implements JsonPointer {
   }
 
   private boolean writeLastElement(Object input, Object value) {
-    String lastKey = undecodedTokens.get(undecodedTokens.size() - 1);
+    String lastKey = decodedTokens.get(decodedTokens.size() - 1);
     if (input instanceof JsonObject) {
-      ((JsonObject)input).put(lastKey, value);
+      ((JsonObject) input).put(lastKey, value);
       return true;
     } else if (input instanceof JsonArray) {
       if ("-".equals(lastKey)) { // Append to end
-        ((JsonArray)input).add(value);
+        ((JsonArray) input).add(value);
         return true;
       } else { // We have a index
         try {
-          ((JsonArray)input).getList().set(Integer.parseInt(lastKey), value);
+          ((JsonArray) input).getList().set(Integer.parseInt(lastKey), value);
           return true;
         } catch (Exception e) {
           return false;
@@ -267,11 +245,11 @@ public class JsonPointerImpl implements JsonPointer {
     if (o == null || getClass() != o.getClass()) return false;
     JsonPointerImpl that = (JsonPointerImpl) o;
     return Objects.equals(startingUri, that.startingUri) &&
-            Objects.equals(undecodedTokens, that.undecodedTokens);
+        Objects.equals(decodedTokens, that.decodedTokens);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(startingUri, undecodedTokens);
+    return Objects.hash(startingUri, decodedTokens);
   }
 }

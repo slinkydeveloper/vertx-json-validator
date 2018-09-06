@@ -12,41 +12,42 @@ import java.util.stream.Collectors;
 
 public class AnyOfValidatorFactory implements ValidatorFactory {
 
-    @Override
-    public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
-        try {
-            JsonArray anyOfSchemas = schema.getJsonArray("anyOf");
-            if (anyOfSchemas.size() == 0) throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "anyOf must have at least one element");
-            scope.appendToAllPointers("anyOf");
-            List<Schema> parsedSchemas = new ArrayList<>();
-            for (int i = 0; i < anyOfSchemas.size(); i++) {
-                parsedSchemas.add(parser.parse(anyOfSchemas.getValue(i), scope.copyList().appendToAllPointers(Integer.toString(i))));
-            }
-            return new AnyOfValidator(parsedSchemas);
-        } catch (ClassCastException e) {
-            throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for anyOf keyword");
-        } catch (NullPointerException e) {
-            throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null anyOf keyword");
-        }
+  @Override
+  public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
+    try {
+      JsonArray anyOfSchemas = schema.getJsonArray("anyOf");
+      if (anyOfSchemas.size() == 0)
+        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "anyOf must have at least one element");
+      scope.appendToAllPointers("anyOf");
+      List<Schema> parsedSchemas = new ArrayList<>();
+      for (int i = 0; i < anyOfSchemas.size(); i++) {
+        parsedSchemas.add(parser.parse(anyOfSchemas.getValue(i), scope.copyList().appendToAllPointers(Integer.toString(i))));
+      }
+      return new AnyOfValidator(parsedSchemas);
+    } catch (ClassCastException e) {
+      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for anyOf keyword");
+    } catch (NullPointerException e) {
+      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null anyOf keyword");
+    }
+  }
+
+  @Override
+  public boolean canCreateValidator(JsonObject schema) {
+    return schema.containsKey("anyOf");
+  }
+
+  class AnyOfValidator implements AsyncValidator {
+
+    private final Schema[] schemas;
+
+    public AnyOfValidator(List<Schema> schemas) {
+      this.schemas = schemas.toArray(new Schema[schemas.size()]);
     }
 
     @Override
-    public boolean canCreateValidator(JsonObject schema) {
-        return schema.containsKey("anyOf");
+    public Future validate(Object in) {
+      return CompositeFuture.any(Arrays.stream(this.schemas).map(s -> s.validate(in)).collect(Collectors.toList())).compose(cf -> Future.succeededFuture());
     }
-
-    class AnyOfValidator implements AsyncValidator {
-
-        private final Schema[] schemas;
-
-        public AnyOfValidator(List<Schema> schemas) {
-            this.schemas = schemas.toArray(new Schema[schemas.size()]);
-        }
-
-        @Override
-        public Future validate(Object in) {
-            return CompositeFuture.any(Arrays.stream(this.schemas).map(s -> s.validate(in)).collect(Collectors.toList())).compose(cf -> Future.succeededFuture());
-        }
-    }
+  }
 
 }

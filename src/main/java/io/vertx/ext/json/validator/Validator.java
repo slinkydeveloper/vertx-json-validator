@@ -1,7 +1,7 @@
 package io.vertx.ext.json.validator;
 
 public interface Validator {
-    boolean isAsync();
+  boolean isAsync();
 
-    ValidatorPriority getPriority();
+  ValidatorPriority getPriority();
 }
