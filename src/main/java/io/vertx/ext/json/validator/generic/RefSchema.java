@@ -41,6 +41,7 @@ public class RefSchema extends SchemaImpl {
     this.getValidators().removeIf(validator ->
       ((SchemaImpl)cachedSchema).getValidators().stream().map(v -> validator.getClass().equals(v.getClass())).filter(b -> b).findFirst().orElse(false)
     );
+    this.getValidators().addAll(((SchemaImpl)this.cachedSchema).getValidators());
   }
 
   @SuppressWarnings("unchecked")

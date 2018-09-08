@@ -41,7 +41,9 @@ public class SchemaRouterImpl implements SchemaRouter {
       node = absolutePaths.get(refURI);
     }
     if (node == null) return null;
-    else return ((RouterNode) refPointer.query(new RouterNodeJsonPointerIterator(node))).getThisSchema();
+    node = (RouterNode) refPointer.query(new RouterNodeJsonPointerIterator(node));
+    if (node == null) return null;
+    else return node.getThisSchema();
   }
 
   @Override

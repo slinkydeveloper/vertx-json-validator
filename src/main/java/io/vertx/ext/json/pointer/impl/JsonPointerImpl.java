@@ -56,7 +56,11 @@ public class JsonPointerImpl implements JsonPointer {
   public JsonPointerImpl(URI uri) {
     this.startingUri = URIUtils.replaceFragment(uri, null);
     if (uri.getFragment() != null && !uri.getFragment().isEmpty()) {
-      decodedTokens = new ArrayList<String>(Arrays.asList(uri.getFragment().split("/", -1)));
+      decodedTokens = new ArrayList<>(Arrays
+          .stream(uri.getFragment().split("/", -1))
+          .map(this::unescape)
+          .collect(Collectors.toList())
+      );
       if (decodedTokens.size() == 0) decodedTokens.add("");
     } else {
       decodedTokens = new ArrayList<>();

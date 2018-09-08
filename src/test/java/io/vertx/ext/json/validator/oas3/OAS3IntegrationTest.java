@@ -11,6 +11,7 @@ import org.junit.runners.Parameterized;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -59,7 +60,7 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
 
   @Override
   public Schema buildSchemaFunction(Object schema) throws URISyntaxException {
-    return OpenAPI3SchemaParser.create(schema, URI.create("./" + this.testFileName + "/" + testFileName + ".json"), new SchemaParserOptions(), new SchemaRouterImpl(), WebClient.create(vertx), vertx.fileSystem()).parse();
+    return OpenAPI3SchemaParser.create(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri(), new SchemaParserOptions(), new SchemaRouterImpl(), WebClient.create(vertx), vertx.fileSystem()).parse();
   }
 
   @Override
