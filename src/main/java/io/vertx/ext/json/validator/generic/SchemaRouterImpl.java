@@ -1,54 +1,94 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.Schema;
+import io.vertx.ext.json.validator.SchemaErrorType;
 import io.vertx.ext.json.validator.SchemaRouter;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class SchemaRouterImpl implements SchemaRouter {
 
-  final Map<JsonPointer, Schema> schemas;
+  final Map<URI, RouterNode> absolutePaths;
 
   public SchemaRouterImpl() {
-    schemas = new HashMap<>();
+    absolutePaths = new HashMap<>();
   }
 
   @Override
-  public Schema resolveCachedSchema(JsonPointer pointer, JsonPointerList scope) {
-    JsonPointerImpl jp = (JsonPointerImpl) pointer;
-    URI u = jp.buildURI();
-    if (!u.isAbsolute()) {
+  public Schema resolveCachedSchema(JsonPointer refPointer, JsonPointer scope) {
+    URI refURI = refPointer.getURIWithoutFragment();
+    RouterNode node;
+    if (!refURI.isAbsolute()) {
       // Fragment pointer or path pointer!
-      if ((u.getSchemeSpecificPart() == null || u.getSchemeSpecificPart().isEmpty()) && u.getFragment() != null) {
-        return scope
+      if (refURI.getPath() != null && !refURI.getPath().isEmpty()) {
+        RouterNode nodeOfScope = absolutePaths.get(scope.getURIWithoutFragment());
+        node = absolutePaths
+            .entrySet()
             .stream()
-            .map(j -> new JsonPointerImpl(URIUtils.replaceFragment(((JsonPointerImpl) j).getStartingUri(), u.getFragment())))
-            .map(schemas::get)
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElse(null);
-      } else {
-        return scope
-            .stream()
-            .map(j -> new JsonPointerImpl(j.buildURI().resolve(u)))
-            .map(schemas::get)
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElse(null);
+            .filter(e -> e.getValue().equals(nodeOfScope))
+            .map(e -> URIUtils.replaceOrResolvePath(e.getKey(), refURI.getPath()))
+            .map(absolutePaths::get)
+            .findFirst().orElse(null);
+      } else { // Fallback to scope
+        node = absolutePaths.get(scope.getURIWithoutFragment());
       }
     } else {
-      return schemas.get(pointer);
+      node = absolutePaths.get(refURI);
     }
+    if (node == null) return null;
+    else return ((RouterNode) refPointer.query(new RouterNodeJsonPointerIterator(node))).getThisSchema();
   }
 
   @Override
-  public void addSchema(Schema schema, JsonPointerList scope) {
-    scope.forEach(p -> schemas.put(p, schema));
+  public void addSchema(Schema schema, JsonPointer inferredScope) {
+    URI inferredScopeWithoutFragment = inferredScope.getURIWithoutFragment();
+    if (absolutePaths.containsKey(inferredScopeWithoutFragment))
+      inferredScope.write(
+          new RouterNodeJsonPointerIterator(absolutePaths.get(inferredScopeWithoutFragment)),
+          schema,
+          true
+      );
+    else {
+      RouterNode node = new RouterNode();
+      absolutePaths.put(inferredScopeWithoutFragment, node);
+      if (inferredScope.isRootPointer()) node.setThisSchema(schema);
+      else inferredScope.write(
+          new RouterNodeJsonPointerIterator(node),
+          schema,
+          true
+      );
+    }
+    if (schema instanceof SchemaImpl) {
+      if (((SchemaImpl) schema).getSchema().containsKey("$id")) {
+        try {
+          String unparsedId = ((SchemaImpl) schema).getSchema().getString("$id");
+          URI id = URI.create(unparsedId);
+          RouterNode baseNodeOfInferredScope = absolutePaths.get(inferredScopeWithoutFragment);
+          RouterNode insertedSchemaNode = (RouterNode) inferredScope.query(new RouterNodeJsonPointerIterator(baseNodeOfInferredScope));
+          if (id.isAbsolute()) {
+            absolutePaths.put(URIUtils.removeFragment(id), insertedSchemaNode);
+          } else if (id.getPath() != null && !id.getPath().isEmpty()) {
+            // If a path is relative you should solve the path/paths. The paths will be solved against aliases of base node of inferred scope
+            List<URI> uris = absolutePaths
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().equals(baseNodeOfInferredScope))
+                .map(e -> URIUtils.replaceOrResolvePath(e.getKey(), id.getPath()))
+                .collect(Collectors.toList());
+            uris.forEach(u -> absolutePaths.put(u, insertedSchemaNode));
+          }
+          JsonPointer idPointer = JsonPointer.fromURI(id);
+          if (!idPointer.isRootPointer())
+            idPointer.write(new RouterNodeJsonPointerIterator(baseNodeOfInferredScope), insertedSchemaNode, true);
+        } catch (IllegalArgumentException e) {
+          throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "$id keyword should be a valid URI");
+        }
+      }
+    }
   }
 }

@@ -1,5 +1,6 @@
 package io.vertx.ext.json.validator.generic;
 
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
@@ -8,6 +9,8 @@ import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.SchemaRouterMock;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
+import io.vertx.ext.web.client.WebClient;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -20,6 +23,15 @@ import static org.assertj.core.api.Assertions.*;
 
 public class SchemaURICreationTest {
 
+  public Vertx vertx;
+  public WebClient client;
+
+  @Before
+  public void setUp() throws Exception {
+    vertx = Vertx.vertx();
+    client = WebClient.create(vertx);
+  }
+
   private JsonObject loadJson(URI uri) throws IOException {
     return new JsonObject(String.join("", Files.readAllLines(Paths.get(uri))));
   }
@@ -30,7 +42,7 @@ public class SchemaURICreationTest {
 
   private void assertThatSchemaContainsXid(Map<JsonPointer, Schema> loadedSchema, JsonPointer jp, String id) {
     assertThat(loadedSchema).containsKey(jp);
-    assertThat(((BaseSchema) loadedSchema.get(jp)).getSchema().getString("x-id")).isEqualTo(id);
+    assertThat(((SchemaImpl) loadedSchema.get(jp)).getSchema().getString("x-id")).isEqualTo(id);
   }
 
   @Test
@@ -39,10 +51,10 @@ public class SchemaURICreationTest {
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouterMock schemaRouter = new SchemaRouterMock();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
-    BaseSchema baseSchema = (BaseSchema) schemaParser.parse();
+    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem());
+    SchemaImpl schemaImpl = (SchemaImpl) schemaParser.parse();
 
-    assertThat(baseSchema.getSchema().getString("x-id")).isEqualTo("main");
+    assertThat(schemaImpl.getSchema().getString("x-id")).isEqualTo("main");
     Map<JsonPointer, Schema> loadedSchema = schemaRouter.getSchemas();
 
     assertThatSchemaContainsXid(loadedSchema, basePointer.copy().append("allOf").append("0"), "allOf_0");
@@ -65,10 +77,10 @@ public class SchemaURICreationTest {
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouterMock schemaRouter = new SchemaRouterMock();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
-    BaseSchema baseSchema = (BaseSchema) schemaParser.parse();
+    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem());
+    SchemaImpl schemaImpl = (SchemaImpl) schemaParser.parse();
 
-    assertThat(baseSchema.getSchema().getString("x-id")).isEqualTo("main");
+    assertThat(schemaImpl.getSchema().getString("x-id")).isEqualTo("main");
     Map<JsonPointer, Schema> loadedSchema = schemaRouter.getSchemas();
 
     assertThatSchemaContainsXid(loadedSchema, basePointer.copy().append("properties").append("prop_1"), "prop_1");
@@ -120,10 +132,10 @@ public class SchemaURICreationTest {
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouterMock schemaRouter = new SchemaRouterMock();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
-    BaseSchema baseSchema = (BaseSchema) schemaParser.parse();
+    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem());
+    SchemaImpl schemaImpl = (SchemaImpl) schemaParser.parse();
 
-    assertThat(baseSchema.getSchema().getString("x-id")).isEqualTo("main");
+    assertThat(schemaImpl.getSchema().getString("x-id")).isEqualTo("main");
     Map<JsonPointer, Schema> loadedSchema = schemaRouter.getSchemas();
 
     assertThatSchemaContainsXid(loadedSchema, basePointer, "main");

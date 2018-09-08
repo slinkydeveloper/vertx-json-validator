@@ -1,9 +1,6 @@
 package io.vertx.ext.json.validator;
 
 import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
-import io.vertx.ext.json.validator.Schema;
-import io.vertx.ext.json.validator.SchemaRouter;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -22,12 +19,12 @@ public class SchemaRouterMock implements SchemaRouter {
   }
 
   @Override
-  public Schema resolveCachedSchema(JsonPointer pointer, JsonPointerList scope) {
+  public Schema resolveCachedSchema(JsonPointer pointer, JsonPointer scope) {
     return null;
   }
 
   @Override
-  public void addSchema(Schema schema, JsonPointerList scope) {
-    scope.forEach(p -> schemas.put(p, schema));
+  public void addSchema(Schema schema, JsonPointer scope) {
+    schemas.put(scope, schema);
   }
 }

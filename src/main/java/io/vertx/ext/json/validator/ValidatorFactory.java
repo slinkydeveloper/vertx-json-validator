@@ -1,7 +1,7 @@
 package io.vertx.ext.json.validator;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
+import io.vertx.ext.json.pointer.JsonPointer;
 
 public interface ValidatorFactory {
   /**
@@ -12,7 +12,7 @@ public interface ValidatorFactory {
    * @param parser
    * @return
    */
-  Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser);
+  Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser);
 
   //TODO change name in something better...
   boolean canCreateValidator(JsonObject schema);

@@ -2,33 +2,32 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
+import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-public abstract class BaseSchema implements Schema {
+public class SchemaImpl implements Schema {
 
-  private static final Logger log = LoggerFactory.getLogger(BaseSchema.class);
+  private static final Logger log = LoggerFactory.getLogger(SchemaImpl.class);
 
   private final JsonObject schema;
-  private final JsonPointerList scope;
+  private final JsonPointer scope;
   private final ConcurrentSkipListSet<Validator> validators;
 
-  public BaseSchema(Object schema, JsonPointerList scope, ConcurrentSkipListSet<Validator> validators) {
-    this.schema = (JsonObject) schema;
+  public SchemaImpl(JsonObject schema, JsonPointer scope, ConcurrentSkipListSet<Validator> validators) {
+    this.schema = schema;
     this.scope = scope;
     this.validators = validators;
   }
 
   @Override
-  public JsonPointerList getIds() {
+  public JsonPointer getScope() {
     return scope;
   }
 
@@ -38,6 +37,7 @@ public abstract class BaseSchema implements Schema {
 
   @Override
   public Future validate(Object in) {
+    if (log.isDebugEnabled()) log.debug("Starting validation for schema {} and input ", schema, in);
     List<Future> futures = new ArrayList<>();
     for (Validator validator : validators) {
       if (validator.isAsync()) futures.add(((AsyncValidator) validator).validate(in));
@@ -52,9 +52,5 @@ public abstract class BaseSchema implements Schema {
 
   public ConcurrentSkipListSet<Validator> getValidators() {
     return validators;
-  }
-
-  public JsonPointerList getScope() {
-    return scope;
   }
 }

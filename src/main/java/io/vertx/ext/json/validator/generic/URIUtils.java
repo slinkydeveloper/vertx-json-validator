@@ -6,6 +6,10 @@ import java.nio.file.Paths;
 
 public class URIUtils {
 
+  public static URI removeFragment(URI oldURI) {
+    return URIUtils.replaceFragment(oldURI, null);
+  }
+
   public static URI replaceFragment(URI oldURI, String fragment) {
     try {
       if (oldURI != null) {
@@ -17,9 +21,9 @@ public class URIUtils {
     }
   }
 
-  public static URI replacePath(URI oldURI, String path) {
+  public static URI replaceOrResolvePath(URI oldURI, String path) {
     try {
-      if ("file".equals(oldURI.getScheme())) {
+      if ("file".equals(oldURI.getScheme()) || "jar".equals(oldURI.getScheme())) {
         return new URI(oldURI.getScheme(), oldURI.getHost(), Paths.get(oldURI.getPath()).getParent().resolve(Paths.get(path)).toString(), null);
       } else
         return new URI(oldURI.getScheme(), oldURI.getHost(), (path.charAt(0) == '/') ? path : "/" + path, null);

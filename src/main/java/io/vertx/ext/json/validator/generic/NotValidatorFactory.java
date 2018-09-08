@@ -1,25 +1,18 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
-
-import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class NotValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
     try {
       Object notSchema = schema.getJsonObject("not");
-      Schema parsedSchema = parser.parse(notSchema, scope.appendToAllPointers("not"));
+      Schema parsedSchema = parser.parse(notSchema, scope.append("not"));
       return new NotValidator(parsedSchema);
     } catch (ClassCastException e) {
       throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for not keyword");

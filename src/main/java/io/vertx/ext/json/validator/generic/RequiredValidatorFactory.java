@@ -1,19 +1,17 @@
 package io.vertx.ext.json.validator.generic;
 
-import com.fasterxml.jackson.core.JsonPointer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
+import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
-import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
 public class RequiredValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
     try {
       JsonArray keys = (JsonArray) schema.getValue("required");
       return new RequiredValidator(new HashSet(keys.getList()));

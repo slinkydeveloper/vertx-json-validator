@@ -2,11 +2,9 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
+import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
-import java.net.URI;
 import java.util.HashSet;
 
 public class UniqueItemsValidatorFactory implements ValidatorFactory {
@@ -20,7 +18,7 @@ public class UniqueItemsValidatorFactory implements ValidatorFactory {
   };
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
     try {
       Boolean unique = (Boolean) schema.getValue("uniqueItems");
       if (unique) return UNIQUE_VALIDATOR;

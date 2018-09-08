@@ -4,7 +4,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
+import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
 import java.util.ArrayList;
@@ -13,10 +13,10 @@ import java.util.List;
 public class ItemsValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
     try {
       Object itemsSchema = schema.getValue("items");
-      Schema parsedSchema = parser.parse(itemsSchema, scope.appendToAllPointers("items"));
+      Schema parsedSchema = parser.parse(itemsSchema, scope.append("items"));
       return new ItemsValidator(parsedSchema);
     } catch (ClassCastException e) {
       throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for items keyword");

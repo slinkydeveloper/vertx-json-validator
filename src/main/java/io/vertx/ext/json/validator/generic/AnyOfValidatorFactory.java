@@ -4,7 +4,7 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
+import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
 import java.util.*;
@@ -13,15 +13,15 @@ import java.util.stream.Collectors;
 public class AnyOfValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
     try {
       JsonArray anyOfSchemas = schema.getJsonArray("anyOf");
       if (anyOfSchemas.size() == 0)
         throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "anyOf must have at least one element");
-      scope.appendToAllPointers("anyOf");
+      JsonPointer basePointer = scope.append("anyOf");
       List<Schema> parsedSchemas = new ArrayList<>();
       for (int i = 0; i < anyOfSchemas.size(); i++) {
-        parsedSchemas.add(parser.parse(anyOfSchemas.getValue(i), scope.copyList().appendToAllPointers(Integer.toString(i))));
+        parsedSchemas.add(parser.parse(anyOfSchemas.getValue(i), basePointer.copy().append(Integer.toString(i))));
       }
       return new AnyOfValidator(parsedSchemas);
     } catch (ClassCastException e) {

@@ -1,11 +1,13 @@
 package io.vertx.ext.json.validator.generic;
 
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
+import io.vertx.ext.web.client.WebClient;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -17,6 +19,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SchemaRouterTest {
 
+  public Vertx vertx;
+  public WebClient client;
+
+  @Before
+  public void setUp() throws Exception {
+    vertx = Vertx.vertx();
+    client = WebClient.create(vertx);
+  }
+
   private JsonObject loadJson(URI uri) throws IOException {
     return new JsonObject(String.join("", Files.readAllLines(Paths.get(uri))));
   }
@@ -25,9 +36,9 @@ public class SchemaRouterTest {
     return Paths.get("src", "test", "resources", "id_test", filename).toAbsolutePath().toUri();
   }
 
-  private void assertThatSchemaContainsXid(SchemaRouter router, JsonPointer jp, JsonPointerList scope, String id) {
+  private void assertThatSchemaContainsXid(SchemaRouter router, JsonPointer jp, JsonPointer scope, String id) {
     assertThat(router.resolveCachedSchema(jp, scope)).isNotNull().matches(
-        s -> id.equals(((BaseSchema) s).getSchema().getString("x-id")),
+        s -> id.equals(((SchemaImpl) s).getSchema().getString("x-id")),
         "x-id should match " + id
     );
   }
@@ -38,22 +49,21 @@ public class SchemaRouterTest {
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouter schemaRouter = new SchemaRouterImpl();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
-    BaseSchema baseSchema = (BaseSchema) schemaParser.parse();
+    OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem()).parse();
 
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create(), baseSchema.getScope(), "main");
-    assertThatSchemaContainsXid(schemaRouter, basePointer, baseSchema.getScope(), "main");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("allOf").append("0"), baseSchema.getScope(), "allOf_0");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("allOf").append("1"), baseSchema.getScope(), "allOf_1");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("anyOf").append("0"), baseSchema.getScope(), "anyOf_0");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("anyOf").append("1"), baseSchema.getScope(), "anyOf_1");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("oneOf").append("0"), baseSchema.getScope(), "oneOf_0");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("oneOf").append("1"), baseSchema.getScope(), "oneOf_1");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("not"), baseSchema.getScope(), "not");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("prop_1"), baseSchema.getScope(), "prop_1");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("prop_2"), baseSchema.getScope(), "prop_2");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("patternProperties").append("^a"), baseSchema.getScope(), "pattern_prop_1");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("additionalProperties"), baseSchema.getScope(), "additional_prop");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create(), basePointer, "main");
+    assertThatSchemaContainsXid(schemaRouter, basePointer, basePointer, "main");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("allOf").append("0"), basePointer, "allOf_0");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("allOf").append("1"), basePointer, "allOf_1");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("anyOf").append("0"), basePointer, "anyOf_0");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("anyOf").append("1"), basePointer, "anyOf_1");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("oneOf").append("0"), basePointer, "oneOf_0");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("oneOf").append("1"), basePointer, "oneOf_1");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("not"), basePointer, "not");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("prop_1"), basePointer, "prop_1");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("prop_2"), basePointer, "prop_2");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("patternProperties").append("^a"), basePointer, "pattern_prop_1");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("additionalProperties"), basePointer, "additional_prop");
   }
 
   @Test
@@ -62,15 +72,14 @@ public class SchemaRouterTest {
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouter schemaRouter = new SchemaRouterImpl();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
-    BaseSchema baseSchema = (BaseSchema) schemaParser.parse();
+    OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem()).parse();
 
-    assertThatSchemaContainsXid(schemaRouter, basePointer.copy().append("properties").append("prop_1"), baseSchema.getScope(), "prop_1");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:590e34ae-8e3d-4bdf-a748-beff72654d0e")), baseSchema.getScope(), "prop_1");
-    assertThatSchemaContainsXid(schemaRouter, basePointer.copy().append("properties").append("prop_2"), baseSchema.getScope(), "prop_2");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:77ed19ca-1127-42dd-8194-3e48661ce672")), baseSchema.getScope(), "prop_2");
-    assertThatSchemaContainsXid(schemaRouter, basePointer.copy().append("properties").append("prop_2").append("not"), baseSchema.getScope(), "not");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:77ed19ca-1127-42dd-8194-3e48661ce672")).append("not"), baseSchema.getScope(), "not");
+    assertThatSchemaContainsXid(schemaRouter, basePointer.copy().append("properties").append("prop_1"), basePointer, "prop_1");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:590e34ae-8e3d-4bdf-a748-beff72654d0e")), basePointer, "prop_1");
+    assertThatSchemaContainsXid(schemaRouter, basePointer.copy().append("properties").append("prop_2"), basePointer, "prop_2");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:77ed19ca-1127-42dd-8194-3e48661ce672")), basePointer, "prop_2");
+    assertThatSchemaContainsXid(schemaRouter, basePointer.copy().append("properties").append("prop_2").append("not"), basePointer, "not");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:77ed19ca-1127-42dd-8194-3e48661ce672")).append("not"), basePointer, "not");
   }
 
   @Test
@@ -78,11 +87,9 @@ public class SchemaRouterTest {
     URI baseURI = buildBaseUri("id_urn_keyword.json");
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouter schemaRouter = new SchemaRouterImpl();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
-    BaseSchema baseSchema = (BaseSchema) schemaParser.parse();
-    JsonPointerList scope = ((BaseSchema) schemaRouter.resolveCachedSchema(JsonPointer.fromURI(URI.create("urn:uuid:77ed19ca-1127-42dd-8194-3e48661ce672")), baseSchema.getScope())).getScope();
+    OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem()).parse();
+    JsonPointer scope = schemaRouter.resolveCachedSchema(JsonPointer.fromURI(URI.create("urn:uuid:77ed19ca-1127-42dd-8194-3e48661ce672")), JsonPointer.fromURI(baseURI)).getScope();
 
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("not"), scope, "not");
     assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:77ed19ca-1127-42dd-8194-3e48661ce672")).append("not"), scope, "not");
   }
 
@@ -124,27 +131,26 @@ public class SchemaRouterTest {
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouter schemaRouter = new SchemaRouterImpl();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
-    JsonPointerList scope = ((BaseSchema) schemaParser.parse()).getScope();
+    OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem()).parse();
 
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create(), scope, "main");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create(), basePointer, "main");
 
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("A"), scope, "A");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("#foo")), scope, "A");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("A"), basePointer, "A");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("#foo")), basePointer, "A");
 
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("B"), scope, "B");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("http://example.com/other.json")), scope, "B");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("B"), basePointer, "B");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("http://example.com/other.json")), basePointer, "B");
 
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("B").append("properties").append("X"), scope, "X");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("#bar")), scope, "X");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("B").append("properties").append("X"), basePointer, "X");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("#bar")), basePointer, "X");
 
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("B").append("properties").append("Y"), scope, "Y");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("http://example.com/t/inner.json")), scope, "Y");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("http://example.com/other.json")).append("properties").append("Y"), scope, "Y");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("B").append("properties").append("Y"), basePointer, "Y");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("http://example.com/t/inner.json")), basePointer, "Y");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("http://example.com/other.json")).append("properties").append("Y"), basePointer, "Y");
 
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("C"), scope, "C");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("http://example.com/root.json")).append("properties").append("C"), scope, "C");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:ee564b8a-7a87-4125-8c96-e9f123d6766f")), scope, "C");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("C"), basePointer, "C");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("http://example.com/root.json")).append("properties").append("C"), basePointer, "C");
+    assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:ee564b8a-7a87-4125-8c96-e9f123d6766f")), basePointer, "C");
 
   }
 
@@ -154,13 +160,11 @@ public class SchemaRouterTest {
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouter schemaRouter = new SchemaRouterImpl();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
-    BaseSchema baseSchema = (BaseSchema) schemaParser.parse();
-    JsonPointerList scope = ((BaseSchema) schemaRouter.resolveCachedSchema(JsonPointer.fromURI(URI.create("http://example.com/other.json")), baseSchema.getScope())).getScope();
+    OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem()).parse();
+    JsonPointer scope = schemaRouter.resolveCachedSchema(JsonPointer.fromURI(URI.create("http://example.com/other.json")), basePointer).getScope();
 
     assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("#foo")), scope, "A");
     assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("#bar")), scope, "X");
-    assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("Y"), scope, "Y");
     assertThatSchemaContainsXid(schemaRouter, JsonPointer.create().append("properties").append("B").append("properties").append("Y"), scope, "Y");
   }
 

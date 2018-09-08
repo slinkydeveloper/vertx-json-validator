@@ -1,17 +1,15 @@
 package io.vertx.ext.json.validator.openapi3;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
+import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.ExclusiveMaximumValidator;
 import io.vertx.ext.json.validator.generic.MaximumValidator;
 
-import java.net.URI;
-
 public class MaximumValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
     try {
       Number maximum = (Number) schema.getValue("maximum");
       if (schema.containsKey("exclusiveMaximum") && schema.getBoolean("exclusiveMaximum"))

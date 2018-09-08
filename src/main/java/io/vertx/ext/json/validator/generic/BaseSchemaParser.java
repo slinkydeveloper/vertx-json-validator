@@ -1,16 +1,17 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.Future;
+import io.vertx.core.file.FileSystem;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
 import io.vertx.ext.json.validator.*;
+import io.vertx.ext.web.client.WebClient;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.stream.Collectors;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
@@ -25,12 +26,16 @@ public abstract class BaseSchemaParser implements SchemaParser {
   protected final SchemaParserOptions options;
   protected final List<ValidatorFactory> validatorFactories;
   protected final SchemaRouter router;
+  protected final WebClient client;
+  protected final FileSystem fs;
 
-  protected BaseSchemaParser(Object schemaRoot, URI baseScope, SchemaParserOptions options, SchemaRouter router) {
+  protected BaseSchemaParser(Object schemaRoot, URI baseScope, SchemaParserOptions options, SchemaRouter router, WebClient client, FileSystem fs) {
     this.schemaRoot = schemaRoot;
     this.baseScope = baseScope;
     this.options = options;
     this.router = router;
+    this.client = client;
+    this.fs = fs;
     this.validatorFactories = initValidatorFactories();
     loadOptions();
   }
@@ -42,46 +47,29 @@ public abstract class BaseSchemaParser implements SchemaParser {
 
   @Override
   public Schema parse() {
-    return this.parse(schemaRoot, new JsonPointerList(Collections.singletonList(new JsonPointerImpl(baseScope))));
+    return this.parse(schemaRoot, baseScope);
   }
 
-  private void appendIdKeyword(JsonPointerList scope, URI idKeyword) {
-    if (idKeyword.isAbsolute()) {
-      scope.add(new JsonPointerImpl(idKeyword));
-    } else if ((idKeyword.getSchemeSpecificPart() == null || idKeyword.getSchemeSpecificPart().isEmpty()) && idKeyword.getFragment() != null) {
-      scope.addAll(
-          scope.stream()
-              .map(j -> URIUtils.replaceFragment(((JsonPointerImpl) j).getStartingUri(), idKeyword.getFragment()))
-              .map(JsonPointerImpl::new)
-              .collect(Collectors.toList())
-      );
-    } else if (idKeyword.getPath() != null) {
-      scope.addAll(
-          scope.stream()
-              .map(j -> URIUtils.replacePath(((JsonPointerImpl) j).getStartingUri(), idKeyword.getPath()))
-              .map(JsonPointerImpl::new)
-              .collect(Collectors.toList())
-      );
-    } else {
-      throw new IllegalArgumentException("Unrecognized $id keyword");
-    }
+  protected Schema parse(Object schema, URI uri) {
+    return this.parse(schema, JsonPointer.fromURI(uri));
   }
 
-  public Schema parse(Object schema, JsonPointerList scope) {
+  @Override
+  public Schema parse(Object schema, JsonPointer scope) {
     if (schema instanceof JsonObject) {
       JsonObject json = (JsonObject) schema;
       ConcurrentSkipListSet<Validator> validators = new ConcurrentSkipListSet<>(ValidatorPriority.VALIDATOR_COMPARATOR);
-      if (json.containsKey("$id")) appendIdKeyword(scope, URI.create(json.getString("$id")));
+
+      Schema s = createSchema(json, scope, validators);
+      router.addSchema(s, scope);
 
       for (ValidatorFactory factory : validatorFactories) {
         if (factory.canCreateValidator(json)) {
-          Validator v = factory.createValidator(json, scope.copyList(), this);
+          Validator v = factory.createValidator(json, scope.copy(), this);
           if (v != null) validators.add(v);
         }
       }
 
-      Schema s = createSchema(json, scope, validators);
-      router.addSchema(s, scope);
       return s;
     } else if (schema instanceof Boolean) {
       Schema s = ((Boolean) schema) ? TRUE_SCHEMA : FALSE_SCHEMA;
@@ -91,7 +79,10 @@ public abstract class BaseSchemaParser implements SchemaParser {
       throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Schema should be a JsonObject or a Boolean");
   }
 
-  protected abstract Schema createSchema(Object schema, JsonPointerList scope, ConcurrentSkipListSet<Validator> validators);
+  protected Schema createSchema(JsonObject schema, JsonPointer scope, ConcurrentSkipListSet<Validator> validators) {
+    if (schema.containsKey("$ref")) return new RefSchema(schema, scope, validators, this);
+    else return new SchemaImpl(schema, scope, validators);
+  }
 
   protected abstract List<ValidatorFactory> initValidatorFactories();
 
@@ -106,5 +97,45 @@ public abstract class BaseSchemaParser implements SchemaParser {
         .findFirst()
         .orElseThrow(() -> new IllegalStateException("This json schema version doesn't support format keyword"));
     this.options.getAdditionalStringFormatValidators().forEach(((BaseFormatValidatorFactory) f)::addStringFormatValidator);
+  }
+
+  private Schema parseSchemaFromString(String schema, URI uri) {
+    String unparsedSchema = schema.trim();
+    if ("false".equals(unparsedSchema) || "true".equals(unparsedSchema)) return this.parse(Boolean.parseBoolean(unparsedSchema), uri);
+    else return this.parse(new JsonObject(unparsedSchema), uri);
+  }
+
+  @Override
+  public Future<Schema> solveRef(final JsonPointer pointer, final JsonPointer scope) {
+    Schema cachedSchema = getSchemaRouter().resolveCachedSchema(pointer, scope);
+    if (cachedSchema == null) {
+      URI u = pointer.getURIWithoutFragment();
+      Future<Schema> fut = Future.future();
+      if ("http".equals(u.getScheme())) {
+        client
+            .get(u.toString())
+            .putHeader(HttpHeaders.ACCEPT.toString(), "application/json, application/schema+json")
+            .send(res -> {
+              if (res.succeeded() && res.result().statusCode() == 200) {
+                parseSchemaFromString(res.result().bodyAsString(), u);
+                fut.tryComplete(getSchemaRouter().resolveCachedSchema(pointer, scope));
+              } else {
+                if (res.failed()) fut.tryFail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO use fail
+                else fut.tryFail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO wrong status code
+              }
+            });
+      } else {
+        URI fileURI = scope.getURIWithoutFragment().resolve(u);
+        fs.readFile(fileURI.toString(), res -> {
+          if (res.succeeded()) {
+            parseSchemaFromString(res.result().toString(), u);
+            fut.tryComplete(getSchemaRouter().resolveCachedSchema(pointer, scope));
+          } else {
+            fut.tryFail(ValidationExceptionFactory.generateNotMatchValidationException(res.cause().toString())); //TODO use fail
+          }
+        });
+      }
+      return fut;
+    } else return Future.succeededFuture(cachedSchema);
   }
 }

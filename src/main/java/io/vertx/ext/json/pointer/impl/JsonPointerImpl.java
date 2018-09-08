@@ -14,6 +14,7 @@ package io.vertx.ext.json.pointer.impl;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.ext.json.pointer.JsonPointerIterator;
 import io.vertx.ext.json.validator.generic.URIUtils;
 
 import java.io.UnsupportedEncodingException;
@@ -124,6 +125,11 @@ public class JsonPointerImpl implements JsonPointer {
   }
 
   @Override
+  public URI getURIWithoutFragment() {
+    return startingUri;
+  }
+
+  @Override
   public JsonPointer append(String path) {
     decodedTokens.add(path);
     return this;
@@ -136,19 +142,19 @@ public class JsonPointerImpl implements JsonPointer {
   }
 
   @Override
-  public Object query(Object input) {
+  public Object query(JsonPointerIterator input) {
     // I should threat this as a special condition because the empty string can be a json obj key!
     if (isRootPointer())
-      return input;
+      return input.getRawValue();
     else {
-      Object v = walkTillLastElement(input);
+      walkTillLastElement(input, false);
       String lastKey = decodedTokens.get(decodedTokens.size() - 1);
-      if (v instanceof JsonObject) {
-        return ((JsonObject) v).getValue(lastKey);
-      } else if (v instanceof JsonArray && !"-".equals(lastKey)) {
+      if (input.isObject()) {
+        return (input.nextObjectParameter(lastKey)) ? input.getRawValue() : null;
+      } else if (input.isArray() && !"-".equals(lastKey)) {
         try {
-          return ((JsonArray) v).getValue(Integer.parseInt(lastKey));
-        } catch (Exception e) {
+          return (input.nextArrayElement(Integer.parseInt(lastKey))) ? input.getRawValue() : null;
+        } catch (NumberFormatException e) {
           return null;
         }
       } else
@@ -157,76 +163,70 @@ public class JsonPointerImpl implements JsonPointer {
   }
 
   @Override
-  public boolean writeObject(JsonObject input, Object value) {
-    return write(input, value);
-  }
-
-  @Override
-  public boolean writeArray(JsonArray input, Object value) {
-    return write(input, value);
-  }
-
-  @Override
   public JsonPointer copy() {
     return new JsonPointerImpl(this.startingUri, this.decodedTokens);
   }
 
-  public URI getStartingUri() {
-    return this.startingUri;
-  }
-
-  private boolean write(Object input, Object value) {
+  @Override
+  public boolean write(JsonPointerIterator input, Object value, boolean createOnMissing) {
     if (isRootPointer())
       throw new IllegalStateException("writeObject() doesn't support root pointers");
     else {
-      Object lastElem = walkTillLastElement(input);
-      return lastElem != null && writeLastElement(lastElem, value);
+      walkTillLastElement(input, createOnMissing);
+      return !input.isNull() && writeLastElement(input, value);
     }
   }
 
-  private Object walkTillLastElement(Object input) {
+  private void walkTillLastElement(JsonPointerIterator iterator, boolean createOnMissing) {
     for (int i = 0; i < decodedTokens.size() - 1; i++) {
       String k = decodedTokens.get(i);
       if (i == 0 && "".equals(k)) {
         continue; // Avoid errors with root empty string
-      } else if (input instanceof JsonObject) {
-        JsonObject obj = (JsonObject) input;
-        if (obj.containsKey(k))
-          input = obj.getValue(k);
-        else
-          return null; // Missing array element
-      } else if (input instanceof JsonArray) {
-        JsonArray arr = (JsonArray) input;
-        if (k.equals("-"))
-          return null; // - is useful only on write!
-        else {
-          try {
-            input = arr.getValue(Integer.parseInt(k));
-          } catch (Exception e) {
-            return null;
+      } else if (iterator.isObject()) {
+        if (!iterator.nextObjectParameter(k)) { // Return false if missing object
+          if (createOnMissing)
+            iterator.createNewContainerAndNext(k);
+          else {
+            iterator.setRawValue(null);
+            return;
           }
         }
+      } else if (iterator.isArray()) {
+        if (k.equals("-")) {
+          iterator.setRawValue(null);
+          return; // - is useful only on write!
+        }
+        try {
+          if (!iterator.nextArrayElement(Integer.parseInt(k))) { // Return false if missing array element
+            if (createOnMissing)
+              iterator.createNewContainerAndNext(k);
+            else {
+              iterator.setRawValue(null);
+              return;
+            }
+          }
+        } catch (NumberFormatException e) {
+          iterator.setRawValue(null);
+          return;
+        }
       } else {
-        return null;
+        iterator.setRawValue(null);
+        return;
       }
     }
-    return input;
   }
 
-  private boolean writeLastElement(Object input, Object value) {
+  private boolean writeLastElement(JsonPointerIterator input, Object value) {
     String lastKey = decodedTokens.get(decodedTokens.size() - 1);
-    if (input instanceof JsonObject) {
-      ((JsonObject) input).put(lastKey, value);
-      return true;
-    } else if (input instanceof JsonArray) {
+    if (input.isObject()) {
+      return input.writeObjectParameter(lastKey, value);
+    } else if (input.isArray()) {
       if ("-".equals(lastKey)) { // Append to end
-        ((JsonArray) input).add(value);
-        return true;
+        return input.appendArrayElement(value);
       } else { // We have a index
         try {
-          ((JsonArray) input).getList().set(Integer.parseInt(lastKey), value);
-          return true;
-        } catch (Exception e) {
+          return input.writeArrayElement(Integer.parseInt(lastKey), value);
+        } catch (NumberFormatException e) {
           return false;
         }
       }

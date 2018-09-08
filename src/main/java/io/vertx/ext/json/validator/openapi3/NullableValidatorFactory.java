@@ -1,10 +1,8 @@
 package io.vertx.ext.json.validator.openapi3;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.impl.JsonPointerList;
+import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
-
-import java.net.URI;
 
 public class NullableValidatorFactory implements ValidatorFactory {
 
@@ -13,7 +11,7 @@ public class NullableValidatorFactory implements ValidatorFactory {
   };
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointerList scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
     try {
       Boolean nullable = (Boolean) schema.getValue("nullable");
       if (nullable == null || !nullable) return NULL_VALIDATOR;
