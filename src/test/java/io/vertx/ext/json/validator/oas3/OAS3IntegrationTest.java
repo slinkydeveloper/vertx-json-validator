@@ -1,15 +1,14 @@
 package io.vertx.ext.json.validator.oas3;
 
+import io.vertx.ext.json.validator.BaseIntegrationTest;
 import io.vertx.ext.json.validator.Schema;
+import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
-import io.vertx.ext.json.validator.BaseIntegrationTest;
-import io.vertx.ext.web.client.WebClient;
 import org.assertj.core.util.Lists;
 import org.junit.runners.Parameterized;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.List;
@@ -28,7 +27,7 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
         "additionalProperties",
         "allOf",
         "anyOf",
-        "discriminator",
+//        "discriminator",
         "enum",
         "exclusiveMaximum",
         "exclusiveMinimum",
@@ -60,11 +59,17 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
 
   @Override
   public Schema buildSchemaFunction(Object schema) throws URISyntaxException {
-    return OpenAPI3SchemaParser.create(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri(), new SchemaParserOptions(), new SchemaRouterImpl(), WebClient.create(vertx), vertx.fileSystem()).parse();
+    SchemaParser parser = OpenAPI3SchemaParser.create(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri(), new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
+    return parser.parse();
   }
 
   @Override
   public String getSchemasPath() {
     return "src/test/resources/tck/openapi3";
+  }
+
+  @Override
+  public String getRemotesPath() {
+    return "src/test/resources/tck/openapi3/remotes";
   }
 }

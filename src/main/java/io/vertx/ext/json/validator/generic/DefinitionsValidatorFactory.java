@@ -15,7 +15,7 @@ public class DefinitionsValidatorFactory implements ValidatorFactory {
   public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
     try {
       JsonObject definitions = schema.getJsonObject("definitions");
-      JsonPointer basePointer = scope.append("definitions");;
+      JsonPointer basePointer = scope.append("definitions");
       definitions.forEach(e -> {
         parser.parse((e.getValue() instanceof Map) ? new JsonObject((Map<String, Object>) e.getValue()) : e.getValue(), basePointer.copy().append(e.getKey()));
       });

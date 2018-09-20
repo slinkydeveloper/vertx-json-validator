@@ -38,9 +38,12 @@ public class RefSchema extends SchemaImpl {
   }
 
   private void removeOverrides() {
-    this.getValidators().removeIf(validator ->
-      ((SchemaImpl)cachedSchema).getValidators().stream().map(v -> validator.getClass().equals(v.getClass())).filter(b -> b).findFirst().orElse(false)
-    );
+    // In draft-6 and openapi the ref schema should not care about other keywords! from draft-8 this function makes sense
+//    this.getValidators().removeIf(validator ->
+//      ((SchemaImpl)cachedSchema).getValidators().stream().map(v -> validator.getClass().equals(v.getClass())).filter(b -> b).findFirst().orElse(false)
+//    );
+//    this.getValidators().addAll(((SchemaImpl)this.cachedSchema).getValidators());
+    this.getValidators().clear();
     this.getValidators().addAll(((SchemaImpl)this.cachedSchema).getValidators());
   }
 
@@ -48,16 +51,30 @@ public class RefSchema extends SchemaImpl {
   @Override
   public Future validate(Object in) {
     if (cachedSchema == null) {
-      return schemaParser
-          .solveRef(refPointer, this.getScope())
+      return schemaParser.getSchemaRouter()
+          .resolveRef(refPointer, this.getScope(), schemaParser)
           .compose(s -> {
-              this.cachedSchema = s;
+            if (s == null) return Future.failedFuture(SchemaErrorType.UNABLE_TO_SOLVE_REF.createException(this.getSchema(), "Unable to solve reference " + this.refPointer.buildURI()));
+            this.cachedSchema = s;
+            if (s instanceof RefSchema) {
+              // We need to call solved schema validate to solve upper ref, then we can merge validators
+              return s.validate(in).compose(f -> {
+                removeOverrides();
+                return super.validate(in);
+              });
+            } else if (BaseSchemaParser.FALSE_SCHEMA == s || BaseSchemaParser.TRUE_SCHEMA == s) {
+              return s.validate(in);
+            } else {
               if (log.isDebugEnabled()) log.debug("Solved schema {}", s.getScope());
               removeOverrides();
               return super.validate(in);
+            }
           });
     } else {
-      return cachedSchema.validate(in).compose(o -> super.validate(in));
+      if (BaseSchemaParser.FALSE_SCHEMA == cachedSchema || BaseSchemaParser.TRUE_SCHEMA == cachedSchema)
+        return cachedSchema.validate(in);
+      else
+        return super.validate(in);
     }
   }
 }

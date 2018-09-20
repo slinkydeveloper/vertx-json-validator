@@ -1,19 +1,18 @@
 package io.vertx.ext.json.validator.openapi3;
 
-import io.vertx.core.file.FileSystem;
-import io.vertx.ext.json.validator.*;
+import io.vertx.ext.json.validator.SchemaParserOptions;
+import io.vertx.ext.json.validator.SchemaRouter;
+import io.vertx.ext.json.validator.ValidatorFactory;
 import io.vertx.ext.json.validator.generic.*;
-import io.vertx.ext.web.client.WebClient;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 public class OpenAPI3SchemaParser extends BaseSchemaParser {
 
-  public OpenAPI3SchemaParser(Object schemaRoot, URI baseScope, SchemaParserOptions options, SchemaRouter router, WebClient client, FileSystem fs) {
-    super(schemaRoot, baseScope, options, router, client, fs);
+  public OpenAPI3SchemaParser(Object schemaRoot, URI baseScope, SchemaParserOptions options, SchemaRouter router) {
+    super(schemaRoot, baseScope, options, router);
   }
 
   @Override
@@ -45,7 +44,7 @@ public class OpenAPI3SchemaParser extends BaseSchemaParser {
     return factories;
   }
 
-  public static OpenAPI3SchemaParser create(Object schemaRoot, URI scope, SchemaParserOptions options, SchemaRouter router, WebClient client, FileSystem fs) {
-    return new OpenAPI3SchemaParser(schemaRoot, scope, options, router, client, fs);
+  public static OpenAPI3SchemaParser create(Object schemaRoot, URI scope, SchemaParserOptions options, SchemaRouter router) {
+    return new OpenAPI3SchemaParser(schemaRoot, scope, options, router);
   }
 }

@@ -1,6 +1,7 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
@@ -9,7 +10,6 @@ import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.SchemaRouterMock;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
-import io.vertx.ext.web.client.WebClient;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,17 +19,17 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SchemaURICreationTest {
 
   public Vertx vertx;
-  public WebClient client;
+  public HttpClient client;
 
   @Before
   public void setUp() throws Exception {
     vertx = Vertx.vertx();
-    client = WebClient.create(vertx);
+    client = vertx.createHttpClient();
   }
 
   private JsonObject loadJson(URI uri) throws IOException {
@@ -51,7 +51,7 @@ public class SchemaURICreationTest {
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouterMock schemaRouter = new SchemaRouterMock();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem());
+    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
     SchemaImpl schemaImpl = (SchemaImpl) schemaParser.parse();
 
     assertThat(schemaImpl.getSchema().getString("x-id")).isEqualTo("main");
@@ -77,7 +77,7 @@ public class SchemaURICreationTest {
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouterMock schemaRouter = new SchemaRouterMock();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem());
+    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
     SchemaImpl schemaImpl = (SchemaImpl) schemaParser.parse();
 
     assertThat(schemaImpl.getSchema().getString("x-id")).isEqualTo("main");
@@ -132,7 +132,7 @@ public class SchemaURICreationTest {
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     SchemaRouterMock schemaRouter = new SchemaRouterMock();
-    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter, client, vertx.fileSystem());
+    SchemaParser schemaParser = OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter);
     SchemaImpl schemaImpl = (SchemaImpl) schemaParser.parse();
 
     assertThat(schemaImpl.getSchema().getString("x-id")).isEqualTo("main");

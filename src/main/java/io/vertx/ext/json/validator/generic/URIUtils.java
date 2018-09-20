@@ -26,7 +26,7 @@ public class URIUtils {
       if ("file".equals(oldURI.getScheme()) || "jar".equals(oldURI.getScheme())) {
         return new URI(oldURI.getScheme(), oldURI.getHost(), Paths.get(oldURI.getPath()).getParent().resolve(Paths.get(path)).toString(), null);
       } else
-        return new URI(oldURI.getScheme(), oldURI.getHost(), (path.charAt(0) == '/') ? path : "/" + path, null);
+        return new URI(oldURI.getScheme(), oldURI.getAuthority(), (path.charAt(0) == '/') ? path : "/" + path, oldURI.getQuery(), null);
     } catch (URISyntaxException e) {
       e.printStackTrace();
       return null;

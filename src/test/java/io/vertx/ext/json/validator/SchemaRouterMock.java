@@ -1,8 +1,8 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.core.Future;
 import io.vertx.ext.json.pointer.JsonPointer;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,6 +20,11 @@ public class SchemaRouterMock implements SchemaRouter {
 
   @Override
   public Schema resolveCachedSchema(JsonPointer pointer, JsonPointer scope) {
+    return null;
+  }
+
+  @Override
+  public Future<Schema> resolveRef(JsonPointer pointer, JsonPointer scope, SchemaParser schemaParser) {
     return null;
   }
 

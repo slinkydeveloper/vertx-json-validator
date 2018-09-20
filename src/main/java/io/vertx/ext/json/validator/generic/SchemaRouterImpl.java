@@ -1,11 +1,14 @@
 package io.vertx.ext.json.validator.generic;
 
+import io.vertx.core.Future;
+import io.vertx.core.file.FileSystem;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.Schema;
-import io.vertx.ext.json.validator.SchemaErrorType;
-import io.vertx.ext.json.validator.SchemaRouter;
+import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,9 +17,15 @@ import java.util.stream.Collectors;
 public class SchemaRouterImpl implements SchemaRouter {
 
   final Map<URI, RouterNode> absolutePaths;
+  final HttpClient client;
+  final FileSystem fs;
+  final Map<URI, List<Future<Schema>>> externalSchemasSolving;
 
-  public SchemaRouterImpl() {
+  public SchemaRouterImpl(HttpClient client, FileSystem fs) {
     absolutePaths = new HashMap<>();
+    this.client = client;
+    this.fs = fs;
+    this.externalSchemasSolving = new HashMap<>();
   }
 
   @Override
@@ -46,6 +55,79 @@ public class SchemaRouterImpl implements SchemaRouter {
     else return node.getThisSchema();
   }
 
+  private synchronized boolean isSchemaAlreadySolving(URI u) {
+    return externalSchemasSolving.containsKey(u);
+  }
+
+  private synchronized void subscribeSchemaSolvedFuture(URI u, Future<Schema> fut) {
+    if (externalSchemasSolving.containsKey(u))
+      externalSchemasSolving.get(u).add(fut);
+    else {
+      List<Future<Schema>> futs = new ArrayList<>();
+      futs.add(fut);
+      externalSchemasSolving.put(u, futs);
+    }
+  }
+
+  private synchronized void triggerUnsolvedSchema(URI u, final Throwable e) {
+    List<Future<Schema>> futs = externalSchemasSolving.remove(u);
+    futs.forEach(f -> f.fail(e));
+  }
+
+  private synchronized void triggerSolvedSchema(URI u, final Schema s) {
+    List<Future<Schema>> futs = externalSchemasSolving.remove(u);
+    futs.forEach(f -> f.complete(s));
+  }
+
+  private void triggerExternalRefSolving(final JsonPointer pointer, final JsonPointer scope, final SchemaParser schemaParser) {
+    final URI u = pointer.getURIWithoutFragment();
+    if ("http".equals(u.getScheme()) || "https".equals(u.getScheme())) {
+      client.getAbs(u.toString(),res -> {
+        res.exceptionHandler(e -> triggerUnsolvedSchema(u, e));
+        if (res.statusCode() == 200) {
+          res.bodyHandler(buf -> {
+            try {
+              schemaParser.parseSchemaFromString(buf.toString(), u);
+              triggerSolvedSchema(u, this.resolveCachedSchema(pointer, scope));
+            } catch (SchemaException e) {
+              triggerUnsolvedSchema(u, e);
+            }
+          });
+        } else {
+          triggerUnsolvedSchema(u, ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO wrong status code
+        }
+      }).putHeader(HttpHeaders.ACCEPT.toString(), "application/json, application/schema+json").end();
+    } else {
+      URI fileURI = scope.getURIWithoutFragment().resolve(u);
+      fs.readFile(fileURI.toString(), res -> {
+        if (res.succeeded()) {
+          try {
+            schemaParser.parseSchemaFromString(res.result().toString(), u);
+            triggerSolvedSchema(u, this.resolveCachedSchema(pointer, scope));
+          } catch (SchemaException e) {
+            triggerUnsolvedSchema(u, e);
+          }
+        } else {
+          triggerUnsolvedSchema(u, ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO use fail
+        }
+      });
+    }
+  }
+
+  @Override
+  public Future<Schema> resolveRef(final JsonPointer pointer, final JsonPointer scope, final SchemaParser schemaParser) {
+    Schema cachedSchema = this.resolveCachedSchema(pointer, scope);
+    if (cachedSchema == null) {
+      URI u = pointer.getURIWithoutFragment();
+      if (!isSchemaAlreadySolving(u)) {
+        triggerExternalRefSolving(pointer, scope, schemaParser);
+      }
+      Future<Schema> fut = Future.future();
+      subscribeSchemaSolvedFuture(u, fut);
+      return fut;
+    } else return Future.succeededFuture(cachedSchema);
+  }
+
   @Override
   public void addSchema(Schema schema, JsonPointer inferredScope) {
     URI inferredScopeWithoutFragment = inferredScope.getURIWithoutFragment();
@@ -73,7 +155,7 @@ public class SchemaRouterImpl implements SchemaRouter {
           RouterNode baseNodeOfInferredScope = absolutePaths.get(inferredScopeWithoutFragment);
           RouterNode insertedSchemaNode = (RouterNode) inferredScope.query(new RouterNodeJsonPointerIterator(baseNodeOfInferredScope));
           if (id.isAbsolute()) {
-            absolutePaths.put(URIUtils.removeFragment(id), insertedSchemaNode);
+            absolutePaths.putIfAbsent(URIUtils.removeFragment(id), insertedSchemaNode); // id and inferredScope can match!
           } else if (id.getPath() != null && !id.getPath().isEmpty()) {
             // If a path is relative you should solve the path/paths. The paths will be solved against aliases of base node of inferred scope
             List<URI> uris = absolutePaths
