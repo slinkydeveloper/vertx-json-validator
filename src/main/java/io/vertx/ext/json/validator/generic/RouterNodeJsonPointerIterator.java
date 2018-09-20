@@ -3,12 +3,22 @@ package io.vertx.ext.json.validator.generic;
 import io.vertx.ext.json.pointer.JsonPointerIterator;
 import io.vertx.ext.json.validator.Schema;
 
+import java.util.function.Consumer;
+
 public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
 
   RouterNode actualNode;
+  final Consumer<RouterNode> onNext;
+
+  public RouterNodeJsonPointerIterator(RouterNode actualNode, Consumer<RouterNode> onNext) {
+    this.actualNode = actualNode;
+    this.onNext = onNext;
+    onNext.accept(this.actualNode);
+  }
 
   public RouterNodeJsonPointerIterator(RouterNode actualNode) {
     this.actualNode = actualNode;
+    this.onNext = null;
   }
 
   @Override
@@ -35,6 +45,7 @@ public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
   public boolean nextObjectParameter(String parameterName) {
     if (objectContainsKey(parameterName)) {
       actualNode = actualNode.getChilds().get(parameterName);
+      if (onNext != null) onNext.accept(actualNode);
       return true;
     }
     return false;
@@ -83,6 +94,7 @@ public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
     RouterNode node = new RouterNode();
     this.actualNode.getChilds().put(k, node);
     this.actualNode = node;
+    if (onNext != null) onNext.accept(actualNode);
     return true;
   }
 }

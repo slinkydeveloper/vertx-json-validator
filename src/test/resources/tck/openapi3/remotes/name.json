@@ -1,8 +1,12 @@
 {
     "definitions": {
         "orNull": {
+            "nullable": true,
             "anyOf": [
-                {"type": "null"},
+                {
+                    "nullable": true,
+                    "type": "number"
+                },
                 {"$ref": "#"}
             ]
         }

@@ -1,5 +1,6 @@
 package io.vertx.ext.json.validator.generic;
 
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpClient;
@@ -8,18 +9,16 @@ import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SchemaRouterImpl implements SchemaRouter {
 
   final Map<URI, RouterNode> absolutePaths;
   final HttpClient client;
   final FileSystem fs;
-  final Map<URI, List<Future<Schema>>> externalSchemasSolving;
+  final Map<URI, List<Future<URI>>> externalSchemasSolving;
 
   public SchemaRouterImpl(HttpClient client, FileSystem fs) {
     absolutePaths = new HashMap<>();
@@ -35,13 +34,10 @@ public class SchemaRouterImpl implements SchemaRouter {
     if (!refURI.isAbsolute()) {
       // Fragment pointer or path pointer!
       if (refURI.getPath() != null && !refURI.getPath().isEmpty()) {
-        RouterNode nodeOfScope = absolutePaths.get(scope.getURIWithoutFragment());
-        node = absolutePaths
-            .entrySet()
-            .stream()
-            .filter(e -> e.getValue().equals(nodeOfScope))
-            .map(e -> URIUtils.replaceOrResolvePath(e.getKey(), refURI.getPath()))
+        node = getParentsURIs(scope)
+            .map(e -> URIUtils.replaceOrResolvePath(e, refURI.getPath()))
             .map(absolutePaths::get)
+            .filter(Objects::nonNull)
             .findFirst().orElse(null);
       } else { // Fallback to scope
         node = absolutePaths.get(scope.getURIWithoutFragment());
@@ -55,62 +51,112 @@ public class SchemaRouterImpl implements SchemaRouter {
     else return node.getThisSchema();
   }
 
+  // The idea is to traverse from base to actual scope all tree and find aliases
+  private Stream<URI> getParentsURIs(JsonPointer scope) {
+    Stream.Builder<URI> uriStreamBuilder = Stream.builder();
+    RouterNode startingNode = absolutePaths.get(scope.getURIWithoutFragment());
+    scope.query(new RouterNodeJsonPointerIterator(startingNode, node ->
+      absolutePaths.forEach((uri, n) -> { if (n == node) uriStreamBuilder.accept(uri); })
+    ));
+    return uriStreamBuilder.build();
+  }
+
   private synchronized boolean isSchemaAlreadySolving(URI u) {
     return externalSchemasSolving.containsKey(u);
   }
 
-  private synchronized void subscribeSchemaSolvedFuture(URI u, Future<Schema> fut) {
+  private synchronized void subscribeSchemaSolvedFuture(URI u, Future fut) {
     if (externalSchemasSolving.containsKey(u))
       externalSchemasSolving.get(u).add(fut);
     else {
-      List<Future<Schema>> futs = new ArrayList<>();
+      List<Future<URI>> futs = new ArrayList<>();
       futs.add(fut);
       externalSchemasSolving.put(u, futs);
     }
   }
 
   private synchronized void triggerUnsolvedSchema(URI u, final Throwable e) {
-    List<Future<Schema>> futs = externalSchemasSolving.remove(u);
+    List<Future<URI>> futs = externalSchemasSolving.remove(u);
     futs.forEach(f -> f.fail(e));
   }
 
-  private synchronized void triggerSolvedSchema(URI u, final Schema s) {
-    List<Future<Schema>> futs = externalSchemasSolving.remove(u);
-    futs.forEach(f -> f.complete(s));
+  private synchronized void triggerSolvedSchema(URI registeredURI, URI findedURI) {
+    List<Future<URI>> futs = externalSchemasSolving.remove(registeredURI);
+    futs.forEach(f -> f.complete(findedURI));
+  }
+
+  private Future<URI> solveRemoteRef(final URI ref, final SchemaParser schemaParser) {
+    Future<URI> fut = Future.future();
+    client.getAbs(ref.toString(),res -> {
+      res.exceptionHandler(fut::fail);
+      if (res.statusCode() == 200) {
+        res.bodyHandler(buf -> {
+          try {
+            schemaParser.parseSchemaFromString(buf.toString(), ref);
+            fut.complete(ref);
+          } catch (SchemaException e) {
+            fut.fail(e);
+          }
+        });
+      } else {
+        fut.fail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO wrong status code
+      }
+    }).putHeader(HttpHeaders.ACCEPT.toString(), "application/json, application/schema+json").end();
+    return fut;
+  }
+
+  private Future<URI> solveLocalRef(final URI ref, final URI scope, final SchemaParser schemaParser) {
+    Future<URI> fut = Future.future();
+    URI fileURI = scope.resolve(ref);
+    fs.readFile(fileURI.toString(), res -> {
+      if (res.succeeded()) {
+        try {
+          schemaParser.parseSchemaFromString(res.result().toString(), ref);
+          fut.complete(ref);
+        } catch (SchemaException e) {
+          fut.fail(e);
+        }
+      } else {
+        fut.fail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO use fail
+      }
+    });
+    return fut;
   }
 
   private void triggerExternalRefSolving(final JsonPointer pointer, final JsonPointer scope, final SchemaParser schemaParser) {
-    final URI u = pointer.getURIWithoutFragment();
-    if ("http".equals(u.getScheme()) || "https".equals(u.getScheme())) {
-      client.getAbs(u.toString(),res -> {
-        res.exceptionHandler(e -> triggerUnsolvedSchema(u, e));
-        if (res.statusCode() == 200) {
-          res.bodyHandler(buf -> {
-            try {
-              schemaParser.parseSchemaFromString(buf.toString(), u);
-              triggerSolvedSchema(u, this.resolveCachedSchema(pointer, scope));
-            } catch (SchemaException e) {
-              triggerUnsolvedSchema(u, e);
-            }
-          });
-        } else {
-          triggerUnsolvedSchema(u, ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO wrong status code
-        }
-      }).putHeader(HttpHeaders.ACCEPT.toString(), "application/json, application/schema+json").end();
-    } else {
-      URI fileURI = scope.getURIWithoutFragment().resolve(u);
-      fs.readFile(fileURI.toString(), res -> {
-        if (res.succeeded()) {
-          try {
-            schemaParser.parseSchemaFromString(res.result().toString(), u);
-            triggerSolvedSchema(u, this.resolveCachedSchema(pointer, scope));
-          } catch (SchemaException e) {
-            triggerUnsolvedSchema(u, e);
-          }
-        } else {
-          triggerUnsolvedSchema(u, ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO use fail
-        }
+    URI ref = pointer.getURIWithoutFragment();
+    if (!ref.isAbsolute()) { // Only a path should be, otherwise the $ref is wrong!
+      CompositeFuture.any(
+          getParentsURIs(scope)
+              .map(u -> URIUtils.replaceOrResolvePath(u, ref.getPath()))
+              .map(u -> {
+                if (URIUtils.isRemoteURI(u))
+                  return solveRemoteRef(u, schemaParser);
+                else if (!URIUtils.isRemoteURI(scope.getURIWithoutFragment()))
+                  return solveLocalRef(u, scope.getURIWithoutFragment(), schemaParser);
+                else return null;
+              })
+              .filter(Objects::nonNull)
+              .collect(Collectors.toList())
+      ).setHandler(ar -> {
+        if (ar.succeeded()) triggerSolvedSchema(
+            ref,
+            ar.result().list().stream().filter(Objects::nonNull).map(o -> (URI)o).findFirst().orElse(null)
+        );
+        else triggerUnsolvedSchema(ref, ar.cause());
       });
+    } else {
+      if (URIUtils.isRemoteURI(ref)) {
+        solveRemoteRef(ref, schemaParser).setHandler(ar -> {
+          if (ar.succeeded()) triggerSolvedSchema(ref, ref);
+          else triggerUnsolvedSchema(ref, ar.cause());
+        });
+      } else {
+        solveLocalRef(ref, scope.getURIWithoutFragment(), schemaParser).setHandler(ar -> {
+          if (ar.succeeded()) triggerSolvedSchema(ref, ref);
+          else triggerUnsolvedSchema(ref, ar.cause());
+        });
+      }
     }
   }
 
@@ -122,9 +168,9 @@ public class SchemaRouterImpl implements SchemaRouter {
       if (!isSchemaAlreadySolving(u)) {
         triggerExternalRefSolving(pointer, scope, schemaParser);
       }
-      Future<Schema> fut = Future.future();
+      Future<URI> fut = Future.future();
       subscribeSchemaSolvedFuture(u, fut);
-      return fut;
+      return fut.compose(uri -> Future.succeededFuture(this.resolveCachedSchema(pointer, JsonPointer.fromURI(uri))));
     } else return Future.succeededFuture(cachedSchema);
   }
 

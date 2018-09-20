@@ -21,12 +21,16 @@ public class URIUtils {
     }
   }
 
+  public static boolean isRemoteURI(URI uri) {
+    return "http".equals(uri.getScheme()) || "https".equals(uri.getScheme());
+  }
+
   public static URI replaceOrResolvePath(URI oldURI, String path) {
     try {
       if ("file".equals(oldURI.getScheme()) || "jar".equals(oldURI.getScheme())) {
         return new URI(oldURI.getScheme(), oldURI.getHost(), Paths.get(oldURI.getPath()).getParent().resolve(Paths.get(path)).toString(), null);
       } else
-        return new URI(oldURI.getScheme(), oldURI.getAuthority(), (path.charAt(0) == '/') ? path : "/" + path, oldURI.getQuery(), null);
+        return oldURI.resolve(path);
     } catch (URISyntaxException e) {
       e.printStackTrace();
       return null;

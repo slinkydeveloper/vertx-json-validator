@@ -12,9 +12,8 @@ public class TypeValidatorFactory implements ValidatorFactory {
     try {
       String type = schema.getString("type");
       String format = schema.getString("format");
-      Boolean nullable = schema.getBoolean("nullable");
       if (type == null) throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null type keyword");
-      return new TypeValidator(parseType(type, format, schema), (nullable == null) ? false : nullable);
+      return new TypeValidator(parseType(type, format, schema));
     } catch (ClassCastException e) {
       throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for type/format/nullable keyword");
     }
@@ -47,11 +46,9 @@ public class TypeValidatorFactory implements ValidatorFactory {
   class TypeValidator implements SyncValidator {
 
     final JsonSchemaType type;
-    final boolean nullable;
 
-    public TypeValidator(JsonSchemaType type, boolean nullable) {
+    public TypeValidator(JsonSchemaType type) {
       this.type = type;
-      this.nullable = nullable;
     }
 
     @Override
@@ -61,9 +58,7 @@ public class TypeValidatorFactory implements ValidatorFactory {
 
     @Override
     public void validate(Object value) throws ValidationException {
-      if (value == null) {
-        if (!nullable) throw ValidationExceptionFactory.generateNotMatchValidationException(""); //TODO
-      } else {
+      if (value != null) {
         if (!type.checkInstance(value)) throw ValidationExceptionFactory.generateNotMatchValidationException("");
       }
     }

@@ -37,7 +37,7 @@ public class RefSchema extends SchemaImpl {
     }
   }
 
-  private void removeOverrides() {
+  private synchronized void removeOverrides() {
     // In draft-6 and openapi the ref schema should not care about other keywords! from draft-8 this function makes sense
 //    this.getValidators().removeIf(validator ->
 //      ((SchemaImpl)cachedSchema).getValidators().stream().map(v -> validator.getClass().equals(v.getClass())).filter(b -> b).findFirst().orElse(false)
@@ -45,6 +45,10 @@ public class RefSchema extends SchemaImpl {
 //    this.getValidators().addAll(((SchemaImpl)this.cachedSchema).getValidators());
     this.getValidators().clear();
     this.getValidators().addAll(((SchemaImpl)this.cachedSchema).getValidators());
+  }
+
+  private synchronized void registerCachedSchema(Schema s) {
+    this.cachedSchema = s;
   }
 
   @SuppressWarnings("unchecked")
@@ -55,7 +59,7 @@ public class RefSchema extends SchemaImpl {
           .resolveRef(refPointer, this.getScope(), schemaParser)
           .compose(s -> {
             if (s == null) return Future.failedFuture(SchemaErrorType.UNABLE_TO_SOLVE_REF.createException(this.getSchema(), "Unable to solve reference " + this.refPointer.buildURI()));
-            this.cachedSchema = s;
+            registerCachedSchema(s);
             if (s instanceof RefSchema) {
               // We need to call solved schema validate to solve upper ref, then we can merge validators
               return s.validate(in).compose(f -> {
