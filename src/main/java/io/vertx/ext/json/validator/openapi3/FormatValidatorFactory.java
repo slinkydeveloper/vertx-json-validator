@@ -3,8 +3,6 @@ package io.vertx.ext.json.validator.openapi3;
 import io.vertx.ext.json.validator.generic.BaseFormatValidatorFactory;
 import io.vertx.ext.json.validator.generic.RegularExpressions;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;

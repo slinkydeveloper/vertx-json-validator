@@ -1,7 +1,6 @@
 package io.vertx.ext.json.validator;
 
 import io.vertx.core.VertxException;
-import io.vertx.core.json.JsonObject;
 
 public class SchemaException extends VertxException {
 

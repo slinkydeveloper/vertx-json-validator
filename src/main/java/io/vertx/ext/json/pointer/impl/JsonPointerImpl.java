@@ -11,15 +11,11 @@
 
 package io.vertx.ext.json.pointer.impl;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.pointer.JsonPointerIterator;
 import io.vertx.ext.json.validator.generic.URIUtils;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

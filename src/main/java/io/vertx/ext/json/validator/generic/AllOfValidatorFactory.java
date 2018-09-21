@@ -7,7 +7,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class AllOfValidatorFactory implements ValidatorFactory {

@@ -2,7 +2,6 @@ package io.vertx.ext.json.validator.generic;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
 
 public class URIUtils {
 
@@ -25,10 +24,12 @@ public class URIUtils {
     return "http".equals(uri.getScheme()) || "https".equals(uri.getScheme());
   }
 
-  public static URI replaceOrResolvePath(URI oldURI, String path) {
+  public static URI resolvePath(URI oldURI, String path) {
     try {
-      if ("file".equals(oldURI.getScheme()) || "jar".equals(oldURI.getScheme())) {
-        return new URI(oldURI.getScheme(), oldURI.getHost(), Paths.get(oldURI.getPath()).getParent().resolve(Paths.get(path)).toString(), null);
+      if ("jar".equals(oldURI.getScheme())) {
+        String[] splittedJarURI = oldURI.getSchemeSpecificPart().split("!");
+        String newInternalJarPath = URI.create(splittedJarURI[1]).resolve(path).toString();
+        return new URI(oldURI.getScheme(), splittedJarURI[0] + "!" + newInternalJarPath, oldURI.getFragment());
       } else
         return oldURI.resolve(path);
     } catch (URISyntaxException e) {

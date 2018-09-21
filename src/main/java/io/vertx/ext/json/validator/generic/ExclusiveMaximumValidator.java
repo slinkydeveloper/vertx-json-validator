@@ -1,6 +1,5 @@
 package io.vertx.ext.json.validator.generic;
 
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.validator.SyncValidator;
 import io.vertx.ext.json.validator.ValidationException;
 

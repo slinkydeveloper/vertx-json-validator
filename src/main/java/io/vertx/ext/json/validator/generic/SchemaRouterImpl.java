@@ -35,7 +35,7 @@ public class SchemaRouterImpl implements SchemaRouter {
       // Fragment pointer or path pointer!
       if (refURI.getPath() != null && !refURI.getPath().isEmpty()) {
         node = getParentsURIs(scope)
-            .map(e -> URIUtils.replaceOrResolvePath(e, refURI.getPath()))
+            .map(e -> URIUtils.resolvePath(e, refURI.getPath()))
             .map(absolutePaths::get)
             .filter(Objects::nonNull)
             .findFirst().orElse(null);
@@ -105,10 +105,10 @@ public class SchemaRouterImpl implements SchemaRouter {
     return fut;
   }
 
-  private Future<URI> solveLocalRef(final URI ref, final URI scope, final SchemaParser schemaParser) {
+  private Future<URI> solveLocalRef(final URI ref, final SchemaParser schemaParser) {
     Future<URI> fut = Future.future();
-    URI fileURI = scope.resolve(ref);
-    fs.readFile(fileURI.toString(), res -> {
+    String filePath = ("jar".equals(ref.getScheme())) ? ref.getSchemeSpecificPart().split("!")[1].substring(1) : ref.getPath();
+    fs.readFile(filePath, res -> {
       if (res.succeeded()) {
         try {
           schemaParser.parseSchemaFromString(res.result().toString(), ref);
@@ -128,12 +128,12 @@ public class SchemaRouterImpl implements SchemaRouter {
     if (!ref.isAbsolute()) { // Only a path should be, otherwise the $ref is wrong!
       CompositeFuture.any(
           getParentsURIs(scope)
-              .map(u -> URIUtils.replaceOrResolvePath(u, ref.getPath()))
+              .map(u -> URIUtils.resolvePath(u, ref.getPath()))
               .map(u -> {
                 if (URIUtils.isRemoteURI(u))
                   return solveRemoteRef(u, schemaParser);
                 else if (!URIUtils.isRemoteURI(scope.getURIWithoutFragment()))
-                  return solveLocalRef(u, scope.getURIWithoutFragment(), schemaParser);
+                  return solveLocalRef(u, schemaParser);
                 else return null;
               })
               .filter(Objects::nonNull)
@@ -152,7 +152,7 @@ public class SchemaRouterImpl implements SchemaRouter {
           else triggerUnsolvedSchema(ref, ar.cause());
         });
       } else {
-        solveLocalRef(ref, scope.getURIWithoutFragment(), schemaParser).setHandler(ar -> {
+        solveLocalRef(ref, schemaParser).setHandler(ar -> {
           if (ar.succeeded()) triggerSolvedSchema(ref, ref);
           else triggerUnsolvedSchema(ref, ar.cause());
         });
@@ -208,7 +208,7 @@ public class SchemaRouterImpl implements SchemaRouter {
                 .entrySet()
                 .stream()
                 .filter(e -> e.getValue().equals(baseNodeOfInferredScope))
-                .map(e -> URIUtils.replaceOrResolvePath(e.getKey(), id.getPath()))
+                .map(e -> URIUtils.resolvePath(e.getKey(), id.getPath()))
                 .collect(Collectors.toList());
             uris.forEach(u -> absolutePaths.put(u, insertedSchemaNode));
           }

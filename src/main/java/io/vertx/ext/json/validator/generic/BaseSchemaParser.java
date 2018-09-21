@@ -24,6 +24,7 @@ public abstract class BaseSchemaParser implements SchemaParser {
   protected final SchemaRouter router;
 
   protected BaseSchemaParser(Object schemaRoot, URI baseScope, SchemaParserOptions options, SchemaRouter router) {
+    if (!baseScope.isAbsolute()) throw new IllegalArgumentException("The base scope provided must be absolute!");
     this.schemaRoot = schemaRoot;
     this.baseScope = baseScope;
     this.options = options;
