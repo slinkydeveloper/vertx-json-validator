@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 
@@ -28,6 +29,15 @@ public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
       URI.create(in);
       return true;
     } catch (IllegalArgumentException e) {
+      return false;
+    }
+  };
+
+  protected final static Predicate<String> REGEX_VALIDATOR = in -> {
+    try {
+      Pattern.compile(in);
+      return true;
+    } catch (PatternSyntaxException e) {
       return false;
     }
   };

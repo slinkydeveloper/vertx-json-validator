@@ -47,6 +47,11 @@ public class EnumValidatorFactory implements ValidatorFactory {
     }
 
     @Override
+    public ValidatorPriority getPriority() {
+      return ValidatorPriority.MAX_PRIORITY;
+    }
+
+    @Override
     public void validate(Object value) throws ValidationException {
       if (!allowedValues.contains(value)) throw NO_MATCH.createException("Input doesn't match one of allowed values of enum: " + allowedValues, "enum", value);
     }

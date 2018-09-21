@@ -5,7 +5,6 @@ import io.vertx.ext.json.validator.Schema;
 import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
-import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
 import org.assertj.core.util.Lists;
 import org.junit.runners.Parameterized;
 
@@ -66,7 +65,7 @@ public class Draft7IntegrationTest extends BaseIntegrationTest {
 
   @Override
   public Schema buildSchemaFunction(Object schema) throws URISyntaxException {
-    SchemaParser parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
+    SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
     return parser.parse(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
   }
 
