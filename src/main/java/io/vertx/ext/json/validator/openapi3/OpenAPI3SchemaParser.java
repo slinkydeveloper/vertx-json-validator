@@ -5,14 +5,13 @@ import io.vertx.ext.json.validator.SchemaRouter;
 import io.vertx.ext.json.validator.ValidatorFactory;
 import io.vertx.ext.json.validator.generic.*;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OpenAPI3SchemaParser extends BaseSchemaParser {
 
-  public OpenAPI3SchemaParser(Object schemaRoot, URI baseScope, SchemaParserOptions options, SchemaRouter router) {
-    super(schemaRoot, baseScope, options, router);
+  protected OpenAPI3SchemaParser(SchemaParserOptions options, SchemaRouter router) {
+    super(options, router);
   }
 
   @Override
@@ -44,7 +43,14 @@ public class OpenAPI3SchemaParser extends BaseSchemaParser {
     return factories;
   }
 
-  public static OpenAPI3SchemaParser create(Object schemaRoot, URI scope, SchemaParserOptions options, SchemaRouter router) {
-    return new OpenAPI3SchemaParser(schemaRoot, scope, options, router);
+  /**
+   * Instantiate an OpenAPI3SchemaParser
+   *
+   * @param options
+   * @param router
+   * @return a new instance of OpenAPI3SchemaParser
+   */
+  public static OpenAPI3SchemaParser create(SchemaParserOptions options, SchemaRouter router) {
+    return new OpenAPI3SchemaParser(options, router);
   }
 }

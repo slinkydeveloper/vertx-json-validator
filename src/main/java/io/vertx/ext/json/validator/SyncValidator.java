@@ -12,5 +12,11 @@ public interface SyncValidator extends Validator {
     return ValidatorPriority.MIN_PRIORITY;
   }
 
+  /**
+   * Validate the provided value
+   *
+   * @param value
+   * @throws ValidationException
+   */
   void validate(Object value) throws ValidationException;
 }

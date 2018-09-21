@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
 public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
 
   protected final static Predicate<String> URI_VALIDATOR = in -> {
@@ -42,7 +44,7 @@ public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
     public void validate(Object value) throws ValidationException {
       if (value instanceof String) {
         if (!validator.test((String) value)) {
-          throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
+          throw NO_MATCH.createException("Provided value don't match pattern", "pattern", value);
         }
       }
     }
@@ -87,7 +89,7 @@ public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("format");
   }
 }

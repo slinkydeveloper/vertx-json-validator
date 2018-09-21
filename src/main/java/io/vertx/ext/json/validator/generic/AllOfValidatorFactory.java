@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
 public class AllOfValidatorFactory implements ValidatorFactory {
 
   @Override
@@ -34,7 +36,7 @@ public class AllOfValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("allOf");
   }
 
@@ -48,7 +50,10 @@ public class AllOfValidatorFactory implements ValidatorFactory {
 
     @Override
     public Future validate(Object in) {
-      return CompositeFuture.all(Arrays.stream(schemas).map(s -> s.validate(in)).collect(Collectors.toList())).compose(cf -> Future.succeededFuture());
+      return FutureUtils.andThen(
+          CompositeFuture.all(Arrays.stream(schemas).map(s -> s.validate(in)).collect(Collectors.toList())),
+          res -> Future.succeededFuture(),
+          err -> Future.failedFuture(NO_MATCH.createException("allOf subschema don't match", err, "allOf", in)));
     }
   }
 

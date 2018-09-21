@@ -20,7 +20,7 @@ public class TypeValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("type");
   }
 
@@ -59,7 +59,7 @@ public class TypeValidatorFactory implements ValidatorFactory {
     @Override
     public void validate(Object value) throws ValidationException {
       if (value != null) {
-        if (!type.checkInstance(value)) throw ValidationExceptionFactory.generateNotMatchValidationException("");
+        if (!type.checkInstance(value)) throw ValidationErrorType.NO_MATCH.createException("input don't match type " + type.name(), "type", value);
       }
     }
   }

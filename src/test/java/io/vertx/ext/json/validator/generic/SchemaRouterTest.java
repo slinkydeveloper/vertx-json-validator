@@ -1,10 +1,10 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
+import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.SchemaRouter;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
@@ -21,12 +21,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SchemaRouterTest {
 
   public Vertx vertx;
-  public HttpClient client;
+  public SchemaParser parser;
+  public SchemaRouter schemaRouter;
 
   @Before
   public void setUp() throws Exception {
     vertx = Vertx.vertx();
-    client = vertx.createHttpClient();
+    schemaRouter = SchemaRouter.create(vertx);
+    parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), schemaRouter);
   }
 
   private JsonObject loadJson(URI uri) throws IOException {
@@ -49,8 +51,7 @@ public class SchemaRouterTest {
     URI baseURI = buildBaseUri("no_id_keyword.json");
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
-    SchemaRouter schemaRouter = new SchemaRouterImpl(client, vertx.fileSystem());
-    OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter).parse();
+    parser.parse(baseSchemaJson, baseURI);
 
     assertThatSchemaContainsXid(schemaRouter, JsonPointer.create(), basePointer, "main");
     assertThatSchemaContainsXid(schemaRouter, basePointer, basePointer, "main");
@@ -72,8 +73,7 @@ public class SchemaRouterTest {
     URI baseURI = buildBaseUri("id_urn_keyword.json");
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
-    SchemaRouter schemaRouter = new SchemaRouterImpl(client, vertx.fileSystem());
-    OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter).parse();
+    parser.parse(baseSchemaJson, baseURI);
 
     assertThatSchemaContainsXid(schemaRouter, basePointer.copy().append("properties").append("prop_1"), basePointer, "prop_1");
     assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:590e34ae-8e3d-4bdf-a748-beff72654d0e")), basePointer, "prop_1");
@@ -87,8 +87,7 @@ public class SchemaRouterTest {
   public void testIdURNKeywordFromInnerScope() throws Exception {
     URI baseURI = buildBaseUri("id_urn_keyword.json");
     JsonObject baseSchemaJson = loadJson(baseURI);
-    SchemaRouter schemaRouter = new SchemaRouterImpl(client, vertx.fileSystem());
-    OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter).parse();
+    parser.parse(baseSchemaJson, baseURI);
     JsonPointer scope = schemaRouter.resolveCachedSchema(JsonPointer.fromURI(URI.create("urn:uuid:77ed19ca-1127-42dd-8194-3e48661ce672")), JsonPointer.fromURI(baseURI)).getScope();
 
     assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("urn:uuid:77ed19ca-1127-42dd-8194-3e48661ce672")).append("not"), scope, "not");
@@ -131,8 +130,7 @@ public class SchemaRouterTest {
     URI baseURI = buildBaseUri("rfc_id_keyword.json");
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
-    SchemaRouter schemaRouter = new SchemaRouterImpl(client, vertx.fileSystem());
-    OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter).parse();
+    parser.parse(baseSchemaJson, baseURI);
 
     assertThatSchemaContainsXid(schemaRouter, JsonPointer.create(), basePointer, "main");
 
@@ -160,8 +158,7 @@ public class SchemaRouterTest {
     URI baseURI = buildBaseUri("rfc_id_keyword.json");
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
-    SchemaRouter schemaRouter = new SchemaRouterImpl(client, vertx.fileSystem());
-    OpenAPI3SchemaParser.create(baseSchemaJson, baseURI, new SchemaParserOptions(), schemaRouter).parse();
+    parser.parse(baseSchemaJson, baseURI);
     JsonPointer scope = schemaRouter.resolveCachedSchema(JsonPointer.fromURI(URI.create("http://example.com/other.json")), basePointer).getScope();
 
     assertThatSchemaContainsXid(schemaRouter, JsonPointer.fromURI(URI.create("#foo")), scope, "A");

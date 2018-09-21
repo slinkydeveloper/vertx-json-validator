@@ -1,0 +1,23 @@
+package io.vertx.ext.json.validator;
+
+/**
+ * All errors type. You can get this values using {@link ValidationException#errorType()}
+ */
+public enum ValidationErrorType {
+  /**
+   * The input doesn't match a specific keyword rule
+   */
+  NO_MATCH,
+  /**
+   * Unable to solve reference
+   */
+  REF_ERROR;
+
+  public ValidationException createException(String message, String keyword, Object input) {
+    return new ValidationException(message, keyword, input, this);
+  }
+
+  public ValidationException createException(String message, Throwable t, String keyword, Object input) {
+    return new ValidationException(message, t, keyword, input, this);
+  }
+}

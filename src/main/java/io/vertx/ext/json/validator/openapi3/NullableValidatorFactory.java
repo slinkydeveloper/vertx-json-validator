@@ -7,7 +7,7 @@ import io.vertx.ext.json.validator.*;
 public class NullableValidatorFactory implements ValidatorFactory {
 
   private final static SyncValidator NULL_VALIDATOR = (value) -> {
-    if (value == null) throw ValidationExceptionFactory.generateNotMatchValidationException(""); //TODO
+    if (value == null) throw ValidationErrorType.NO_MATCH.createException("input cannot be null", "nullable", value);
   };
 
   @Override
@@ -24,7 +24,7 @@ public class NullableValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return true;
   }
 

@@ -13,6 +13,8 @@ import io.vertx.ext.json.validator.Validator;
 import java.net.URI;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.REF_ERROR;
+
 public class RefSchema extends SchemaImpl {
 
   private static final Logger log = LoggerFactory.getLogger(RefSchema.class);
@@ -55,10 +57,10 @@ public class RefSchema extends SchemaImpl {
   @Override
   public Future validate(Object in) {
     if (cachedSchema == null) {
-      return schemaParser.getSchemaRouter()
-          .resolveRef(refPointer, this.getScope(), schemaParser)
-          .compose(s -> {
-            if (s == null) return Future.failedFuture(SchemaErrorType.UNABLE_TO_SOLVE_REF.createException(this.getSchema(), "Unable to solve reference " + this.refPointer.buildURI()));
+      return FutureUtils.andThen(
+          schemaParser.getSchemaRouter().resolveRef(refPointer, this.getScope(), schemaParser),
+          s -> {
+            if (s == null) return Future.failedFuture(REF_ERROR.createException("Canno resolve reference " + this.refPointer.buildURI(), "$ref", in));
             registerCachedSchema(s);
             if (s instanceof RefSchema) {
               // We need to call solved schema validate to solve upper ref, then we can merge validators
@@ -73,7 +75,9 @@ public class RefSchema extends SchemaImpl {
               removeOverrides();
               return super.validate(in);
             }
-          });
+          },
+          err -> Future.failedFuture(REF_ERROR.createException("Error while resolving reference " + this.refPointer.buildURI(), err, "$ref", in))
+          );
     } else {
       if (BaseSchemaParser.FALSE_SCHEMA == cachedSchema || BaseSchemaParser.TRUE_SCHEMA == cachedSchema)
         return cachedSchema.validate(in);

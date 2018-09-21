@@ -4,6 +4,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
 public class MultipleOfValidatorFactory implements ValidatorFactory {
 
   @Override
@@ -19,7 +21,7 @@ public class MultipleOfValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("multipleOf");
   }
 
@@ -34,7 +36,7 @@ public class MultipleOfValidatorFactory implements ValidatorFactory {
     public void validate(Object value) throws ValidationException {
       if (value instanceof Number) {
         if (((Number) value).doubleValue() % multipleOf != 0) {
-          throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
+          throw NO_MATCH.createException("provided number should be multiple of " + multipleOf, "multipleOf", value);
         }
       }
     }

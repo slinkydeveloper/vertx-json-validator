@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
 public class SchemaImpl implements Schema {
 
   private static final Logger log = LoggerFactory.getLogger(SchemaImpl.class);
@@ -40,10 +42,24 @@ public class SchemaImpl implements Schema {
     if (log.isDebugEnabled()) log.debug("Starting validation for schema {} and input ", schema, in);
     List<Future> futures = new ArrayList<>();
     for (Validator validator : validators) {
-      if (validator.isAsync()) futures.add(((AsyncValidator) validator).validate(in));
-      else try {
+      if (validator.isAsync()) {
+        Future asyncValidate = ((AsyncValidator) validator).validate(in);
+        asyncValidate = asyncValidate.recover(t -> {
+            if (t instanceof ValidationException) {
+              ValidationException e = (ValidationException)t;
+              e.setSchema(this);
+              e.setScope(this.scope);
+              return Future.failedFuture(e);
+            } else {
+              return Future.failedFuture(NO_MATCH.createException("Error while validating", (Throwable) t, null, in));
+            }
+        });
+        futures.add(asyncValidate);
+      } else try {
         ((SyncValidator) validator).validate(in);
       } catch (ValidationException e) {
+        e.setSchema(this);
+        e.setScope(this.scope);
         return Future.failedFuture(e);
       }
     }

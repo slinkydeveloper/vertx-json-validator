@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
 public class PropertiesValidatorFactory implements ValidatorFactory {
 
   private Schema parseAdditionalProperties(Object obj, JsonPointer scope, SchemaParser parser) {
@@ -82,7 +84,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("properties") || schema.containsKey("patternProperties") || schema.containsKey("additionalProperties");
   }
 
@@ -128,9 +130,9 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
           if (s != null) futs.add(s.validate(entry.getValue()));
           else {
             if (allowAdditionalProperties) {
-              if (additionalPropertiesSchema != null) futs.add(additionalPropertiesSchema.validate(entry.getValue()));
+              if (additionalPropertiesSchema != null) futs.add(additionalPropertiesSchema.validate(entry.getValue()).recover(t -> Future.failedFuture(NO_MATCH.createException("additionalProperties schema should match", (Throwable) t, "additionalProperties", in))));
             } else {
-              return Future.failedFuture(ValidationExceptionFactory.generateNotMatchValidationException("Should not contain additional props")); //TODO
+              return Future.failedFuture(NO_MATCH.createException("provided object should not contain additional properties", "additionalProperties", in));
             }
           }
         }

@@ -5,7 +5,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
-import java.net.URI;
 import java.util.List;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -15,18 +14,13 @@ import java.util.concurrent.ConcurrentSkipListSet;
 public abstract class BaseSchemaParser implements SchemaParser {
 
   protected final static Schema TRUE_SCHEMA = (in) -> Future.succeededFuture();
-  protected final static Schema FALSE_SCHEMA = (in) -> Future.failedFuture(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO
+  protected final static Schema FALSE_SCHEMA = (in) -> Future.failedFuture(ValidationErrorType.NO_MATCH.createException("False schema always fail validation", null, in));
 
-  protected final Object schemaRoot;
-  protected final URI baseScope;
   protected final SchemaParserOptions options;
   protected final List<ValidatorFactory> validatorFactories;
   protected final SchemaRouter router;
 
-  protected BaseSchemaParser(Object schemaRoot, URI baseScope, SchemaParserOptions options, SchemaRouter router) {
-    if (!baseScope.isAbsolute()) throw new IllegalArgumentException("The base scope provided must be absolute!");
-    this.schemaRoot = schemaRoot;
-    this.baseScope = baseScope;
+  protected BaseSchemaParser(SchemaParserOptions options, SchemaRouter router) {
     this.options = options;
     this.router = router;
     this.validatorFactories = initValidatorFactories();
@@ -39,37 +33,29 @@ public abstract class BaseSchemaParser implements SchemaParser {
   }
 
   @Override
-  public Schema parse() {
-    return this.parse(schemaRoot, baseScope);
-  }
-
-  protected Schema parse(Object schema, URI uri) {
-    return this.parse(schema, JsonPointer.fromURI(uri));
-  }
-
-  @Override
-  public Schema parse(Object schema, JsonPointer scope) {
-    if (schema instanceof JsonObject) {
-      JsonObject json = (JsonObject) schema;
+  public Schema parse(Object jsonSchema, JsonPointer scope) {
+    if (!scope.getURIWithoutFragment().isAbsolute()) throw new IllegalArgumentException("The scope provided must be absolute!");
+    if (jsonSchema instanceof JsonObject) {
+      JsonObject json = (JsonObject) jsonSchema;
       ConcurrentSkipListSet<Validator> validators = new ConcurrentSkipListSet<>(ValidatorPriority.VALIDATOR_COMPARATOR);
 
       Schema s = createSchema(json, scope, validators);
       router.addSchema(s, scope);
 
       for (ValidatorFactory factory : validatorFactories) {
-        if (factory.canCreateValidator(json)) {
+        if (factory.canConsumeSchema(json)) {
           Validator v = factory.createValidator(json, scope.copy(), this);
           if (v != null) validators.add(v);
         }
       }
 
       return s;
-    } else if (schema instanceof Boolean) {
-      Schema s = ((Boolean) schema) ? TRUE_SCHEMA : FALSE_SCHEMA;
+    } else if (jsonSchema instanceof Boolean) {
+      Schema s = ((Boolean) jsonSchema) ? TRUE_SCHEMA : FALSE_SCHEMA;
       router.addSchema(s, scope);
       return s;
     } else
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Schema should be a JsonObject or a Boolean");
+      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(jsonSchema, "Schema should be a JsonObject or a Boolean");
   }
 
   protected Schema createSchema(JsonObject schema, JsonPointer scope, ConcurrentSkipListSet<Validator> validators) {
@@ -93,10 +79,10 @@ public abstract class BaseSchemaParser implements SchemaParser {
   }
 
   @Override
-  public Schema parseSchemaFromString(String schema, URI uri) {
-    String unparsedSchema = schema.trim();
+  public Schema parseSchemaFromString(String unparsedJson, JsonPointer scope) {
+    String unparsedSchema = unparsedJson.trim();
     if ("false".equals(unparsedSchema) || "true".equals(unparsedSchema))
-      return this.parse(Boolean.parseBoolean(unparsedSchema), uri);
-    else return this.parse(new JsonObject(unparsedSchema), uri);
+      return this.parse(Boolean.parseBoolean(unparsedSchema), scope);
+    else return this.parse(new JsonObject(unparsedSchema), scope);
   }
 }

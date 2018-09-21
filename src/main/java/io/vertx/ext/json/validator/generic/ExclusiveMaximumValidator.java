@@ -3,6 +3,8 @@ package io.vertx.ext.json.validator.generic;
 import io.vertx.ext.json.validator.SyncValidator;
 import io.vertx.ext.json.validator.ValidationException;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
 public class ExclusiveMaximumValidator implements SyncValidator {
   private final double maximum;
 
@@ -14,7 +16,7 @@ public class ExclusiveMaximumValidator implements SyncValidator {
   public void validate(Object value) throws ValidationException {
     if (value instanceof Number) {
       if (((Number) value).doubleValue() >= maximum) {
-        throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
+        throw NO_MATCH.createException("value should be < " + maximum, "maximum", value);
       }
     }
   }

@@ -5,6 +5,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
 public class MaxItemsValidatorFactory implements ValidatorFactory {
 
   @Override
@@ -22,7 +24,7 @@ public class MaxItemsValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("maxItems");
   }
 
@@ -37,7 +39,7 @@ public class MaxItemsValidatorFactory implements ValidatorFactory {
     public void validate(Object value) throws ValidationException {
       if (value instanceof JsonArray) {
         if (((JsonArray) value).size() > maximum) {
-          throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
+          throw NO_MATCH.createException("provided array should have size <= " + maximum, "maxItems", value);
         }
       }
     }

@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
 public class EnumValidatorFactory implements ValidatorFactory {
 
   @SuppressWarnings("unchecked")
@@ -33,7 +35,7 @@ public class EnumValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("enum");
   }
 
@@ -46,7 +48,7 @@ public class EnumValidatorFactory implements ValidatorFactory {
 
     @Override
     public void validate(Object value) throws ValidationException {
-      if (!allowedValues.contains(value)) throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
+      if (!allowedValues.contains(value)) throw NO_MATCH.createException("Input doesn't match one of allowed values of enum: " + allowedValues, "enum", value);
     }
   }
 

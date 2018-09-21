@@ -13,7 +13,7 @@ public class UniqueItemsValidatorFactory implements ValidatorFactory {
     if (value instanceof JsonArray) {
       JsonArray arr = (JsonArray) value;
       if (new HashSet(arr.getList()).size() != arr.size())
-        throw new ValidationException(ValidationException.ErrorType.NO_MATCH);
+        throw ValidationErrorType.NO_MATCH.createException("array elements must be unique", "uniqueItems", value);
     }
   };
 
@@ -31,7 +31,7 @@ public class UniqueItemsValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("uniqueItems");
   }
 

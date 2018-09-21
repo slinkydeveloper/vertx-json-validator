@@ -1,6 +1,5 @@
 package io.vertx.ext.json.validator.generic;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -10,8 +9,6 @@ import io.vertx.ext.json.validator.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class OneOfValidatorFactory implements ValidatorFactory {
@@ -36,7 +33,7 @@ public class OneOfValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("oneOf");
   }
 
@@ -51,30 +48,8 @@ public class OneOfValidatorFactory implements ValidatorFactory {
     @SuppressWarnings("unchecked")
     @Override
     public Future validate(Object in) {
-      return oneOf(Arrays.stream(schemas).map(s -> s.validate(in)).collect(Collectors.toList()));
+      return FutureUtils.oneOf(Arrays.stream(schemas).map(s -> s.validate(in)).map(f -> (Future<Object>)f).collect(Collectors.toList()));
     }
-  }
-
-  private static Future oneOf(List<Future> results) {
-    final Future res = Future.future();
-    final AtomicInteger processed = new AtomicInteger(0);
-    final AtomicBoolean atLeastOneOk = new AtomicBoolean(false);
-    final int len = results.size();
-    for (int i = 0; i < len; i++) {
-      results.get(i).setHandler(ar -> {
-        int p = processed.incrementAndGet();
-        if (((AsyncResult) ar).succeeded()) {
-          if (atLeastOneOk.get())
-            res.tryFail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO
-          else atLeastOneOk.set(true);
-        }
-        if (p == len) {
-          if (atLeastOneOk.get()) res.tryComplete();
-          else res.tryFail(ValidationExceptionFactory.generateNotMatchValidationException("")); //TODO
-        }
-      });
-    }
-    return res;
   }
 
 }

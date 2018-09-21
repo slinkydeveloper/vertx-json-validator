@@ -3,6 +3,8 @@ package io.vertx.ext.json.validator.generic;
 import io.vertx.ext.json.validator.SyncValidator;
 import io.vertx.ext.json.validator.ValidationException;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
 public class ExclusiveMinimumValidator implements SyncValidator {
   private final double minimum;
 
@@ -14,7 +16,7 @@ public class ExclusiveMinimumValidator implements SyncValidator {
   public void validate(Object value) throws ValidationException {
     if (value instanceof Number) {
       if (((Number) value).doubleValue() <= minimum) {
-        throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
+        throw NO_MATCH.createException("value should be > " + minimum, "minimum", value);
       }
     }
   }

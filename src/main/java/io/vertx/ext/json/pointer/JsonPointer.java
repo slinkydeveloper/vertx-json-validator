@@ -51,6 +51,11 @@ public interface JsonPointer {
    */
   URI buildURI();
 
+  /**
+   * Returns the underlying URI without the fragment
+   *
+   * @return
+   */
   URI getURIWithoutFragment();
 
   /**

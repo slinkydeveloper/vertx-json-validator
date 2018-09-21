@@ -1,6 +1,7 @@
 package io.vertx.ext.json.validator;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.annotations.Fluent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,7 +12,7 @@ import java.util.function.Predicate;
 @DataObject
 public class SchemaParserOptions {
 
-  private List<ValidatorFactory> additionalValidatorFactories; //TODO put
+  private List<ValidatorFactory> additionalValidatorFactories;
   private Map<String, Predicate<String>> additionalStringFormatValidators;
   private boolean applyDefault;
 
@@ -27,6 +28,28 @@ public class SchemaParserOptions {
 
   public Map<String, Predicate<String>> getAdditionalStringFormatValidators() {
     return additionalStringFormatValidators;
+  }
+
+  /**
+   * Add a validator factory that will be applied to {@link SchemaParser}
+   *
+   * @return
+   */
+  @Fluent
+  public SchemaParserOptions putAdditionalValidatorFactory(ValidatorFactory factory) {
+    this.additionalValidatorFactories.add(factory);
+    return this;
+  }
+
+  /**
+   * Add a format validator that will be applied to {@link SchemaParser}
+   *
+   * @return
+   */
+  @Fluent
+  public SchemaParserOptions putAdditionalStringFormatValidator(String formatName, Predicate<String> predicate) {
+    this.additionalStringFormatValidators.put(formatName, predicate);
+    return this;
   }
 
   public boolean isApplyDefault() {

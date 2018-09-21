@@ -59,8 +59,8 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
 
   @Override
   public Schema buildSchemaFunction(Object schema) throws URISyntaxException {
-    SchemaParser parser = OpenAPI3SchemaParser.create(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri(), new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
-    return parser.parse();
+    SchemaParser parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
+    return parser.parse(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
   }
 
   @Override

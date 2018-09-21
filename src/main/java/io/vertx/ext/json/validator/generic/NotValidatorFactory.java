@@ -1,10 +1,11 @@
 package io.vertx.ext.json.validator.generic;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
+
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 
 public class NotValidatorFactory implements ValidatorFactory {
 
@@ -22,7 +23,7 @@ public class NotValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("not");
   }
 
@@ -37,13 +38,11 @@ public class NotValidatorFactory implements ValidatorFactory {
     @SuppressWarnings("unchecked")
     @Override
     public Future validate(Object in) {
-      Future future = Future.future();
-      schema.validate(in).setHandler(ar -> {
-        if (((AsyncResult) ar).succeeded())
-          future.fail(ValidationExceptionFactory.generateNotMatchValidationException(""));
-        else future.complete();
-      });
-      return future;
+      return FutureUtils.andThen(
+          schema.validate(in),
+          res -> Future.failedFuture(NO_MATCH.createException("input should be invalid", "not", in)),
+          err -> Future.succeededFuture()
+      );
     }
   }
 

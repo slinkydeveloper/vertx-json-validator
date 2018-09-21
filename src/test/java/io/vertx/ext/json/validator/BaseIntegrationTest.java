@@ -20,6 +20,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -47,6 +49,8 @@ public abstract class BaseIntegrationTest {
 
   @Rule
   public final RunTestOnContext classContext = new RunTestOnContext(Vertx::vertx);
+
+  public static final Logger log = LoggerFactory.getLogger(BaseIntegrationTest.class);
 
   public static final int SCHEMA_SERVER_PORT = 1234;
 
@@ -146,6 +150,7 @@ public abstract class BaseIntegrationTest {
       public void handle(AsyncResult event) {
         if (event.succeeded())
           t.fail("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
+        log.debug(event.cause().toString());
         async.complete();
       }
     });

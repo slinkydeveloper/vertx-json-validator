@@ -4,6 +4,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
 public class MaxLengthValidatorFactory implements ValidatorFactory {
 
   @Override
@@ -21,7 +23,7 @@ public class MaxLengthValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public boolean canCreateValidator(JsonObject schema) {
+  public boolean canConsumeSchema(JsonObject schema) {
     return schema.containsKey("maxLength");
   }
 
@@ -36,7 +38,7 @@ public class MaxLengthValidatorFactory implements ValidatorFactory {
     public void validate(Object value) throws ValidationException {
       if (value instanceof String) {
         if (((String) value).codePointCount(0, ((String) value).length()) > maximum) {
-          throw new ValidationException(ValidationException.ErrorType.NO_MATCH); //TODO
+          throw NO_MATCH.createException("provided string should have size <= " + maximum, "maxLength", value);
         }
       }
     }
