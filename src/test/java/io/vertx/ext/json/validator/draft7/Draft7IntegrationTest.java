@@ -1,4 +1,4 @@
-package io.vertx.ext.json.validator.oas3;
+package io.vertx.ext.json.validator.draft7;
 
 import io.vertx.ext.json.validator.BaseIntegrationTest;
 import io.vertx.ext.json.validator.Schema;
@@ -16,21 +16,27 @@ import java.util.List;
 /**
  * @author Francesco Guardiani @slinkydeveloper
  */
-public class OAS3IntegrationTest extends BaseIntegrationTest {
-  public OAS3IntegrationTest(Object testName, Object testFileName, Object testObject) {
+public class Draft7IntegrationTest extends BaseIntegrationTest {
+  public Draft7IntegrationTest(Object testName, Object testFileName, Object testObject) {
     super(testName, testFileName, testObject);
   }
 
   @Parameterized.Parameters(name = "{0}")
   public static Iterable<Object[]> data() throws Exception {
     List<String> tests = Lists.newArrayList(
+        "additionalItems",
         "additionalProperties",
         "allOf",
         "anyOf",
-//        "discriminator",
+        "boolean_schema",
+        "const",
+        "contains",
+        "definitions",
+        "dependencies",
         "enum",
         "exclusiveMaximum",
         "exclusiveMinimum",
+        "if-then-else",
         "format",
         "items",
         "maximum",
@@ -43,17 +49,18 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
         "minProperties",
         "multipleOf",
         "not",
-        "nullable",
         "oneOf",
         "pattern",
+        "patternProperties",
         "properties",
+        "propertyNames",
         "ref",
         "refRemote",
         "required",
         "type",
         "uniqueItems"
     );
-    return BaseIntegrationTest.buildParameters(tests, Paths.get("src", "test", "resources", "tck", "openapi3"));
+    return BaseIntegrationTest.buildParameters(tests, Paths.get("src", "test", "resources", "tck", "draft7"));
   }
 
 
@@ -65,11 +72,11 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
 
   @Override
   public String getSchemasPath() {
-    return "src/test/resources/tck/openapi3";
+    return "src/test/resources/tck/draft7";
   }
 
   @Override
   public String getRemotesPath() {
-    return "src/test/resources/tck/openapi3/remotes";
+    return "src/test/resources/tck/draft7/remotes";
   }
 }

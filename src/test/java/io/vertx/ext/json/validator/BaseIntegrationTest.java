@@ -10,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
+import io.vertx.ext.unit.junit.Timeout;
 import io.vertx.ext.unit.junit.VertxUnitRunnerWithParametersFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
@@ -27,7 +28,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Objects;
@@ -44,8 +45,8 @@ public abstract class BaseIntegrationTest {
   @Rule
   public final JUnitSoftAssertions t = new JUnitSoftAssertions();
 
-  //@Rule
-  //public final Timeout timeout = Timeout.seconds(2);
+  @Rule
+  public final Timeout timeout = Timeout.seconds(2);
 
   @Rule
   public final RunTestOnContext classContext = new RunTestOnContext(Vertx::vertx);
@@ -60,9 +61,9 @@ public abstract class BaseIntegrationTest {
   public String testFileName;
   JsonObject test;
 
-  public static Iterable<Object[]> buildParameters(List<String> tests) {
+  public static Iterable<Object[]> buildParameters(List<String> tests, Path tckPath) {
     return tests.stream()
-        .map(f -> new AbstractMap.SimpleImmutableEntry<>(f, Paths.get("src", "test", "resources", "tck", "openapi3", f + ".json"))) //TODO
+        .map(f -> new AbstractMap.SimpleImmutableEntry<>(f, tckPath.resolve(f + ".json")))
         .map(p -> {
           try {
             return new AbstractMap.SimpleImmutableEntry<>(p.getKey(), Files.readAllLines(p.getValue(), Charset.forName("UTF8")));
