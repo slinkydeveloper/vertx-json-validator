@@ -1,9 +1,11 @@
 package io.vertx.ext.json.pointer;
 
+import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.impl.JsonPointerIteratorImpl;
 
+@VertxGen
 public interface JsonPointerIterator {
 
   boolean isObject();

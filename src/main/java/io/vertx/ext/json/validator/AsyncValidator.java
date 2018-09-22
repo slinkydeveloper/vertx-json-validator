@@ -1,8 +1,10 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 
 @FunctionalInterface
+@VertxGen
 public interface AsyncValidator extends Validator {
   @Override
   default boolean isAsync() {

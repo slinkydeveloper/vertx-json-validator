@@ -1,5 +1,8 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
+
+@VertxGen
 public enum SchemaErrorType {
   /**
    * Keyword has wrong type or not valid value

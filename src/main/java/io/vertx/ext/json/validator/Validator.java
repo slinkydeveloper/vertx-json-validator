@@ -1,5 +1,8 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
+
+@VertxGen
 public interface Validator {
   /**
    * Returns true if this validator is an instance of {@link AsyncValidator}

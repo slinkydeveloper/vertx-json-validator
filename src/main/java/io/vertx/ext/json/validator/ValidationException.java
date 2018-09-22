@@ -1,6 +1,7 @@
 package io.vertx.ext.json.validator;
 
 import io.vertx.codegen.annotations.Nullable;
+import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.VertxException;
 import io.vertx.ext.json.pointer.JsonPointer;
 
@@ -9,6 +10,7 @@ import io.vertx.ext.json.pointer.JsonPointer;
  *
  * @author Francesco Guardiani @slinkydeveloper
  */
+@VertxGen
 public class ValidationException extends VertxException {
 
   final private String keyword;

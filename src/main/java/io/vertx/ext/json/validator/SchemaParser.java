@@ -1,9 +1,11 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.ext.json.pointer.JsonPointer;
 
 import java.net.URI;
 
+@VertxGen
 public interface SchemaParser {
 
   /**

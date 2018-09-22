@@ -1,10 +1,14 @@
 package io.vertx.ext.json.validator.openapi3;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.validator.Schema;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.SchemaRouter;
 import io.vertx.ext.json.validator.ValidatorFactory;
 import io.vertx.ext.json.validator.generic.*;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,5 +56,18 @@ public class OpenAPI3SchemaParser extends BaseSchemaParser {
    */
   public static OpenAPI3SchemaParser create(SchemaParserOptions options, SchemaRouter router) {
     return new OpenAPI3SchemaParser(options, router);
+  }
+
+  /**
+   * Parse a openapi 3 schema
+   *
+   * @param vertx this vertx instance
+   * @param schema parsed json schema
+   * @param scope scope of json schema
+   * @return a new instance of Draft7SchemaParser
+   * @throws io.vertx.ext.json.validator.SchemaException if schema is invalid
+   */
+  public static Schema parse(Vertx vertx, JsonObject schema, URI scope) {
+    return new OpenAPI3SchemaParser(new SchemaParserOptions(), SchemaRouter.create(vertx)).parse(schema, scope);
   }
 }

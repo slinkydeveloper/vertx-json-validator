@@ -1,5 +1,6 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.file.FileSystem;
@@ -7,6 +8,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
 
+@VertxGen
 public interface SchemaRouter {
 
   /**

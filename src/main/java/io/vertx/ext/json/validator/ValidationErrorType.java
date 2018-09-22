@@ -1,8 +1,11 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
+
 /**
  * All errors type. You can get this values using {@link ValidationException#errorType()}
  */
+@VertxGen
 public enum ValidationErrorType {
   /**
    * The input doesn't match a specific keyword rule

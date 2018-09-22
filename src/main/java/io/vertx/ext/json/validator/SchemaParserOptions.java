@@ -2,6 +2,7 @@ package io.vertx.ext.json.validator;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.VertxGen;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,17 +10,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+@VertxGen
 @DataObject
 public class SchemaParserOptions {
 
   private List<ValidatorFactory> additionalValidatorFactories;
   private Map<String, Predicate<String>> additionalStringFormatValidators;
-  private boolean applyDefault;
 
   public SchemaParserOptions() {
     this.additionalValidatorFactories = new ArrayList<>();
     this.additionalStringFormatValidators = new HashMap<>();
-    this.applyDefault = false;
   }
 
   public List<ValidatorFactory> getAdditionalValidatorFactories() {
@@ -52,11 +52,4 @@ public class SchemaParserOptions {
     return this;
   }
 
-  public boolean isApplyDefault() {
-    return applyDefault;
-  }
-
-  public void setApplyDefault(boolean applyDefault) {
-    this.applyDefault = applyDefault;
-  }
 }

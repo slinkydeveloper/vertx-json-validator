@@ -1,5 +1,6 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.VertxException;
 
 /**
@@ -7,6 +8,7 @@ import io.vertx.core.VertxException;
  *
  * @author slinkydeveloper
  */
+@VertxGen
 public class SchemaException extends VertxException {
 
   private Object schema;

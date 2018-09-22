@@ -1,6 +1,9 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
+
 @FunctionalInterface
+@VertxGen
 public interface SyncValidator extends Validator {
   @Override
   default boolean isAsync() {
