@@ -44,6 +44,8 @@ public class Draft7SchemaParser extends BaseSchemaParser {
     factories.add(new DependenciesValidatorFactory());
     factories.add(new ExclusiveMaximumValidatorFactory());
     factories.add(new ExclusiveMinimumValidatorFactory());
+    factories.add(new IfThenElseValidatorFactory());
+    factories.add(new PropertyNamesValidatorFactory());
     return factories;
   }
 

@@ -6,6 +6,7 @@ import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
@@ -35,6 +36,7 @@ public abstract class BaseSchemaParser implements SchemaParser {
   @Override
   public Schema parse(Object jsonSchema, JsonPointer scope) {
     if (!scope.getURIWithoutFragment().isAbsolute()) throw new IllegalArgumentException("The scope provided must be absolute!");
+    if (jsonSchema instanceof Map) jsonSchema = new JsonObject((Map<String, Object>) jsonSchema);
     if (jsonSchema instanceof JsonObject) {
       JsonObject json = (JsonObject) jsonSchema;
       ConcurrentSkipListSet<Validator> validators = new ConcurrentSkipListSet<>(ValidatorPriority.VALIDATOR_COMPARATOR);

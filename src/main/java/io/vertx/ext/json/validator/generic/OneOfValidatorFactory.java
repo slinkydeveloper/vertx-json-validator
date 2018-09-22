@@ -22,7 +22,7 @@ public class OneOfValidatorFactory implements ValidatorFactory {
       JsonPointer basePointer = scope.append("oneOf");
       List<Schema> parsedSchemas = new ArrayList<>();
       for (int i = 0; i < oneOfSchemas.size(); i++) {
-        parsedSchemas.add(parser.parse(oneOfSchemas.getJsonObject(i), basePointer.copy().append(Integer.toString(i))));
+        parsedSchemas.add(parser.parse(oneOfSchemas.getValue(i), basePointer.copy().append(Integer.toString(i))));
       }
       return new OneOfValidator(parsedSchemas);
     } catch (ClassCastException e) {

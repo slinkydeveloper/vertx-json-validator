@@ -151,7 +151,8 @@ public abstract class BaseIntegrationTest {
       public void handle(AsyncResult event) {
         if (event.succeeded())
           t.fail("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
-        log.debug(event.cause().toString());
+        else
+          log.debug(event.cause().toString());
         async.complete();
       }
     });

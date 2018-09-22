@@ -5,6 +5,7 @@ import io.vertx.core.Future;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
@@ -28,7 +29,7 @@ public class SchemaRouterImpl implements SchemaRouter {
   }
 
   @Override
-  public Schema resolveCachedSchema(JsonPointer refPointer, JsonPointer scope) {
+  public Schema resolveCachedSchema(JsonPointer refPointer, JsonPointer scope, final SchemaParser parser) {
     URI refURI = refPointer.getURIWithoutFragment();
     RouterNode node;
     if (!refURI.isAbsolute()) {
@@ -46,23 +47,34 @@ public class SchemaRouterImpl implements SchemaRouter {
       node = absolutePaths.get(refURI);
     }
     if (node == null) return null;
-    node = (RouterNode) refPointer.query(new RouterNodeJsonPointerIterator(node));
-    if (node == null) return null;
-    else return node.getThisSchema();
+    RouterNode resultNode = (RouterNode) refPointer.query(new RouterNodeJsonPointerIterator(node));
+    if (resultNode == null && node.getThisSchema() instanceof SchemaImpl) {
+      // Maybe the schema that we are searching was not parsed!
+      JsonObject baseSchemaToQuery = ((SchemaImpl)node.getThisSchema()).getSchema();
+      Object queryResult = refPointer.queryJson(baseSchemaToQuery);
+      if (queryResult == null) return null;
+      return parser.parse(queryResult, URIUtils.replaceFragment(node.getThisSchema().getScope().getURIWithoutFragment(), refPointer.build()));
+    }
+    if (resultNode == null) return null;
+    else return resultNode.getThisSchema();
   }
 
   @Override
   public Future<Schema> resolveRef(final JsonPointer pointer, final JsonPointer scope, final SchemaParser schemaParser) {
-    Schema cachedSchema = this.resolveCachedSchema(pointer, scope);
-    if (cachedSchema == null) {
-      URI u = pointer.getURIWithoutFragment();
-      if (!isSchemaAlreadySolving(u)) {
-        triggerExternalRefSolving(pointer, scope, schemaParser);
-      }
-      Future<URI> fut = Future.future();
-      subscribeSchemaSolvedFuture(u, fut);
-      return fut.compose(uri -> Future.succeededFuture(this.resolveCachedSchema(pointer, JsonPointer.fromURI(uri))));
-    } else return Future.succeededFuture(cachedSchema);
+    try {
+      Schema cachedSchema = this.resolveCachedSchema(pointer, scope, schemaParser);
+      if (cachedSchema == null) {
+        URI u = pointer.getURIWithoutFragment();
+        if (!isSchemaAlreadySolving(u)) {
+          triggerExternalRefSolving(pointer, scope, schemaParser);
+        }
+        Future<URI> fut = Future.future();
+        subscribeSchemaSolvedFuture(u, fut);
+        return fut.compose(uri -> Future.succeededFuture(this.resolveCachedSchema(pointer, JsonPointer.fromURI(uri), schemaParser)));
+      } else return Future.succeededFuture(cachedSchema);
+    } catch (SchemaException e) {
+      return Future.failedFuture(e);
+    }
   }
 
   @Override

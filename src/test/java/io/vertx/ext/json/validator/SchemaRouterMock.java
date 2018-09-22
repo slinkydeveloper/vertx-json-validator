@@ -19,7 +19,7 @@ public class SchemaRouterMock implements SchemaRouter {
   }
 
   @Override
-  public Schema resolveCachedSchema(JsonPointer pointer, JsonPointer scope) {
+  public Schema resolveCachedSchema(JsonPointer refPointer, JsonPointer schemaScope, SchemaParser parser) {
     return null;
   }
 

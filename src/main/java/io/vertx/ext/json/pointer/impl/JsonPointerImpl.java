@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  */
 public class JsonPointerImpl implements JsonPointer {
 
-  final public static Pattern VALID_POINTER_PATTERN = Pattern.compile("([0-9]*|-)(\\/([\\u0000-\\u002E]|[\\u0030-\\u007D]|[\\u007F-\\u10FFFF]|\\~0|\\~1)*)*");
+  final public static Pattern VALID_POINTER_PATTERN = Pattern.compile("^(/(([^/~])|(~[01]))*)*$");
 
   URI startingUri;
 

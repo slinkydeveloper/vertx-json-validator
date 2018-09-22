@@ -109,26 +109,27 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
       this.additionalPropertiesSchema = additionalPropertiesSchema;
     }
 
-    private Schema searchPropSchema(String key) {
-      if (properties != null && properties.containsKey(key)) return properties.get(key);
-      else {
-        if (patternProperties != null)
-          for (Map.Entry<Pattern, Schema> patternProperty : patternProperties.entrySet()) {
-            if (patternProperty.getKey().matcher(key).lookingAt()) return patternProperty.getValue();
-          }
-        return null;
-      }
-    }
-
     @Override
     public Future validate(Object in) {
       if (in instanceof JsonObject) {
         JsonObject obj = (JsonObject) in;
         List<Future> futs = new ArrayList<>();
         for (Map.Entry<String, Object> entry : obj) {
-          Schema s = searchPropSchema(entry.getKey());
-          if (s != null) futs.add(s.validate(entry.getValue()));
-          else {
+          boolean found = false;
+          String key = entry.getKey();
+          if (properties != null && properties.containsKey(key)) {
+            futs.add(properties.get(key).validate(entry.getValue()));
+            found = true;
+          }
+          if (patternProperties != null) {
+            for (Map.Entry<Pattern, Schema> patternProperty : patternProperties.entrySet()) {
+              if (patternProperty.getKey().matcher(key).find()) {
+                futs.add(patternProperty.getValue().validate(entry.getValue()));
+                found = true;
+              }
+            }
+          }
+          if (!found) {
             if (allowAdditionalProperties) {
               if (additionalPropertiesSchema != null) futs.add(additionalPropertiesSchema.validate(entry.getValue()).recover(t -> Future.failedFuture(NO_MATCH.createException("additionalProperties schema should match", (Throwable) t, "additionalProperties", in))));
             } else {

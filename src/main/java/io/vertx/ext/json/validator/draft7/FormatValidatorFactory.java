@@ -1,5 +1,6 @@
 package io.vertx.ext.json.validator.draft7;
 
+import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
 import io.vertx.ext.json.validator.generic.BaseFormatValidatorFactory;
 import io.vertx.ext.json.validator.generic.RegularExpressions;
 
@@ -21,6 +22,8 @@ public class FormatValidatorFactory extends BaseFormatValidatorFactory {
     predicates.put("uri", URI_VALIDATOR);
     predicates.put("uri-reference", URI_REFERENCE_VALIDATOR);
     predicates.put("regex", REGEX_VALIDATOR);
+    predicates.put("json-pointer", createPredicateFromPattern(JsonPointerImpl.VALID_POINTER_PATTERN));
+    predicates.put("relative-json-pointer", createPredicateFromPattern(RegularExpressions.RELATIVE_JSON_POINTER));
     return predicates;
   }
 }

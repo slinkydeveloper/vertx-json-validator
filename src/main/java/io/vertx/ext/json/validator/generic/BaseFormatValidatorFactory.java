@@ -42,6 +42,10 @@ public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
     }
   };
 
+  protected final static Predicate<String> IDN_EMAIL_VALIDATOR = in -> {
+return true;
+  };
+
   class FormatValidator implements SyncValidator {
 
     Predicate<String> validator;

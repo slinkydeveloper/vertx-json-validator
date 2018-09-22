@@ -12,7 +12,7 @@ public class NotValidatorFactory implements ValidatorFactory {
   @Override
   public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
     try {
-      Object notSchema = schema.getJsonObject("not");
+      Object notSchema = schema.getValue("not");
       Schema parsedSchema = parser.parse(notSchema, scope.append("not"));
       return new NotValidator(parsedSchema);
     } catch (ClassCastException e) {

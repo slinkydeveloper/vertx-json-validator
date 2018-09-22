@@ -60,7 +60,7 @@ public class RefSchema extends SchemaImpl {
       return FutureUtils.andThen(
           schemaParser.getSchemaRouter().resolveRef(refPointer, this.getScope(), schemaParser),
           s -> {
-            if (s == null) return Future.failedFuture(REF_ERROR.createException("Canno resolve reference " + this.refPointer.buildURI(), "$ref", in));
+            if (s == null) return Future.failedFuture(REF_ERROR.createException("Cannot resolve reference " + this.refPointer.buildURI(), "$ref", in));
             registerCachedSchema(s);
             if (s instanceof RefSchema) {
               // We need to call solved schema validate to solve upper ref, then we can merge validators
