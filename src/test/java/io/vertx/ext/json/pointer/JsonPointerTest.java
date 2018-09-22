@@ -108,7 +108,6 @@ public class JsonPointerTest {
         ).put("helo",
             new JsonObject().put("world", "wrong").put("worl", "wrong")
         ));
-    assertEquals(1, JsonPointer.from("1/hello/world").queryJson(array));
     assertEquals(1, JsonPointer.from("/1/hello/world").queryJson(array));
     assertEquals(1, JsonPointer.fromURI(URI.create("#1/hello/world")).queryJson(array));
   }
@@ -252,8 +251,8 @@ public class JsonPointerTest {
     array.add(obj.copy());
     array.add(obj.copy());
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
-    assertTrue(JsonPointer.from("0/hello/world/francesco").writeArray(array, toInsert));
-    assertEquals(toInsert, JsonPointer.from("0/hello/world/francesco").queryJson(array));
+    assertTrue(JsonPointer.from("/0/hello/world/francesco").writeArray(array, toInsert));
+    assertEquals(toInsert, JsonPointer.from("/0/hello/world/francesco").queryJson(array));
     assertNotEquals(array.getValue(0), array.getValue(1));
   }
 
@@ -269,8 +268,8 @@ public class JsonPointerTest {
     array.add(obj.copy());
     array.add(obj.copy());
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
-    assertTrue(JsonPointer.from("-").writeArray(array, toInsert));
-    assertEquals(toInsert, JsonPointer.from("2").queryJson(array));
+    assertTrue(JsonPointer.from("/-").writeArray(array, toInsert));
+    assertEquals(toInsert, JsonPointer.from("/2").queryJson(array));
     assertEquals(array.getValue(0), array.getValue(1));
   }
 
@@ -286,8 +285,8 @@ public class JsonPointerTest {
     array.add(obj.copy());
     array.add(obj.copy());
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
-    assertTrue(JsonPointer.from("0").writeArray(array, toInsert));
-    assertEquals(toInsert, JsonPointer.from("0").queryJson(array));
+    assertTrue(JsonPointer.from("/0").writeArray(array, toInsert));
+    assertEquals(toInsert, JsonPointer.from("/0").queryJson(array));
     assertNotEquals(array.getValue(0), array.getValue(1));
   }
 

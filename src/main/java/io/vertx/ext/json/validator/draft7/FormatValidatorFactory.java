@@ -24,6 +24,8 @@ public class FormatValidatorFactory extends BaseFormatValidatorFactory {
     predicates.put("regex", REGEX_VALIDATOR);
     predicates.put("json-pointer", createPredicateFromPattern(JsonPointerImpl.VALID_POINTER_PATTERN));
     predicates.put("relative-json-pointer", createPredicateFromPattern(RegularExpressions.RELATIVE_JSON_POINTER));
+    predicates.put("uri-template", createPredicateFromPattern(RegularExpressions.URI_TEMPLATE));
+    predicates.put("time", createPredicateFromPattern(RegularExpressions.TIME));
     return predicates;
   }
 }
