@@ -44,7 +44,7 @@ public class IfThenElseValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public Future validate(Object in) {
+    public Future<Void> validate(Object in) {
       return FutureUtils.andThen(
           this.condition.validate(in),
           o -> (this.thenBranch != null) ? this.thenBranch.validate(in): Future.succeededFuture(),

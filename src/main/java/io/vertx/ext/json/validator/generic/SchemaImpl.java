@@ -38,7 +38,7 @@ public class SchemaImpl implements Schema {
   }
 
   @Override
-  public Future validate(Object in) {
+  public Future<Void> validate(Object in) {
     if (log.isDebugEnabled()) log.debug("Starting validation for schema {} and input ", schema, in);
     List<Future> futures = new ArrayList<>();
     for (Validator validator : validators) {

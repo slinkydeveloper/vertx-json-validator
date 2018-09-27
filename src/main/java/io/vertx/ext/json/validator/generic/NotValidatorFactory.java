@@ -37,7 +37,7 @@ public class NotValidatorFactory implements ValidatorFactory {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Future validate(Object in) {
+    public Future<Void> validate(Object in) {
       return FutureUtils.andThen(
           schema.validate(in),
           res -> Future.failedFuture(NO_MATCH.createException("input should be invalid", "not", in)),

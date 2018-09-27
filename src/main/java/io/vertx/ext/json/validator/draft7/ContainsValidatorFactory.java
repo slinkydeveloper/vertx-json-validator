@@ -37,7 +37,7 @@ public class ContainsValidatorFactory implements ValidatorFactory {
     public ContainsValidator(Schema schema) { this.schema = schema; }
 
     @Override
-    public Future validate(Object in) {
+    public Future<Void> validate(Object in) {
       if (in instanceof JsonArray){
         if (((JsonArray)in).isEmpty()) return Future.failedFuture(ValidationErrorType.NO_MATCH.createException("provided array should not be empty", "contains", in));
         else return FutureUtils.andThen(

@@ -36,7 +36,7 @@ public class PropertyNamesValidatorFactory implements ValidatorFactory {
     public PropertyNamesValidator(Schema schema) { this.schema = schema; }
 
     @Override
-    public Future validate(Object in) {
+    public Future<Void> validate(Object in) {
       if (in instanceof JsonObject){
         return FutureUtils.andThen(
             CompositeFuture.all(

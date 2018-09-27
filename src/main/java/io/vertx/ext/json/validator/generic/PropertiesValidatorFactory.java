@@ -110,7 +110,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public Future validate(Object in) {
+    public Future<Void> validate(Object in) {
       if (in instanceof JsonObject) {
         JsonObject obj = (JsonObject) in;
         List<Future> futs = new ArrayList<>();

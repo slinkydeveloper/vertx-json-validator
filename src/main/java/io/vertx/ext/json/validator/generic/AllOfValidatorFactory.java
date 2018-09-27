@@ -49,7 +49,7 @@ public class AllOfValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public Future validate(Object in) {
+    public Future<Void> validate(Object in) {
       return FutureUtils.andThen(
           CompositeFuture.all(Arrays.stream(schemas).map(s -> s.validate(in)).collect(Collectors.toList())),
           res -> Future.succeededFuture(),

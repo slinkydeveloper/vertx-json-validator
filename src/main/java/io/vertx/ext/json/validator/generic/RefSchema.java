@@ -55,7 +55,7 @@ public class RefSchema extends SchemaImpl {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Future validate(Object in) {
+  public Future<Void> validate(Object in) {
     if (cachedSchema == null) {
       return FutureUtils.andThen(
           schemaParser.getSchemaRouter().resolveRef(refPointer, this.getScope(), schemaParser),

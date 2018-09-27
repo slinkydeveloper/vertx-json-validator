@@ -47,7 +47,7 @@ public class AnyOfValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public Future validate(Object in) {
+    public Future<Void> validate(Object in) {
       return CompositeFuture.any(
           Arrays.stream(this.schemas)
               .map(s -> s.validate(in))

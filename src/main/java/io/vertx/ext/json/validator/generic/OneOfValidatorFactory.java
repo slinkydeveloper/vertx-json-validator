@@ -45,10 +45,9 @@ public class OneOfValidatorFactory implements ValidatorFactory {
       this.schemas = schemas.toArray(new Schema[schemas.size()]);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public Future validate(Object in) {
-      return FutureUtils.oneOf(Arrays.stream(schemas).map(s -> s.validate(in)).map(f -> (Future<Object>)f).collect(Collectors.toList()));
+    public Future<Void> validate(Object in) {
+      return FutureUtils.oneOf(Arrays.stream(schemas).map(s -> s.validate(in)).collect(Collectors.toList()));
     }
   }
 

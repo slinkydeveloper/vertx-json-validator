@@ -22,5 +22,5 @@ public interface AsyncValidator extends Validator {
    * @param in
    * @return
    */
-  Future validate(Object in);
+  Future<Void> validate(Object in);
 }

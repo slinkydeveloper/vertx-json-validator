@@ -38,9 +38,8 @@ public class ItemsValidatorFactory implements ValidatorFactory {
       this.schema = schema;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public Future validate(Object in) {
+    public Future<Void> validate(Object in) {
       if (in instanceof JsonArray) {
         JsonArray arr = (JsonArray) in;
         List<Future> futs = new ArrayList<>();

@@ -46,7 +46,7 @@ public class ItemsValidatorFactory extends io.vertx.ext.json.validator.generic.I
     }
 
     @Override
-    public Future validate(Object in) {
+    public Future<Void> validate(Object in) {
       if (in instanceof JsonArray) {
         List<Future> futures = new ArrayList<>();
         JsonArray arr = (JsonArray) in;
