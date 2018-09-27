@@ -142,6 +142,12 @@ public class JsonPointerImpl implements JsonPointer {
   }
 
   @Override
+  public JsonPointer parent() {
+    if (!this.isRootPointer()) decodedTokens.remove(decodedTokens.size() - 1);
+    return this;
+  }
+
+  @Override
   public Object query(JsonPointerIterator input) {
     // I should threat this as a special condition because the empty string can be a json obj key!
     if (isRootPointer())

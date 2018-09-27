@@ -79,6 +79,14 @@ public interface JsonPointer {
   JsonPointer append(List<String> paths);
 
   /**
+   * Remove last append
+   *
+   * @return
+   */
+  @Fluent
+  JsonPointer parent();
+
+  /**
    * Query the provided readable json pointer iterator. <br/>
    * Note: if this pointer is a root pointer, this function returns the provided object
    *
