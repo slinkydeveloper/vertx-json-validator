@@ -43,18 +43,15 @@ public class SchemaImpl implements Schema {
     List<Future> futures = new ArrayList<>();
     for (Validator validator : validators) {
       if (validator.isAsync()) {
-        Future asyncValidate = ((AsyncValidator) validator).validate(in);
-        asyncValidate = asyncValidate.recover(t -> {
-            if (t instanceof ValidationException) {
-              ValidationException e = (ValidationException)t;
-              e.setSchema(this);
-              e.setScope(this.scope);
-              return Future.failedFuture(e);
-            } else {
-              return Future.failedFuture(NO_MATCH.createException("Error while validating", (Throwable) t, null, in));
-            }
-        });
-        futures.add(asyncValidate);
+        Future<Void> asyncValidate = ((AsyncValidator) validator).validate(in);
+        if (asyncValidate.isComplete()) {
+          if (asyncValidate.failed()) {
+            return fillException(asyncValidate.cause(), in);
+          }
+        } else {
+          asyncValidate = asyncValidate.recover(t -> fillException(t, in));
+          futures.add(asyncValidate);
+        }
       } else try {
         ((SyncValidator) validator).validate(in);
       } catch (ValidationException e) {
@@ -63,10 +60,25 @@ public class SchemaImpl implements Schema {
         return Future.failedFuture(e);
       }
     }
-    return CompositeFuture.all(futures).compose(cf -> Future.succeededFuture());
+    if (!futures.isEmpty()) {
+      return CompositeFuture.all(futures).compose(cf -> Future.succeededFuture());
+    } else {
+      return Future.succeededFuture();
+    }
   }
 
   public ConcurrentSkipListSet<Validator> getValidators() {
     return validators;
+  }
+
+  private Future<Void> fillException(Throwable e, Object in) {
+    if (e instanceof ValidationException) {
+      ValidationException ve = (ValidationException) e;
+      ve.setSchema(this);
+      ve.setScope(this.scope);
+      return Future.failedFuture(ve);
+    } else {
+      return Future.failedFuture(NO_MATCH.createException("Error while validating", (Throwable) e, null, in));
+    }
   }
 }

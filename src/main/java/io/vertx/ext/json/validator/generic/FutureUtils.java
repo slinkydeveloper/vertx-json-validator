@@ -1,6 +1,5 @@
 package io.vertx.ext.json.validator.generic;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 
 import java.util.List;
@@ -20,7 +19,7 @@ public class FutureUtils {
     for (int i = 0; i < len; i++) {
       results.get(i).setHandler(ar -> {
         int p = processed.incrementAndGet();
-        if (((AsyncResult) ar).succeeded()) {
+        if (ar.succeeded()) {
           if (atLeastOneOk.get())
             res.tryFail(new IllegalStateException("One future was already completed"));
           else {

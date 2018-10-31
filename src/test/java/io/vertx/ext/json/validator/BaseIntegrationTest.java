@@ -1,7 +1,5 @@
 package io.vertx.ext.json.validator;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -134,27 +132,21 @@ public abstract class BaseIntegrationTest {
 
   private void validateSuccess(Schema schema, Object obj, String testCaseName, TestContext context) {
     Async async = context.async();
-    schema.validate(obj).setHandler(new Handler<AsyncResult>() {
-      @Override
-      public void handle(AsyncResult event) {
-        if (event.failed())
-          t.fail(String.format("\"%s\" -> \"%s\" should be valid", testName, testCaseName), event.cause());
-        async.complete();
-      }
+    schema.validate(obj).setHandler(event -> {
+      if (event.failed())
+        t.fail(String.format("\"%s\" -> \"%s\" should be valid", testName, testCaseName), event.cause());
+      async.complete();
     });
   }
 
   private void validateFailure(Schema schema, Object obj, String testCaseName, TestContext context) {
     Async async = context.async();
-    schema.validate(obj).setHandler(new Handler<AsyncResult>() {
-      @Override
-      public void handle(AsyncResult event) {
-        if (event.succeeded())
-          t.fail("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
-        else
-          log.debug(event.cause().toString());
-        async.complete();
-      }
+    schema.validate(obj).setHandler(event -> {
+      if (event.succeeded())
+        t.fail("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
+      else
+        log.debug(event.cause().toString());
+      async.complete();
     });
   }
 
