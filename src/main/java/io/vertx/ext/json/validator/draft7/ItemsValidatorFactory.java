@@ -51,12 +51,20 @@ public class ItemsValidatorFactory extends io.vertx.ext.json.validator.generic.I
         List<Future> futures = new ArrayList<>();
         JsonArray arr = (JsonArray) in;
         for (int i = 0; i < arr.size(); i++) {
+          Future<Void> fut;
           if (i >= schemas.length) {
             if (additionalItems != null)
-              futures.add(additionalItems.validate(arr.getValue(i)));
-          } else futures.add(schemas[i].validate(arr.getValue(i)));
+              fut = additionalItems.validate(arr.getValue(i));
+            else continue;
+          } else fut = schemas[i].validate(arr.getValue(i));
+          if (fut.isComplete()) {
+            if (fut.failed()) return Future.failedFuture(fut.cause());
+          } else {
+            futures.add(fut);
+          }
         }
-        return CompositeFuture.all(futures).compose(cf -> Future.succeededFuture());
+        if (futures.isEmpty()) return Future.succeededFuture();
+        else return CompositeFuture.all(futures).compose(cf -> Future.succeededFuture());
       } else return Future.succeededFuture();
     }
   }

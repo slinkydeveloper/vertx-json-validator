@@ -161,7 +161,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
   }
 
   private Future<Void> fillAdditionalPropertyException(Throwable t, Object in) {
-    return Future.failedFuture(NO_MATCH.createException("additionalProperties schema should match", (Throwable) t, "additionalProperties", in));
+    return Future.failedFuture(NO_MATCH.createException("additionalProperties schema should match", t, "additionalProperties", in));
   }
 
 }
