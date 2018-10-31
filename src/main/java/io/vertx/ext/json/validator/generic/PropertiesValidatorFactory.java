@@ -118,28 +118,50 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
           boolean found = false;
           String key = entry.getKey();
           if (properties != null && properties.containsKey(key)) {
-            futs.add(properties.get(key).validate(entry.getValue()));
+            Future<Void> propFut = properties.get(key).validate(entry.getValue());
+            if (propFut.isComplete()) {
+              if (propFut.failed()) return Future.failedFuture(propFut.cause());
+            } else {
+              futs.add(propFut);
+            }
             found = true;
           }
           if (patternProperties != null) {
             for (Map.Entry<Pattern, Schema> patternProperty : patternProperties.entrySet()) {
               if (patternProperty.getKey().matcher(key).find()) {
-                futs.add(patternProperty.getValue().validate(entry.getValue()));
+                Future<Void> patternPropFut = patternProperty.getValue().validate(entry.getValue());
+                if (patternPropFut.isComplete()) {
+                  if (patternPropFut.failed()) return Future.failedFuture(patternPropFut.cause());
+                } else {
+                  futs.add(patternPropFut);
+                }
                 found = true;
               }
             }
           }
           if (!found) {
             if (allowAdditionalProperties) {
-              if (additionalPropertiesSchema != null) futs.add(additionalPropertiesSchema.validate(entry.getValue()).recover(t -> Future.failedFuture(NO_MATCH.createException("additionalProperties schema should match", (Throwable) t, "additionalProperties", in))));
+              if (additionalPropertiesSchema != null) {
+                Future<Void> additionalPropFut = additionalPropertiesSchema.validate(entry.getValue());
+                if (additionalPropFut.isComplete()) {
+                  if (additionalPropFut.failed()) return fillAdditionalPropertyException(additionalPropFut.cause(), in);
+                } else {
+                  futs.add(additionalPropFut.recover(t -> fillAdditionalPropertyException(t, in)));
+                }
+              }
             } else {
               return Future.failedFuture(NO_MATCH.createException("provided object should not contain additional properties", "additionalProperties", in));
             }
           }
         }
-        return CompositeFuture.all(futs).compose(cf -> Future.succeededFuture());
+        if (futs.isEmpty()) return Future.succeededFuture();
+        else return CompositeFuture.all(futs).compose(cf -> Future.succeededFuture());
       } else return Future.succeededFuture();
     }
+  }
+
+  private Future<Void> fillAdditionalPropertyException(Throwable t, Object in) {
+    return Future.failedFuture(NO_MATCH.createException("additionalProperties schema should match", (Throwable) t, "additionalProperties", in));
   }
 
 }

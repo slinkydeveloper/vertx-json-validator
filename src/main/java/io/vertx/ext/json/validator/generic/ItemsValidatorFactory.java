@@ -44,9 +44,17 @@ public class ItemsValidatorFactory implements ValidatorFactory {
         JsonArray arr = (JsonArray) in;
         List<Future> futs = new ArrayList<>();
         for (Object v : arr) {
-          futs.add(schema.validate(v));
+          Future<Void> f = schema.validate(v);
+          if (f.isComplete()) {
+            if (f.failed()) return Future.failedFuture(f.cause());
+          } else {
+            futs.add(f);
+          }
         }
-        return CompositeFuture.all(futs).compose(cf -> Future.succeededFuture());
+        if (futs.isEmpty())
+          return Future.succeededFuture();
+        else
+          return CompositeFuture.all(futs).compose(cf -> Future.succeededFuture());
       } else return Future.succeededFuture();
     }
   }
