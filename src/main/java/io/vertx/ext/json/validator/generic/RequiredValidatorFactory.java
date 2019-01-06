@@ -13,7 +13,7 @@ import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 public class RequiredValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator validator) {
     try {
       JsonArray keys = (JsonArray) schema.getValue("required");
       return new RequiredValidator(new HashSet(keys.getList()));
@@ -29,7 +29,7 @@ public class RequiredValidatorFactory implements ValidatorFactory {
     return schema.containsKey("required");
   }
 
-  public class RequiredValidator implements SyncValidator {
+  public class RequiredValidator extends BaseSyncValidator {
     private final Set<String> requiredKeys;
 
     public RequiredValidator(Set<String> requiredKeys) {
@@ -37,11 +37,11 @@ public class RequiredValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (value instanceof JsonObject) {
-        JsonObject obj = (JsonObject) value;
+    public void validateSync(Object in) throws ValidationException {
+      if (in instanceof JsonObject) {
+        JsonObject obj = (JsonObject) in;
         for (String k : requiredKeys) {
-          if (!obj.containsKey(k)) throw NO_MATCH.createException("provided object should contain property " + k, "required", value);
+          if (!obj.containsKey(k)) throw NO_MATCH.createException("provided object should contain property " + k, "required", in);
         }
       }
     }

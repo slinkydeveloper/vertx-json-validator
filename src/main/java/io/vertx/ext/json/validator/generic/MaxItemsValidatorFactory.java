@@ -10,7 +10,7 @@ import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 public class MaxItemsValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       Number maximum = (Number) schema.getValue("maxItems");
       if (maximum.intValue() < 0)
@@ -28,7 +28,7 @@ public class MaxItemsValidatorFactory implements ValidatorFactory {
     return schema.containsKey("maxItems");
   }
 
-  public class MaxItemsValidator implements SyncValidator {
+  public class MaxItemsValidator extends BaseSyncValidator {
     private final int maximum;
 
     public MaxItemsValidator(int maximum) {
@@ -36,10 +36,10 @@ public class MaxItemsValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (value instanceof JsonArray) {
-        if (((JsonArray) value).size() > maximum) {
-          throw NO_MATCH.createException("provided array should have size <= " + maximum, "maxItems", value);
+    public void validateSync(Object in) throws ValidationException {
+      if (in instanceof JsonArray) {
+        if (((JsonArray) in).size() > maximum) {
+          throw NO_MATCH.createException("provided array should have size <= " + maximum, "maxItems", in);
         }
       }
     }

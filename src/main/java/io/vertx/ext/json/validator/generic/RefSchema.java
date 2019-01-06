@@ -5,13 +5,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.Schema;
-import io.vertx.ext.json.validator.SchemaErrorType;
-import io.vertx.ext.json.validator.SchemaParser;
-import io.vertx.ext.json.validator.Validator;
+import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 import static io.vertx.ext.json.validator.ValidationErrorType.REF_ERROR;
 
@@ -23,8 +19,8 @@ public class RefSchema extends SchemaImpl {
   private final SchemaParser schemaParser;
   private Schema cachedSchema;
 
-  public RefSchema(JsonObject schema, JsonPointer scope, ConcurrentSkipListSet<Validator> validators, SchemaParser schemaParser) {
-    super(schema, scope, validators);
+  public RefSchema(JsonObject schema, JsonPointer scope, SchemaParser schemaParser, MutableStateValidator parent) {
+    super(schema, scope, parent);
     this.schemaParser = schemaParser;
     try {
       String unparsedUri = schema.getString("$ref");
@@ -55,34 +51,45 @@ public class RefSchema extends SchemaImpl {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Future<Void> validate(Object in) {
+  public Future<Void> validateAsync(Object in) {
     if (cachedSchema == null) {
       return FutureUtils.andThen(
           schemaParser.getSchemaRouter().resolveRef(refPointer, this.getScope(), schemaParser),
           s -> {
             if (s == null) return Future.failedFuture(REF_ERROR.createException("Cannot resolve reference " + this.refPointer.buildURI(), "$ref", in));
             registerCachedSchema(s);
+            triggerUpdateIsSync();
             if (s instanceof RefSchema) {
-              // We need to call solved schema validate to solve upper ref, then we can merge validators
-              return s.validate(in).compose(f -> {
+              // We need to call solved schema validateAsync to solve upper ref, then we can merge validators
+              return s.validateAsync(in).compose(f -> {
                 removeOverrides();
-                return super.validate(in);
+                return super.validateAsync(in);
               });
-            } else if (BaseSchemaParser.FALSE_SCHEMA == s || BaseSchemaParser.TRUE_SCHEMA == s) {
-              return s.validate(in);
+            } else if (FalseSchema.getInstance() == s || TrueSchema.getInstance() == s) {
+              return s.validateAsync(in);
             } else {
               if (log.isDebugEnabled()) log.debug("Solved schema {}", s.getScope());
               removeOverrides();
-              return super.validate(in);
+              return super.validateAsync(in);
             }
           },
           err -> Future.failedFuture(REF_ERROR.createException("Error while resolving reference " + this.refPointer.buildURI(), err, "$ref", in))
           );
     } else {
-      if (BaseSchemaParser.FALSE_SCHEMA == cachedSchema || BaseSchemaParser.TRUE_SCHEMA == cachedSchema)
-        return cachedSchema.validate(in);
+      if (FalseSchema.getInstance() == cachedSchema || TrueSchema.getInstance() == cachedSchema)
+        return cachedSchema.validateAsync(in);
       else
-        return super.validate(in);
+        return super.validateAsync(in);
     }
+  }
+
+  @Override
+  public void validateSync(Object in) throws ValidationException {
+    cachedSchema.validateSync(in);
+  }
+
+  @Override
+  public boolean calculateIsSync() {
+    return cachedSchema != null && cachedSchema.isSync();
   }
 }

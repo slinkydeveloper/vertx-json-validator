@@ -9,7 +9,7 @@ import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 public class MinPropertiesValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       Number minimum = (Number) schema.getValue("minProperties");
       if (minimum.intValue() < 0)
@@ -27,7 +27,7 @@ public class MinPropertiesValidatorFactory implements ValidatorFactory {
     return schema.containsKey("minProperties");
   }
 
-  public class MinPropertiesValidator implements SyncValidator {
+  public class MinPropertiesValidator extends BaseSyncValidator {
     private final int minimum;
 
     public MinPropertiesValidator(int minimum) {
@@ -35,10 +35,10 @@ public class MinPropertiesValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (value instanceof JsonObject) {
-        if (((JsonObject) value).size() < minimum) {
-          throw NO_MATCH.createException("provided object should have size >= " + minimum, "minProperties", value);
+    public void validateSync(Object in) throws ValidationException {
+      if (in instanceof JsonObject) {
+        if (((JsonObject) in).size() < minimum) {
+          throw NO_MATCH.createException("provided object should have size >= " + minimum, "minProperties", in);
         }
       }
     }

@@ -1,53 +1,55 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.*;
+import io.vertx.ext.json.validator.AsyncValidatorException;
+import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.Schema;
+import io.vertx.ext.json.validator.ValidationException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
-public class OneOfValidatorFactory implements ValidatorFactory {
+import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+
+public class OneOfValidatorFactory extends BaseCombinatorsValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
-    try {
-      JsonArray oneOfSchemas = schema.getJsonArray("oneOf");
-      if (oneOfSchemas.size() == 0)
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "oneOf must have at least one element");
-      JsonPointer basePointer = scope.append("oneOf");
-      List<Schema> parsedSchemas = new ArrayList<>();
-      for (int i = 0; i < oneOfSchemas.size(); i++) {
-        parsedSchemas.add(parser.parse(oneOfSchemas.getValue(i), basePointer.copy().append(Integer.toString(i))));
-      }
-      return new OneOfValidator(parsedSchemas);
-    } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for oneOf keyword");
-    } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null oneOf keyword");
+  BaseCombinatorsValidator instantiate(MutableStateValidator parent) {
+    return new OneOfValidator(parent);
+  }
+
+  @Override
+  String getKeyword() {
+    return "oneOf";
+  }
+
+  class OneOfValidator extends BaseCombinatorsValidator {
+
+    public OneOfValidator(MutableStateValidator parent) {
+      super(parent);
     }
-  }
 
-  @Override
-  public boolean canConsumeSchema(JsonObject schema) {
-    return schema.containsKey("oneOf");
-  }
-
-  class OneOfValidator implements AsyncValidator {
-
-    private Schema[] schemas;
-
-    public OneOfValidator(List<Schema> schemas) {
-      this.schemas = schemas.toArray(new Schema[schemas.size()]);
+    private boolean isValidSync(Schema schema, Object in) {
+      try {
+        schema.validateSync(in);
+        return true;
+      } catch (ValidationException e) {
+        return false;
+      }
     }
 
     @Override
-    public Future<Void> validate(Object in) {
-      return FutureUtils.oneOf(Arrays.stream(schemas).map(s -> s.validate(in)).collect(Collectors.toList()));
+    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+      this.checkSync();
+      long validCount = Arrays.stream(schemas).map(s -> isValidSync(s, in)).filter(b -> b.equals(true)).count();
+      if (validCount > 1) throw NO_MATCH.createException("More than one schema valid", "oneOf", in);
+      else if (validCount == 0) throw NO_MATCH.createException("No schema matches", "oneOf", in);
+    }
+
+    @Override
+    public Future<Void> validateAsync(Object in) {
+      if (isSync()) return validateSyncAsAsync(in);
+      return FutureUtils.oneOf(Arrays.stream(schemas).map(s -> s.validateAsync(in)).collect(Collectors.toList()));
     }
   }
 

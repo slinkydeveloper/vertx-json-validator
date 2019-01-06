@@ -2,22 +2,19 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.SchemaErrorType;
-import io.vertx.ext.json.validator.SchemaParser;
-import io.vertx.ext.json.validator.Validator;
-import io.vertx.ext.json.validator.ValidatorFactory;
+import io.vertx.ext.json.validator.*;
 
 import java.util.Map;
 
 public class DefinitionsValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       JsonObject definitions = schema.getJsonObject("definitions");
       JsonPointer basePointer = scope.append("definitions");
       definitions.forEach(e -> {
-        parser.parse((e.getValue() instanceof Map) ? new JsonObject((Map<String, Object>) e.getValue()) : e.getValue(), basePointer.copy().append(e.getKey()));
+        parser.parse((e.getValue() instanceof Map) ? new JsonObject((Map<String, Object>) e.getValue()) : e.getValue(), basePointer.copy().append(e.getKey()), parent);
       });
       return null;
     } catch (ClassCastException e) {

@@ -14,7 +14,7 @@ public interface ValidatorFactory {
    * @param parser caller parser
    * @return
    */
-  Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser);
+  Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent);
 
   /**
    * Returns true if this factory can consume the provided schema, eventually returning an instance of {@link Validator}

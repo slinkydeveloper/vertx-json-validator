@@ -2,56 +2,45 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.*;
+import io.vertx.ext.json.validator.AsyncValidatorException;
+import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.Schema;
+import io.vertx.ext.json.validator.ValidationException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 
-public class AllOfValidatorFactory implements ValidatorFactory {
+public class AllOfValidatorFactory extends BaseCombinatorsValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
-    try {
-      JsonArray allOfSchemas = schema.getJsonArray("allOf");
-      if (allOfSchemas.size() == 0)
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "allOf must have at least one element");
-      JsonPointer basePointer = scope.append("allOf");
-      List<Schema> parsedSchemas = new ArrayList<>();
-      for (int i = 0; i < allOfSchemas.size(); i++) {
-        parsedSchemas.add(parser.parse(allOfSchemas.getValue(i), basePointer.copy().append(Integer.toString(i))));
-      }
-      return new AllOfValidator(parsedSchemas);
-    } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for allOf keyword");
-    } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null allOf keyword");
-    }
+  BaseCombinatorsValidator instantiate(MutableStateValidator parent) {
+    return new AllOfValidator(parent);
   }
 
   @Override
-  public boolean canConsumeSchema(JsonObject schema) {
-    return schema.containsKey("allOf");
+  String getKeyword() {
+    return "allOf";
   }
 
-  class AllOfValidator implements AsyncValidator {
+  class AllOfValidator extends BaseCombinatorsValidator {
 
-    private final Schema[] schemas;
-
-    public AllOfValidator(List<Schema> schemas) {
-      this.schemas = schemas.toArray(new Schema[schemas.size()]);
+    public AllOfValidator(MutableStateValidator parent) {
+      super(parent);
     }
 
     @Override
-    public Future<Void> validate(Object in) {
+    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+      this.checkSync();
+      for (Schema s : schemas) s.validateSync(in);
+    }
+
+    @Override
+    public Future<Void> validateAsync(Object in) {
+      if (isSync()) return validateSyncAsAsync(in);
       return FutureUtils.andThen(
-          CompositeFuture.all(Arrays.stream(schemas).map(s -> s.validate(in)).collect(Collectors.toList())),
+          CompositeFuture.all(Arrays.stream(schemas).map(s -> s.validateAsync(in)).collect(Collectors.toList())),
           res -> Future.succeededFuture(),
           err -> Future.failedFuture(NO_MATCH.createException("allOf subschema don't match", err, "allOf", in)));
     }

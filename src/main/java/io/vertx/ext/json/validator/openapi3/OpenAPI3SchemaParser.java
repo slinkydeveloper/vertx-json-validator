@@ -68,6 +68,6 @@ public class OpenAPI3SchemaParser extends BaseSchemaParser {
    * @throws io.vertx.ext.json.validator.SchemaException if schema is invalid
    */
   public static Schema parse(Vertx vertx, JsonObject schema, URI scope) {
-    return new OpenAPI3SchemaParser(new SchemaParserOptions(), SchemaRouter.create(vertx)).parse(schema, scope);
+    return new OpenAPI3SchemaParser(new SchemaParserOptions(), SchemaRouter.create(vertx)).parse(schema, scope, null);
   }
 }

@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
+import io.vertx.ext.json.validator.generic.BaseSyncValidator;
 import io.vertx.ext.json.validator.generic.JsonSchemaType;
 
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.List;
 public class TypeValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       List<JsonSchemaType> allowedTypes = new ArrayList<>();
       Object type = schema.getValue("type");
@@ -59,7 +60,7 @@ public class TypeValidatorFactory implements ValidatorFactory {
     }
   }
 
-  class TypeValidator implements SyncValidator {
+  class TypeValidator extends BaseSyncValidator {
 
     final JsonSchemaType[] types;
     final boolean nullIsValid;
@@ -75,11 +76,11 @@ public class TypeValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (value != null) {
-        for (JsonSchemaType type : types) if (type.checkInstance(value)) return;
-        throw ValidationErrorType.NO_MATCH.createException("input don't match any of types " + Arrays.deepToString(types), "type", value);
-      } else if (!nullIsValid) throw ValidationErrorType.NO_MATCH.createException("input don't match any of types " + Arrays.deepToString(types), "type", value);
+    public void validateSync(Object in) throws ValidationException {
+      if (in != null) {
+        for (JsonSchemaType type : types) if (type.checkInstance(in)) return;
+        throw ValidationErrorType.NO_MATCH.createException("input don't match any of types " + Arrays.deepToString(types), "type", in);
+      } else if (!nullIsValid) throw ValidationErrorType.NO_MATCH.createException("input don't match any of types " + Arrays.deepToString(types), "type", in);
     }
   }
 }

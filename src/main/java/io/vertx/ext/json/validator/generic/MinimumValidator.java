@@ -1,11 +1,10 @@
 package io.vertx.ext.json.validator.generic;
 
-import io.vertx.ext.json.validator.SyncValidator;
 import io.vertx.ext.json.validator.ValidationException;
 
 import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 
-public class MinimumValidator implements SyncValidator {
+public class MinimumValidator extends BaseSyncValidator {
   private final double minimum;
 
   public MinimumValidator(double minimum) {
@@ -13,10 +12,10 @@ public class MinimumValidator implements SyncValidator {
   }
 
   @Override
-  public void validate(Object value) throws ValidationException {
-    if (value instanceof Number) {
-      if (((Number) value).doubleValue() < minimum) {
-        throw NO_MATCH.createException("value should be >= " + minimum, "minimum", value);
+  public void validateSync(Object in) throws ValidationException {
+    if (in instanceof Number) {
+      if (((Number) in).doubleValue() < minimum) {
+        throw NO_MATCH.createException("value should be >= " + minimum, "minimum", in);
       }
     }
   }

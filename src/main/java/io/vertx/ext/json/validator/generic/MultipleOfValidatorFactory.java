@@ -9,7 +9,7 @@ import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 public class MultipleOfValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       Number multipleOf = (Number) schema.getValue("multipleOf");
       return new MultipleOfValidator(multipleOf.doubleValue());
@@ -25,7 +25,7 @@ public class MultipleOfValidatorFactory implements ValidatorFactory {
     return schema.containsKey("multipleOf");
   }
 
-  class MultipleOfValidator implements SyncValidator {
+  class MultipleOfValidator extends BaseSyncValidator {
     private final double multipleOf;
 
     public MultipleOfValidator(double multipleOf) {
@@ -33,10 +33,10 @@ public class MultipleOfValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (value instanceof Number) {
-        if (((Number) value).doubleValue() % multipleOf != 0) {
-          throw NO_MATCH.createException("provided number should be multiple of " + multipleOf, "multipleOf", value);
+    public void validateSync(Object in) throws ValidationException {
+      if (in instanceof Number) {
+        if (((Number) in).doubleValue() % multipleOf != 0) {
+          throw NO_MATCH.createException("provided number should be multiple of " + multipleOf, "multipleOf", in);
         }
       }
     }

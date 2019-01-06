@@ -10,22 +10,23 @@ import io.vertx.ext.json.validator.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 
-public class SchemaImpl implements Schema {
+public class SchemaImpl extends BaseMutableStateValidator implements Schema {
 
   private static final Logger log = LoggerFactory.getLogger(SchemaImpl.class);
 
   private final JsonObject schema;
   private final JsonPointer scope;
-  private final ConcurrentSkipListSet<Validator> validators;
+  private ConcurrentSkipListSet<Validator> validators;
 
-  public SchemaImpl(JsonObject schema, JsonPointer scope, ConcurrentSkipListSet<Validator> validators) {
+  public SchemaImpl(JsonObject schema, JsonPointer scope, MutableStateValidator parent) {
+    super(parent);
     this.schema = schema;
     this.scope = scope;
-    this.validators = validators;
   }
 
   @Override
@@ -38,22 +39,18 @@ public class SchemaImpl implements Schema {
   }
 
   @Override
-  public Future<Void> validate(Object in) {
-    if (log.isDebugEnabled()) log.debug("Starting validation for schema {} and input ", schema, in);
+  public Future<Void> validateAsync(Object in) {
+    if (log.isDebugEnabled()) log.debug("Starting async validation for schema {} and input {}", schema, in);
+    if (isSync()) return validateSyncAsAsync(in);
+
     List<Future> futures = new ArrayList<>();
     for (Validator validator : validators) {
-      if (validator.isAsync()) {
-        Future<Void> asyncValidate = ((AsyncValidator) validator).validate(in);
-        if (asyncValidate.isComplete()) {
-          if (asyncValidate.failed()) {
-            return fillException(asyncValidate.cause(), in);
-          }
-        } else {
-          asyncValidate = asyncValidate.recover(t -> fillException(t, in));
-          futures.add(asyncValidate);
-        }
+      if (!validator.isSync()) {
+        Future<Void> asyncValidate = validator.validateAsync(in);
+        asyncValidate = asyncValidate.recover(t -> fillException(t, in));
+        futures.add(asyncValidate);
       } else try {
-        ((SyncValidator) validator).validate(in);
+        validator.validateSync(in);
       } catch (ValidationException e) {
         e.setSchema(this);
         e.setScope(this.scope);
@@ -67,8 +64,33 @@ public class SchemaImpl implements Schema {
     }
   }
 
-  public ConcurrentSkipListSet<Validator> getValidators() {
+  @Override
+  public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+    if (log.isDebugEnabled()) log.debug("Starting sync validation for schema {} and input {}", schema, in);
+    this.checkSync();
+    for (Validator validator : validators) {
+      try {
+        validator.validateSync(in);
+      } catch (ValidationException e) {
+        e.setSchema(this);
+        e.setScope(this.scope);
+        throw e;
+      }
+    }
+  }
+
+  @Override
+  public boolean calculateIsSync() {
+    return validators.stream().map(Validator::isSync).reduce(true, Boolean::logicalAnd);
+  }
+
+  public Set<Validator> getValidators() {
     return validators;
+  }
+
+  public void setValidators(ConcurrentSkipListSet<Validator> validators) {
+    this.validators = validators;
+    this.initializeIsSync();
   }
 
   private Future<Void> fillException(Throwable e, Object in) {

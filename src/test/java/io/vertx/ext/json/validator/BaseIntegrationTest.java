@@ -132,7 +132,7 @@ public abstract class BaseIntegrationTest {
 
   private void validateSuccess(Schema schema, Object obj, String testCaseName, TestContext context) {
     Async async = context.async();
-    schema.validate(obj).setHandler(event -> {
+    schema.validateAsync(obj).setHandler(event -> {
       if (event.failed())
         t.fail(String.format("\"%s\" -> \"%s\" should be valid", testName, testCaseName), event.cause());
       async.complete();
@@ -141,7 +141,7 @@ public abstract class BaseIntegrationTest {
 
   private void validateFailure(Schema schema, Object obj, String testCaseName, TestContext context) {
     Async async = context.async();
-    schema.validate(obj).setHandler(event -> {
+    schema.validateAsync(obj).setHandler(event -> {
       if (event.succeeded())
         t.fail("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
       else

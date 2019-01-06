@@ -9,7 +9,7 @@ import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 public class MinLengthValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       Number minimum = (Number) schema.getValue("minLength");
       if (minimum.intValue() < 0)
@@ -27,7 +27,7 @@ public class MinLengthValidatorFactory implements ValidatorFactory {
     return schema.containsKey("minLength");
   }
 
-  public class MinLengthValidator implements SyncValidator {
+  public class MinLengthValidator extends BaseSyncValidator {
     private final int minimum;
 
     public MinLengthValidator(int minimum) {
@@ -35,10 +35,10 @@ public class MinLengthValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (value instanceof String) {
-        if (((String) value).codePointCount(0, ((String) value).length()) < minimum) {
-          throw NO_MATCH.createException("provided string should have size >= " + minimum, "minLength", value);
+    public void validateSync(Object in) throws ValidationException {
+      if (in instanceof String) {
+        if (((String) in).codePointCount(0, ((String) in).length()) < minimum) {
+          throw NO_MATCH.createException("provided string should have size >= " + minimum, "minLength", in);
         }
       }
     }

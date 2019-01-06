@@ -13,7 +13,7 @@ import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 public class PatternValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       String pattern = (String) schema.getValue("pattern");
       return new PatternValidator(Pattern.compile(pattern));
@@ -31,7 +31,7 @@ public class PatternValidatorFactory implements ValidatorFactory {
     return schema.containsKey("pattern");
   }
 
-  public class PatternValidator implements SyncValidator {
+  public class PatternValidator extends BaseSyncValidator {
     private final Pattern pattern;
 
     public PatternValidator(Pattern pattern) {
@@ -39,11 +39,11 @@ public class PatternValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (value instanceof String) {
-        Matcher m = pattern.matcher((String) value);
+    public void validateSync(Object in) throws ValidationException {
+      if (in instanceof String) {
+        Matcher m = pattern.matcher((String) in);
         if (!(m.matches() || m.lookingAt() || m.find())) {
-          throw NO_MATCH.createException("provided string should respect pattern " + pattern, "pattern", value);
+          throw NO_MATCH.createException("provided string should respect pattern " + pattern, "pattern", in);
         }
       }
     }

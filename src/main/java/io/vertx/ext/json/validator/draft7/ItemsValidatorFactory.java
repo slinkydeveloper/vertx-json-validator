@@ -6,47 +6,72 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
+import io.vertx.ext.json.validator.generic.BaseMutableStateValidator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ItemsValidatorFactory extends io.vertx.ext.json.validator.generic.ItemsValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     Object itemsSchema = schema.getValue("items");
     if (itemsSchema instanceof JsonArray) {
       try {
         JsonPointer baseScope = scope.copy().append("items");
         JsonArray itemsList = (JsonArray) itemsSchema;
         List<Schema> parsedSchemas = new ArrayList<>();
+
+        ItemByItemValidator validator = new ItemByItemValidator(parent);
         for (int i = 0; i < itemsList.size(); i++) {
-          parsedSchemas.add(i, parser.parse(itemsList.getValue(i), baseScope.copy().append(Integer.toString(i))));
+          parsedSchemas.add(i, parser.parse(itemsList.getValue(i), baseScope.copy().append(Integer.toString(i)), validator));
         }
         if (schema.containsKey("additionalItems"))
-          return new ItemByItemValidator(parsedSchemas.toArray(new Schema[parsedSchemas.size()]), parser.parse(schema.getValue("additionalItems"), scope.copy().append("additionalItems")));
+          validator.configure(parsedSchemas.toArray(new Schema[parsedSchemas.size()]), parser.parse(schema.getValue("additionalItems"), scope.copy().append("additionalItems"), validator));
         else
-          return new ItemByItemValidator(parsedSchemas.toArray(new Schema[parsedSchemas.size()]), null);
+          validator.configure(parsedSchemas.toArray(new Schema[parsedSchemas.size()]), null);
+        return validator;
       } catch (NullPointerException e) {
         throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null items keyword");
       }
     } else {
-      return super.createValidator(schema, scope, parser);
+      return super.createValidator(schema, scope, parser, parent);
     }
   }
 
-  class ItemByItemValidator implements AsyncValidator {
+  class ItemByItemValidator extends BaseMutableStateValidator {
 
-    final Schema[] schemas;
-    final Schema additionalItems;
+    Schema[] schemas;
+    Schema additionalItems;
 
-    public ItemByItemValidator(Schema[] schemas, Schema additionalItems) {
+    public ItemByItemValidator(MutableStateValidator parent) {
+      super(parent);
+    }
+
+    private void configure(Schema[] schemas, Schema additionalItems) {
       this.schemas = schemas;
       this.additionalItems = additionalItems;
     }
 
     @Override
-    public Future<Void> validate(Object in) {
+    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+      this.checkSync();
+      if (in instanceof JsonArray) {
+        JsonArray arr = (JsonArray) in;
+        for (int i = 0; i < arr.size(); i++) {
+          if (i >= schemas.length) {
+            if (additionalItems != null)
+              additionalItems.validateSync(arr.getValue(i));
+          } else
+            schemas[i].validateSync(arr.getValue(i));
+        }
+      }
+    }
+
+    @Override
+    public Future<Void> validateAsync(Object in) {
+      if (isSync()) return validateSyncAsAsync(in);
       if (in instanceof JsonArray) {
         List<Future> futures = new ArrayList<>();
         JsonArray arr = (JsonArray) in;
@@ -54,9 +79,9 @@ public class ItemsValidatorFactory extends io.vertx.ext.json.validator.generic.I
           Future<Void> fut;
           if (i >= schemas.length) {
             if (additionalItems != null)
-              fut = additionalItems.validate(arr.getValue(i));
+              fut = additionalItems.validateAsync(arr.getValue(i));
             else continue;
-          } else fut = schemas[i].validate(arr.getValue(i));
+          } else fut = schemas[i].validateAsync(arr.getValue(i));
           if (fut.isComplete()) {
             if (fut.failed()) return Future.failedFuture(fut.cause());
           } else {
@@ -66,6 +91,11 @@ public class ItemsValidatorFactory extends io.vertx.ext.json.validator.generic.I
         if (futures.isEmpty()) return Future.succeededFuture();
         else return CompositeFuture.all(futures).compose(cf -> Future.succeededFuture());
       } else return Future.succeededFuture();
+    }
+
+    @Override
+    public boolean calculateIsSync() {
+      return (additionalItems == null || additionalItems.isSync()) && Arrays.stream(schemas).map(Schema::isSync).reduce(true, Boolean::logicalAnd);
     }
   }
 

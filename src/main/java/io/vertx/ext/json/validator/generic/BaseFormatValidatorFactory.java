@@ -43,10 +43,10 @@ public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
   };
 
   protected final static Predicate<String> IDN_EMAIL_VALIDATOR = in -> {
-return true;
+    return true;
   };
 
-  class FormatValidator implements SyncValidator {
+  class FormatValidator extends BaseSyncValidator {
 
     Predicate<String> validator;
 
@@ -55,10 +55,10 @@ return true;
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (value instanceof String) {
-        if (!validator.test((String) value)) {
-          throw NO_MATCH.createException("Provided value don't match pattern", "pattern", value);
+    public void validateSync(Object in) throws ValidationException {
+      if (in instanceof String) {
+        if (!validator.test((String) in)) {
+          throw NO_MATCH.createException("Provided value don't match pattern", "pattern", in);
         }
       }
     }
@@ -92,7 +92,7 @@ return true;
   }
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     String format = schema.getString("format");
     if (ignoringFormats.contains(format)) return null;
     else {

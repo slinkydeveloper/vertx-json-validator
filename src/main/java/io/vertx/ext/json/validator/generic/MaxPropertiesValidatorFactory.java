@@ -9,7 +9,7 @@ import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 public class MaxPropertiesValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       Number maximum = (Number) schema.getValue("maxProperties");
       if (maximum.intValue() < 0)
@@ -27,7 +27,7 @@ public class MaxPropertiesValidatorFactory implements ValidatorFactory {
     return schema.containsKey("maxProperties");
   }
 
-  public class MaxPropertiesValidator implements SyncValidator {
+  public class MaxPropertiesValidator extends BaseSyncValidator {
     private final int maximum;
 
     public MaxPropertiesValidator(int maximum) {
@@ -35,10 +35,10 @@ public class MaxPropertiesValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (value instanceof JsonObject) {
-        if (((JsonObject) value).size() > maximum) {
-          throw NO_MATCH.createException("provided object should have size <= " + maximum, "maxProperties", value);
+    public void validateSync(Object in) throws ValidationException {
+      if (in instanceof JsonObject) {
+        if (((JsonObject) in).size() > maximum) {
+          throw NO_MATCH.createException("provided object should have size <= " + maximum, "maxProperties", in);
         }
       }
     }

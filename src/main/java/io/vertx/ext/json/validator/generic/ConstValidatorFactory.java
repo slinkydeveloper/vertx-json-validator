@@ -10,7 +10,7 @@ public class ConstValidatorFactory implements ValidatorFactory {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
       Object allowedValue = schema.getValue("const");
       return new EnumValidator(allowedValue);
   }
@@ -20,7 +20,8 @@ public class ConstValidatorFactory implements ValidatorFactory {
     return schema.containsKey("const");
   }
 
-  public class EnumValidator implements SyncValidator {
+  public class EnumValidator extends BaseSyncValidator {
+
     private final Object allowedValue;
 
     public EnumValidator(Object allowedValue) {
@@ -33,11 +34,11 @@ public class ConstValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
+    public void validateSync(Object in) throws ValidationException {
       if (allowedValue != null) {
-        if (!allowedValue.equals(value))
-          throw NO_MATCH.createException("Input doesn't match const: " + allowedValue, "const", value);
-      } else if (value != null) throw NO_MATCH.createException("Input doesn't match const: " + allowedValue, "const", value);
+        if (!allowedValue.equals(in))
+          throw NO_MATCH.createException("Input doesn't match const: " + allowedValue, "const", in);
+      } else if (in != null) throw NO_MATCH.createException("Input doesn't match const: " + allowedValue, "const", in);
     }
   }
 

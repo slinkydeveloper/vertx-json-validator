@@ -1,6 +1,5 @@
 package io.vertx.ext.json.validator.generic;
 
-import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
@@ -13,9 +12,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
  * @author Francesco Guardiani @slinkydeveloper
  */
 public abstract class BaseSchemaParser implements SchemaParser {
-
-  protected final static Schema TRUE_SCHEMA = (in) -> Future.succeededFuture();
-  protected final static Schema FALSE_SCHEMA = (in) -> Future.failedFuture(ValidationErrorType.NO_MATCH.createException("False schema always fail validation", null, in));
 
   protected final SchemaParserOptions options;
   protected final List<ValidatorFactory> validatorFactories;
@@ -34,35 +30,35 @@ public abstract class BaseSchemaParser implements SchemaParser {
   }
 
   @Override
-  public Schema parse(Object jsonSchema, JsonPointer scope) {
+  public Schema parse(Object jsonSchema, JsonPointer scope, MutableStateValidator parent) {
     if (!scope.getURIWithoutFragment().isAbsolute()) throw new IllegalArgumentException("The scope provided must be absolute!");
     if (jsonSchema instanceof Map) jsonSchema = new JsonObject((Map<String, Object>) jsonSchema);
     if (jsonSchema instanceof JsonObject) {
       JsonObject json = (JsonObject) jsonSchema;
       ConcurrentSkipListSet<Validator> validators = new ConcurrentSkipListSet<>(ValidatorPriority.VALIDATOR_COMPARATOR);
 
-      Schema s = createSchema(json, scope, validators);
+      SchemaImpl s = createSchema(json, scope, parent);
       router.addSchema(s, scope);
 
       for (ValidatorFactory factory : validatorFactories) {
         if (factory.canConsumeSchema(json)) {
-          Validator v = factory.createValidator(json, scope.copy(), this);
+          Validator v = factory.createValidator(json, scope.copy(), this, s);
           if (v != null) validators.add(v);
         }
       }
-
+      s.setValidators(validators);
       return s;
     } else if (jsonSchema instanceof Boolean) {
-      Schema s = ((Boolean) jsonSchema) ? TRUE_SCHEMA : FALSE_SCHEMA;
+      Schema s = ((Boolean) jsonSchema) ? TrueSchema.getInstance() : FalseSchema.getInstance();
       router.addSchema(s, scope);
       return s;
     } else
       throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(jsonSchema, "Schema should be a JsonObject or a Boolean");
   }
 
-  protected Schema createSchema(JsonObject schema, JsonPointer scope, ConcurrentSkipListSet<Validator> validators) {
-    if (schema.containsKey("$ref")) return new RefSchema(schema, scope, validators, this);
-    else return new SchemaImpl(schema, scope, validators);
+  protected SchemaImpl createSchema(JsonObject schema, JsonPointer scope, MutableStateValidator parent) {
+    if (schema.containsKey("$ref")) return new RefSchema(schema, scope, this, parent);
+    else return new SchemaImpl(schema, scope, parent);
   }
 
   protected abstract List<ValidatorFactory> initValidatorFactories();
@@ -81,10 +77,10 @@ public abstract class BaseSchemaParser implements SchemaParser {
   }
 
   @Override
-  public Schema parseSchemaFromString(String unparsedJson, JsonPointer scope) {
+  public Schema parseSchemaFromString(String unparsedJson, JsonPointer scope, MutableStateValidator parent) {
     String unparsedSchema = unparsedJson.trim();
     if ("false".equals(unparsedSchema) || "true".equals(unparsedSchema))
-      return this.parse(Boolean.parseBoolean(unparsedSchema), scope);
-    else return this.parse(new JsonObject(unparsedSchema), scope);
+      return this.parse(Boolean.parseBoolean(unparsedSchema), scope, parent);
+    else return this.parse(new JsonObject(unparsedSchema), scope, parent);
   }
 }

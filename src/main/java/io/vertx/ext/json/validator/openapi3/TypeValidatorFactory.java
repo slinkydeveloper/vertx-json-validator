@@ -3,12 +3,13 @@ package io.vertx.ext.json.validator.openapi3;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
+import io.vertx.ext.json.validator.generic.BaseSyncValidator;
 import io.vertx.ext.json.validator.generic.JsonSchemaType;
 
 public class TypeValidatorFactory implements ValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       String type = schema.getString("type");
       String format = schema.getString("format");
@@ -43,7 +44,7 @@ public class TypeValidatorFactory implements ValidatorFactory {
     }
   }
 
-  class TypeValidator implements SyncValidator {
+  class TypeValidator extends BaseSyncValidator {
 
     final JsonSchemaType type;
 
@@ -57,9 +58,9 @@ public class TypeValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (value != null) {
-        if (!type.checkInstance(value)) throw ValidationErrorType.NO_MATCH.createException("input don't match type " + type.name(), "type", value);
+    public void validateSync(Object in) throws ValidationException {
+      if (in != null) {
+        if (!type.checkInstance(in)) throw ValidationErrorType.NO_MATCH.createException("input don't match type " + type.name(), "type", in);
       }
     }
   }

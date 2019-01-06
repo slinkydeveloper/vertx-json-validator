@@ -12,14 +12,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
 
 import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 
 public class PropertiesValidatorFactory implements ValidatorFactory {
 
-  private Schema parseAdditionalProperties(Object obj, JsonPointer scope, SchemaParser parser) {
+  private Schema parseAdditionalProperties(Object obj, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
-      return parser.parse(obj, scope.copy().append("additionalProperties"));
+      return parser.parse(obj, scope.copy().append("additionalProperties"), parent);
     } catch (ClassCastException e) {
       throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(obj, "Wrong type for additionalProperties keyword");
     } catch (NullPointerException e) {
@@ -27,14 +28,15 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
     }
   }
 
-  private Map<String, Schema> parseProperties(JsonObject obj, JsonPointer scope, SchemaParser parser) {
+  private Map<String, Schema> parseProperties(JsonObject obj, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     JsonPointer basePointer = scope.copy().append("properties");
     Map<String, Schema> parsedSchemas = new HashMap<>();
     for (Map.Entry<String, Object> entry : obj) {
       try {
         parsedSchemas.put(entry.getKey(), parser.parse(
             entry.getValue(),
-            basePointer.copy().append(entry.getKey())
+            basePointer.copy().append(entry.getKey()),
+            parent
         ));
       } catch (ClassCastException | NullPointerException e) {
         throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(obj, "Property descriptor " + entry.getKey() + " should be a not null JsonObject");
@@ -43,14 +45,15 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
     return parsedSchemas;
   }
 
-  private Map<Pattern, Schema> parsePatternProperties(JsonObject obj, JsonPointer scope, SchemaParser parser) {
+  private Map<Pattern, Schema> parsePatternProperties(JsonObject obj, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     JsonPointer basePointer = scope.copy().append("patternProperties");
     Map<Pattern, Schema> parsedSchemas = new HashMap<>();
     for (Map.Entry<String, Object> entry : obj) {
       try {
         parsedSchemas.put(Pattern.compile(entry.getKey()), parser.parse(
             entry.getValue(),
-            basePointer.copy().append(entry.getKey())
+            basePointer.copy().append(entry.getKey()),
+            parent
         ));
       } catch (PatternSyntaxException e) {
         throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(obj, "Invalid pattern for pattern keyword");
@@ -62,22 +65,25 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
   }
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       JsonObject properties = schema.getJsonObject("properties");
       JsonObject patternProperties = schema.getJsonObject("patternProperties");
       Object additionalProperties = schema.getValue("additionalProperties");
 
-      Map<String, Schema> parsedProperties = (properties != null) ? parseProperties(properties, scope, parser) : null;
-      Map<Pattern, Schema> parsedPatternProperties = (patternProperties != null) ? parsePatternProperties(patternProperties, scope, parser) : null;
+      PropertiesValidator validator = new PropertiesValidator(parent);
+
+      Map<String, Schema> parsedProperties = (properties != null) ? parseProperties(properties, scope, parser, validator) : null;
+      Map<Pattern, Schema> parsedPatternProperties = (patternProperties != null) ? parsePatternProperties(patternProperties, scope, parser, validator) : null;
 
       if (additionalProperties instanceof JsonObject) {
-        return new PropertiesValidator(parsedProperties, parsedPatternProperties, parseAdditionalProperties(additionalProperties, scope, parser));
+        validator.configure(parsedProperties, parsedPatternProperties, parseAdditionalProperties(additionalProperties, scope, parser, validator));
       } else if (additionalProperties instanceof Boolean) {
-        return new PropertiesValidator(parsedProperties, parsedPatternProperties, (Boolean) additionalProperties);
+        validator.configure(parsedProperties, parsedPatternProperties, (Boolean) additionalProperties);
       } else {
-        return new PropertiesValidator(parsedProperties, parsedPatternProperties, true);
+        validator.configure(parsedProperties, parsedPatternProperties, true);
       }
+      return validator;
     } catch (ClassCastException e) {
       throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for properties/patternProperties keyword");
     }
@@ -88,29 +94,51 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
     return schema.containsKey("properties") || schema.containsKey("patternProperties") || schema.containsKey("additionalProperties");
   }
 
-  class PropertiesValidator implements AsyncValidator {
+  private Future<Void> fillAdditionalPropertyException(Throwable t, Object in) {
+    return Future.failedFuture(NO_MATCH.createException("additionalProperties schema should match", t, "additionalProperties", in));
+  }
+
+  class PropertiesValidator extends BaseMutableStateValidator {
 
     private Map<String, Schema> properties;
     private Map<Pattern, Schema> patternProperties;
     private boolean allowAdditionalProperties;
     private Schema additionalPropertiesSchema;
 
-    public PropertiesValidator(Map<String, Schema> properties, Map<Pattern, Schema> patternProperties, boolean allowAdditionalProperties) {
+    public PropertiesValidator(MutableStateValidator parent) {
+      super(parent);
+    }
+
+    private void configure(Map<String, Schema> properties, Map<Pattern, Schema> patternProperties, boolean allowAdditionalProperties) {
       this.properties = properties;
       this.patternProperties = patternProperties;
       this.allowAdditionalProperties = allowAdditionalProperties;
       this.additionalPropertiesSchema = null;
+      initializeIsSync();
     }
 
-    public PropertiesValidator(Map<String, Schema> properties, Map<Pattern, Schema> patternProperties, Schema additionalPropertiesSchema) {
+    private void configure(Map<String, Schema> properties, Map<Pattern, Schema> patternProperties, Schema additionalPropertiesSchema) {
       this.properties = properties;
       this.patternProperties = patternProperties;
       this.allowAdditionalProperties = true;
       this.additionalPropertiesSchema = additionalPropertiesSchema;
+      initializeIsSync();
     }
 
     @Override
-    public Future<Void> validate(Object in) {
+    public boolean calculateIsSync() {
+      Stream<Boolean> props = (properties != null) ? properties.values().stream().map(Schema::isSync) : Stream.empty();
+      Stream<Boolean> patternProps = (patternProperties != null) ? patternProperties.values().stream().map(Schema::isSync) : Stream.empty();
+      Stream<Boolean> additionalProps = (additionalPropertiesSchema != null) ? Stream.of(additionalPropertiesSchema.isSync()) : Stream.empty();
+      return Stream.concat(
+          props,
+          Stream.concat(patternProps, additionalProps)
+      ).reduce(true, Boolean::logicalAnd);
+    }
+
+    @Override
+    public Future<Void> validateAsync(Object in) {
+      if (isSync()) return validateSyncAsAsync(in);
       if (in instanceof JsonObject) {
         JsonObject obj = (JsonObject) in;
         List<Future> futs = new ArrayList<>();
@@ -118,22 +146,30 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
           boolean found = false;
           String key = entry.getKey();
           if (properties != null && properties.containsKey(key)) {
-            Future<Void> propFut = properties.get(key).validate(entry.getValue());
-            if (propFut.isComplete()) {
-              if (propFut.failed()) return Future.failedFuture(propFut.cause());
+            Schema s = properties.get(key);
+            if (s.isSync()) {
+              try {
+                s.validateSync(entry.getValue());
+              } catch (ValidationException e) {
+                return Future.failedFuture(e);
+              }
             } else {
-              futs.add(propFut);
+              futs.add(s.validateAsync(entry.getValue()));
             }
             found = true;
           }
           if (patternProperties != null) {
             for (Map.Entry<Pattern, Schema> patternProperty : patternProperties.entrySet()) {
               if (patternProperty.getKey().matcher(key).find()) {
-                Future<Void> patternPropFut = patternProperty.getValue().validate(entry.getValue());
-                if (patternPropFut.isComplete()) {
-                  if (patternPropFut.failed()) return Future.failedFuture(patternPropFut.cause());
+                Schema s = patternProperty.getValue();
+                if (s.isSync()) {
+                  try {
+                    s.validateSync(entry.getValue());
+                  } catch (ValidationException e) {
+                    return Future.failedFuture(e);
+                  }
                 } else {
-                  futs.add(patternPropFut);
+                  futs.add(s.validateAsync(entry.getValue()));
                 }
                 found = true;
               }
@@ -142,11 +178,14 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
           if (!found) {
             if (allowAdditionalProperties) {
               if (additionalPropertiesSchema != null) {
-                Future<Void> additionalPropFut = additionalPropertiesSchema.validate(entry.getValue());
-                if (additionalPropFut.isComplete()) {
-                  if (additionalPropFut.failed()) return fillAdditionalPropertyException(additionalPropFut.cause(), in);
+                if (additionalPropertiesSchema.isSync()) {
+                  try {
+                    additionalPropertiesSchema.validateSync(entry.getValue());
+                  } catch (ValidationException e) {
+                    return fillAdditionalPropertyException(e, in);
+                  }
                 } else {
-                  futs.add(additionalPropFut.recover(t -> fillAdditionalPropertyException(t, in)));
+                  futs.add(additionalPropertiesSchema.validateAsync(entry.getValue()).recover(t -> fillAdditionalPropertyException(t, in)));
                 }
               }
             } else {
@@ -158,10 +197,41 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
         else return CompositeFuture.all(futs).compose(cf -> Future.succeededFuture());
       } else return Future.succeededFuture();
     }
-  }
 
-  private Future<Void> fillAdditionalPropertyException(Throwable t, Object in) {
-    return Future.failedFuture(NO_MATCH.createException("additionalProperties schema should match", t, "additionalProperties", in));
+    @Override
+    public void validateSync(Object in) throws ValidationException {
+      this.checkSync();
+      if (in instanceof JsonObject) {
+        JsonObject obj = (JsonObject) in;
+        for (Map.Entry<String, Object> entry : obj) {
+          boolean found = false;
+          String key = entry.getKey();
+          if (properties != null && properties.containsKey(key)) {
+            Schema s = properties.get(key);
+            s.validateSync(entry.getValue());
+            found = true;
+          }
+          if (patternProperties != null) {
+            for (Map.Entry<Pattern, Schema> patternProperty : patternProperties.entrySet()) {
+              if (patternProperty.getKey().matcher(key).find()) {
+                Schema s = patternProperty.getValue();
+                s.validateSync(entry.getValue());
+                found = true;
+              }
+            }
+          }
+          if (!found) {
+            if (allowAdditionalProperties) {
+              if (additionalPropertiesSchema != null) {
+                additionalPropertiesSchema.validateSync(entry.getValue());
+              }
+            } else {
+              throw NO_MATCH.createException("provided object should not contain additional properties", "additionalProperties", in);
+            }
+          }
+        }
+      }
+    }
   }
 
 }

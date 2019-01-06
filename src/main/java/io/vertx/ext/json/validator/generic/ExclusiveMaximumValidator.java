@@ -1,11 +1,10 @@
 package io.vertx.ext.json.validator.generic;
 
-import io.vertx.ext.json.validator.SyncValidator;
 import io.vertx.ext.json.validator.ValidationException;
 
 import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 
-public class ExclusiveMaximumValidator implements SyncValidator {
+public class ExclusiveMaximumValidator extends BaseSyncValidator {
   private final double maximum;
 
   public ExclusiveMaximumValidator(double maximum) {
@@ -13,10 +12,10 @@ public class ExclusiveMaximumValidator implements SyncValidator {
   }
 
   @Override
-  public void validate(Object value) throws ValidationException {
-    if (value instanceof Number) {
-      if (((Number) value).doubleValue() >= maximum) {
-        throw NO_MATCH.createException("value should be < " + maximum, "maximum", value);
+  public void validateSync(Object in) throws ValidationException {
+    if (in instanceof Number) {
+      if (((Number) in).doubleValue() >= maximum) {
+        throw NO_MATCH.createException("value should be < " + maximum, "maximum", in);
       }
     }
   }

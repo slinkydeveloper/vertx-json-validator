@@ -1,49 +1,56 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.*;
+import io.vertx.ext.json.validator.AsyncValidatorException;
+import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.ValidationException;
 
 import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
 
-public class NotValidatorFactory implements ValidatorFactory {
+public class NotValidatorFactory extends BaseSingleSchemaValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
-    try {
-      Object notSchema = schema.getValue("not");
-      Schema parsedSchema = parser.parse(notSchema, scope.append("not"));
-      return new NotValidator(parsedSchema);
-    } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for not keyword");
-    } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null not keyword");
+  protected BaseSingleSchemaValidator instantiate(MutableStateValidator parent) {
+    return new NotValidator(parent);
+  }
+
+  @Override
+  protected String getKeyword() {
+    return "not";
+  }
+
+  class NotValidator extends BaseSingleSchemaValidator {
+
+    public NotValidator(MutableStateValidator parent) {
+      super(parent);
     }
-  }
 
-  @Override
-  public boolean canConsumeSchema(JsonObject schema) {
-    return schema.containsKey("not");
-  }
+    private boolean isValidSync(Object in) {
+      try {
+        schema.validateSync(in);
+        return true;
+      } catch (ValidationException e) {
+        return false;
+      }
+    }
 
-  class NotValidator implements AsyncValidator {
-
-    private Schema schema;
-
-    public NotValidator(Schema schema) {
-      this.schema = schema;
+    @Override
+    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+      this.checkSync();
+      if (isValidSync(in)) throw NO_MATCH.createException("input should be invalid", "not", in);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public Future<Void> validate(Object in) {
+    public Future<Void> validateAsync(Object in) {
+      if (isSync()) return validateSyncAsAsync(in);
       return FutureUtils.andThen(
-          schema.validate(in),
+          schema.validateAsync(in),
           res -> Future.failedFuture(NO_MATCH.createException("input should be invalid", "not", in)),
           err -> Future.succeededFuture()
       );
     }
+
   }
 
 }

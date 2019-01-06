@@ -16,7 +16,7 @@ public class EnumValidatorFactory implements ValidatorFactory {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
     try {
       JsonArray allowedValues = (JsonArray) schema.getValue("enum");
       Set allowedValuesParsed = (Set) allowedValues
@@ -39,7 +39,7 @@ public class EnumValidatorFactory implements ValidatorFactory {
     return schema.containsKey("enum");
   }
 
-  public class EnumValidator implements SyncValidator {
+  public class EnumValidator extends BaseSyncValidator {
     private final Set allowedValues;
 
     public EnumValidator(Set allowedValues) {
@@ -52,8 +52,8 @@ public class EnumValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validate(Object value) throws ValidationException {
-      if (!allowedValues.contains(value)) throw NO_MATCH.createException("Input doesn't match one of allowed values of enum: " + allowedValues, "enum", value);
+    public void validateSync(Object in) throws ValidationException {
+      if (!allowedValues.contains(in)) throw NO_MATCH.createException("Input doesn't match one of allowed values of enum: " + allowedValues, "enum", in);
     }
   }
 

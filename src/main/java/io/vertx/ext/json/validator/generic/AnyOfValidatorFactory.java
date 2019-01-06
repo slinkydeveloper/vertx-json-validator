@@ -2,58 +2,57 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.*;
+import io.vertx.ext.json.validator.AsyncValidatorException;
+import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.Schema;
+import io.vertx.ext.json.validator.ValidationException;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
-public class AnyOfValidatorFactory implements ValidatorFactory {
+public class AnyOfValidatorFactory extends BaseCombinatorsValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
-    try {
-      JsonArray anyOfSchemas = schema.getJsonArray("anyOf");
-      if (anyOfSchemas.size() == 0)
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "anyOf must have at least one element");
-      JsonPointer basePointer = scope.append("anyOf");
-      List<Schema> parsedSchemas = new ArrayList<>();
-      for (int i = 0; i < anyOfSchemas.size(); i++) {
-        parsedSchemas.add(parser.parse(anyOfSchemas.getValue(i), basePointer.copy().append(Integer.toString(i))));
-      }
-      return new AnyOfValidator(parsedSchemas);
-    } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for anyOf keyword");
-    } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null anyOf keyword");
-    }
+  BaseCombinatorsValidator instantiate(MutableStateValidator parent) {
+    return new AnyOfValidator(parent);
   }
 
   @Override
-  public boolean canConsumeSchema(JsonObject schema) {
-    return schema.containsKey("anyOf");
+  String getKeyword() {
+    return "anyOf";
   }
 
-  class AnyOfValidator implements AsyncValidator {
+  class AnyOfValidator extends BaseCombinatorsValidator {
 
-    private final Schema[] schemas;
-
-    public AnyOfValidator(List<Schema> schemas) {
-      this.schemas = schemas.toArray(new Schema[schemas.size()]);
+    public AnyOfValidator(MutableStateValidator parent) {
+      super(parent);
     }
 
     @Override
-    public Future<Void> validate(Object in) {
+    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+      this.checkSync();
+      ValidationException res = null;
+      for (Schema s : this.schemas) {
+        try {
+          s.validateSync(in);
+          return;
+        } catch (ValidationException e) {
+          res = e;
+        }
+      }
+      throw res;
+    }
+
+    @Override
+    public Future<Void> validateAsync(Object in) {
+      if (isSync()) return validateSyncAsAsync(in);
       return CompositeFuture.any(
           Arrays.stream(this.schemas)
-              .map(s -> s.validate(in))
+              .map(s -> s.validateAsync(in))
               .collect(Collectors.toList())
       ).compose(cf -> Future.succeededFuture());
     }
+
   }
 
 }

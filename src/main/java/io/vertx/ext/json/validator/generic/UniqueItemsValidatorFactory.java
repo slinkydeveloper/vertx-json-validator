@@ -9,16 +9,19 @@ import java.util.HashSet;
 
 public class UniqueItemsValidatorFactory implements ValidatorFactory {
 
-  private final static SyncValidator UNIQUE_VALIDATOR = (value) -> {
-    if (value instanceof JsonArray) {
-      JsonArray arr = (JsonArray) value;
-      if (new HashSet(arr.getList()).size() != arr.size())
-        throw ValidationErrorType.NO_MATCH.createException("array elements must be unique", "uniqueItems", value);
+  private final static BaseSyncValidator UNIQUE_VALIDATOR = new BaseSyncValidator() {
+    @Override
+    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+      if (in instanceof JsonArray) {
+        JsonArray arr = (JsonArray) in;
+        if (new HashSet(arr.getList()).size() != arr.size())
+          throw ValidationErrorType.NO_MATCH.createException("array elements must be unique", "uniqueItems", in);
+      }
     }
   };
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
+  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator validator) {
     try {
       Boolean unique = (Boolean) schema.getValue("uniqueItems");
       if (unique) return UNIQUE_VALIDATOR;

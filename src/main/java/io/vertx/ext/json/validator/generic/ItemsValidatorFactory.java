@@ -3,48 +3,48 @@ package io.vertx.ext.json.validator.generic;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.*;
+import io.vertx.ext.json.validator.AsyncValidatorException;
+import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.ValidationException;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ItemsValidatorFactory implements ValidatorFactory {
+public class ItemsValidatorFactory extends BaseSingleSchemaValidatorFactory {
 
   @Override
-  public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser) {
-    try {
-      Object itemsSchema = schema.getValue("items");
-      Schema parsedSchema = parser.parse(itemsSchema, scope.append("items"));
-      return new ItemsValidator(parsedSchema);
-    } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for items keyword");
-    } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null items keyword");
-    }
+  protected BaseSingleSchemaValidator instantiate(MutableStateValidator parent) {
+    return new ItemsValidator(parent);
   }
 
   @Override
-  public boolean canConsumeSchema(JsonObject schema) {
-    return schema.containsKey("items");
+  protected String getKeyword() {
+    return "items";
   }
 
-  class ItemsValidator implements AsyncValidator {
+  class ItemsValidator extends BaseSingleSchemaValidator {
 
-    private Schema schema;
-
-    public ItemsValidator(Schema schema) {
-      this.schema = schema;
+    public ItemsValidator(MutableStateValidator parent) {
+      super(parent);
     }
 
     @Override
-    public Future<Void> validate(Object in) {
+    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+      this.checkSync();
+      if (in instanceof JsonArray) {
+        JsonArray arr = (JsonArray) in;
+        arr.forEach(schema::validateSync);
+      }
+    }
+
+    @Override
+    public Future<Void> validateAsync(Object in) {
+      if (isSync()) return validateSyncAsAsync(in);
       if (in instanceof JsonArray) {
         JsonArray arr = (JsonArray) in;
         List<Future> futs = new ArrayList<>();
         for (Object v : arr) {
-          Future<Void> f = schema.validate(v);
+          Future<Void> f = schema.validateAsync(v);
           if (f.isComplete()) {
             if (f.failed()) return Future.failedFuture(f.cause());
           } else {

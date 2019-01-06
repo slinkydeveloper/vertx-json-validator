@@ -57,7 +57,7 @@ public class LocalRefTest {
     URI sampleURI = buildBasePath("sample.json").toAbsolutePath().toUri();
     JsonObject mainSchemaUnparsed = new JsonObject().put("$ref", sampleURI.toString());
     Schema mainSchema = parser.parse(mainSchemaUnparsed, buildBasePath("test_1.json").toAbsolutePath().toUri());
-    mainSchema.validate("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
+    mainSchema.validateAsync("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
       assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
       assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
     }));
@@ -68,7 +68,7 @@ public class LocalRefTest {
     URI sampleURI = URI.create("./sample.json");
     JsonObject mainSchemaUnparsed = new JsonObject().put("$ref", sampleURI.toString());
     Schema mainSchema = parser.parse(mainSchemaUnparsed, buildBasePath("test_2.json").toUri());
-    mainSchema.validate("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
+    mainSchema.validateAsync("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
       assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
       assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
     }));
@@ -79,7 +79,7 @@ public class LocalRefTest {
     URI sampleURI = getClass().getResource("/ref_test/sample.json").toURI();
     JsonObject mainSchemaUnparsed = new JsonObject().put("$ref", sampleURI.toString());
     Schema mainSchema = parser.parse(mainSchemaUnparsed, sampleURI.resolve("test_1.json"));
-    mainSchema.validate("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
+    mainSchema.validateAsync("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
       assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
       assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
     }));
@@ -99,7 +99,7 @@ public class LocalRefTest {
     URI sampleURI = getClass().getClassLoader().getResource("sample_in_jar.json").toURI();
     JsonObject mainSchemaUnparsed = new JsonObject().put("$ref", sampleURI.toString());
     Schema mainSchema = parser.parse(mainSchemaUnparsed, URIUtils.resolvePath(sampleURI, "test_1.json"));
-    mainSchema.validate("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
+    mainSchema.validateAsync("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
       assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
       assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
     }));
