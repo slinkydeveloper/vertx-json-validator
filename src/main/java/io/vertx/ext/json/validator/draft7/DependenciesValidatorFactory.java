@@ -60,6 +60,7 @@ public class DependenciesValidatorFactory implements ValidatorFactory {
     private void configure(Map<String, Set<String>> keyDeps, Map<String, Schema> keySchemaDeps) {
       this.keyDeps = keyDeps;
       this.keySchemaDeps = keySchemaDeps;
+      initializeIsSync();
     }
 
     private void checkKeyDeps(JsonObject obj) {

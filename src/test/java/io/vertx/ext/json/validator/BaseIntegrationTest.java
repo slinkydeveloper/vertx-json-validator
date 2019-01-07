@@ -130,11 +130,30 @@ public abstract class BaseIntegrationTest {
     }
   }
 
+  private void assertThrow(Runnable r, Class<? extends Throwable> t, TestContext context) {
+    try {
+      r.run();
+      context.fail("No exception thrown");
+    } catch (Throwable throwed) {
+      context.assertEquals(t, throwed.getClass());
+    }
+  }
+
+  private void assertNotThrow(Runnable r, TestContext context) {
+    try {
+      r.run();
+    } catch (Throwable throwed) {
+      context.fail(throwed);
+    }
+  }
+
   private void validateSuccess(Schema schema, Object obj, String testCaseName, TestContext context) {
     Async async = context.async();
     schema.validateAsync(obj).setHandler(event -> {
       if (event.failed())
         t.fail(String.format("\"%s\" -> \"%s\" should be valid", testName, testCaseName), event.cause());
+      context.assertTrue(schema.isSync());
+      assertNotThrow(() -> schema.validateSync(obj), context);
       async.complete();
     });
   }
@@ -146,9 +165,12 @@ public abstract class BaseIntegrationTest {
         t.fail("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
       else
         log.debug(event.cause().toString());
+      context.assertTrue(schema.isSync());
+      assertThrow(() -> schema.validateSync(obj), ValidationException.class, context);
       async.complete();
     });
   }
+
 
   @Test
   public void test(TestContext context) {

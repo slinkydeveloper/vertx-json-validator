@@ -52,6 +52,7 @@ public class ItemsValidatorFactory extends io.vertx.ext.json.validator.generic.I
     private void configure(Schema[] schemas, Schema additionalItems) {
       this.schemas = schemas;
       this.additionalItems = additionalItems;
+      initializeIsSync();
     }
 
     @Override
