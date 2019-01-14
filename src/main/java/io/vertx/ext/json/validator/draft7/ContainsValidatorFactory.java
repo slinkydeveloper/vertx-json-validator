@@ -3,8 +3,8 @@ package io.vertx.ext.json.validator.draft7;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.json.validator.AsyncValidatorException;
 import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.NoSyncValidationException;
 import io.vertx.ext.json.validator.ValidationException;
 import io.vertx.ext.json.validator.generic.BaseSingleSchemaValidator;
 import io.vertx.ext.json.validator.generic.BaseSingleSchemaValidatorFactory;
@@ -48,7 +48,7 @@ public class ContainsValidatorFactory extends BaseSingleSchemaValidatorFactory {
     }
 
     @Override
-    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+    public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
       ValidationException t = null;
       if (in instanceof JsonArray){

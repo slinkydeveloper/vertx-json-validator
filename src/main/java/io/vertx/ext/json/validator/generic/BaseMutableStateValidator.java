@@ -1,8 +1,8 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.Future;
-import io.vertx.ext.json.validator.AsyncValidatorException;
 import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.NoSyncValidationException;
 import io.vertx.ext.json.validator.ValidationException;
 import io.vertx.ext.json.validator.ValidatorPriority;
 
@@ -44,8 +44,8 @@ public abstract class BaseMutableStateValidator implements MutableStateValidator
   @Override
   public MutableStateValidator getParent() { return parent; }
 
-  protected void checkSync() throws ValidationException, AsyncValidatorException {
-    if (!isSync()) throw new AsyncValidatorException();
+  protected void checkSync() throws ValidationException, NoSyncValidationException {
+    if (!isSync()) throw new NoSyncValidationException();
   }
 
   @Override

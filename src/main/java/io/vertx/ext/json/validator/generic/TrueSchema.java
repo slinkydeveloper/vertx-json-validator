@@ -31,7 +31,7 @@ public class TrueSchema implements Schema {
   }
 
   @Override
-  public void validateSync(Object in) throws ValidationException, AsyncValidatorException { }
+  public void validateSync(Object in) throws ValidationException, NoSyncValidationException { }
 
   @Override
   public Future<Void> validateAsync(Object in) {

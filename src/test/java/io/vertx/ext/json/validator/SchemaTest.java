@@ -25,9 +25,9 @@ public class SchemaTest {
     return new JsonObject(String.join("", Files.readAllLines(Paths.get(uri))));
   }
 
-  private URI buildBaseUri(String filename) {
-    return Paths.get("src", "test", "resources", filename).toAbsolutePath().toUri();
-  }
+    private URI buildBaseUri(String filename) {
+      return Paths.get("src", "test", "resources", filename).toAbsolutePath().toUri();
+    }
 
   private void assertThrow(Runnable r, Class<? extends Throwable> t, TestContext context) {
     try {

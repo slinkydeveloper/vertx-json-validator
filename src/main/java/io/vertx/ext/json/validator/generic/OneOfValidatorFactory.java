@@ -1,8 +1,8 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.Future;
-import io.vertx.ext.json.validator.AsyncValidatorException;
 import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.NoSyncValidationException;
 import io.vertx.ext.json.validator.Schema;
 import io.vertx.ext.json.validator.ValidationException;
 
@@ -39,7 +39,7 @@ public class OneOfValidatorFactory extends BaseCombinatorsValidatorFactory {
     }
 
     @Override
-    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+    public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
       long validCount = Arrays.stream(schemas).map(s -> isValidSync(s, in)).filter(b -> b.equals(true)).count();
       if (validCount > 1) throw NO_MATCH.createException("More than one schema valid", "oneOf", in);

@@ -56,7 +56,7 @@ public class ItemsValidatorFactory extends io.vertx.ext.json.validator.generic.I
     }
 
     @Override
-    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+    public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
       if (in instanceof JsonArray) {
         JsonArray arr = (JsonArray) in;

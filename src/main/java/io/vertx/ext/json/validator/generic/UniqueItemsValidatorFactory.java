@@ -11,7 +11,7 @@ public class UniqueItemsValidatorFactory implements ValidatorFactory {
 
   private final static BaseSyncValidator UNIQUE_VALIDATOR = new BaseSyncValidator() {
     @Override
-    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+    public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       if (in instanceof JsonArray) {
         JsonArray arr = (JsonArray) in;
         if (new HashSet(arr.getList()).size() != arr.size())

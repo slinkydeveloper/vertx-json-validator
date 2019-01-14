@@ -88,10 +88,11 @@ public class DependenciesValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+    public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
       if (in instanceof JsonObject) {
         JsonObject obj = (JsonObject) in;
+        checkKeyDeps(obj);
         keySchemaDeps.entrySet().stream().filter(e -> obj.containsKey(e.getKey())).forEach(e -> e.getValue().validateSync(in));
       }
     }

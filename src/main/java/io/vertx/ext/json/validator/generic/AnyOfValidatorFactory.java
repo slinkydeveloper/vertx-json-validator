@@ -2,8 +2,8 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.ext.json.validator.AsyncValidatorException;
 import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.NoSyncValidationException;
 import io.vertx.ext.json.validator.Schema;
 import io.vertx.ext.json.validator.ValidationException;
 
@@ -29,7 +29,7 @@ public class AnyOfValidatorFactory extends BaseCombinatorsValidatorFactory {
     }
 
     @Override
-    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+    public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
       ValidationException res = null;
       for (Schema s : this.schemas) {

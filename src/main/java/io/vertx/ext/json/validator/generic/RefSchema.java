@@ -37,12 +37,13 @@ public class RefSchema extends SchemaImpl {
 
   private synchronized void removeOverrides() {
     // In draft-6 and openapi the ref schema should not care about other keywords! from draft-8 this function makes sense
-//    this.getValidators().removeIf(validator ->
-//      ((SchemaImpl)cachedSchema).getValidators().stream().map(v -> validator.getClass().equals(v.getClass())).filter(b -> b).findFirst().orElse(false)
-//    );
-//    this.getValidators().addAll(((SchemaImpl)this.cachedSchema).getValidators());
+    //    this.getValidators().removeIf(validator ->
+    //      ((SchemaImpl)cachedSchema).getValidators().stream().map(v -> validator.getClass().equals(v.getClass())).filter(b -> b).findFirst().orElse(false)
+    //    );
+    //    this.getValidators().addAll(((SchemaImpl)this.cachedSchema).getValidators());
     this.getValidators().clear();
     this.getValidators().addAll(((SchemaImpl)this.cachedSchema).getValidators());
+    super.initializeIsSync();
   }
 
   private synchronized void registerCachedSchema(Schema s) {
@@ -58,7 +59,6 @@ public class RefSchema extends SchemaImpl {
           s -> {
             if (s == null) return Future.failedFuture(REF_ERROR.createException("Cannot resolve reference " + this.refPointer.buildURI(), "$ref", in));
             registerCachedSchema(s);
-            triggerUpdateIsSync();
             if (s instanceof RefSchema) {
               // We need to call solved schema validateAsync to solve upper ref, then we can merge validators
               return s.validateAsync(in).compose(f -> {
@@ -85,11 +85,32 @@ public class RefSchema extends SchemaImpl {
 
   @Override
   public void validateSync(Object in) throws ValidationException {
-    cachedSchema.validateSync(in);
+    if (cachedSchema == null) {
+        Schema s = schemaParser.getSchemaRouter().resolveCachedSchema(refPointer, this.getScope(), schemaParser);
+        if (s == null) throw REF_ERROR.createException("Cannot resolve reference " + this.refPointer.buildURI() + " SYNCHRONOUSLY. Maybe this is a remote reference?", "$ref", in);
+        registerCachedSchema(s);
+        if (s instanceof RefSchema) {
+          // We need to call solved schema validateAsync to solve upper ref, then we can merge validators
+          s.validateSync(in);
+          removeOverrides();
+          super.validateSync(in);
+        } else if (FalseSchema.getInstance() == s || TrueSchema.getInstance() == s) {
+          s.validateSync(in);
+        } else {
+          if (log.isDebugEnabled()) log.debug("Solved schema {}", s.getScope());
+          removeOverrides();
+          super.validateSync(in);
+        }
+    } else {
+      if (FalseSchema.getInstance() == cachedSchema || TrueSchema.getInstance() == cachedSchema)
+        cachedSchema.validateSync(in);
+      else
+        super.validateSync(in);
+    }
   }
 
   @Override
   public boolean calculateIsSync() {
-    return cachedSchema != null && cachedSchema.isSync();
+    return cachedSchema != null && (FalseSchema.getInstance() == cachedSchema || TrueSchema.getInstance() == cachedSchema || super.calculateIsSync());
   }
 }

@@ -24,9 +24,10 @@ public interface Validator {
    * Validate the provided value
    *
    * @param in
-   * @throws ValidationException
+   * @throws ValidationException if the object is not valid
+   * @throws NoSyncValidationException if no sync validation can be provided
    */
-  void validateSync(Object in) throws ValidationException, AsyncValidatorException;
+  void validateSync(Object in) throws ValidationException, NoSyncValidationException;
 
   /**
    * Return a Future that succeed when the validation succeed, while fail with a {@link ValidationException} when validation fails

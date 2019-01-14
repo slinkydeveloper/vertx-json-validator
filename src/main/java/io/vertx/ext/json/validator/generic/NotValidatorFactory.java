@@ -1,8 +1,8 @@
 package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.Future;
-import io.vertx.ext.json.validator.AsyncValidatorException;
 import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.NoSyncValidationException;
 import io.vertx.ext.json.validator.ValidationException;
 
 import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
@@ -35,7 +35,7 @@ public class NotValidatorFactory extends BaseSingleSchemaValidatorFactory {
     }
 
     @Override
-    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+    public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
       if (isValidSync(in)) throw NO_MATCH.createException("input should be invalid", "not", in);
     }

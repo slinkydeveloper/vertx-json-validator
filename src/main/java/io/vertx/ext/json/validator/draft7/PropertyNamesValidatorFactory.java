@@ -3,8 +3,8 @@ package io.vertx.ext.json.validator.draft7;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.validator.AsyncValidatorException;
 import io.vertx.ext.json.validator.MutableStateValidator;
+import io.vertx.ext.json.validator.NoSyncValidationException;
 import io.vertx.ext.json.validator.ValidationErrorType;
 import io.vertx.ext.json.validator.ValidationException;
 import io.vertx.ext.json.validator.generic.BaseSingleSchemaValidator;
@@ -32,7 +32,7 @@ public class PropertyNamesValidatorFactory extends BaseSingleSchemaValidatorFact
     }
 
     @Override
-    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+    public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
       if (in instanceof JsonObject) {
         ((JsonObject) in).getMap().keySet().stream().forEach(schema::validateSync);

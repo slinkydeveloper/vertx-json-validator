@@ -65,7 +65,7 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
   }
 
   @Override
-  public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+  public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
     if (log.isDebugEnabled()) log.debug("Starting sync validation for schema {} and input {}", schema, in);
     this.checkSync();
     for (Validator validator : validators) {

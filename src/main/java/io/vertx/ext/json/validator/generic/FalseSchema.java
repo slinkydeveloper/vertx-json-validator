@@ -31,7 +31,7 @@ public class FalseSchema implements Schema {
   }
 
   @Override
-  public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+  public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
     throw ValidationErrorType.NO_MATCH.createException("False schema always fail validation", null, in);
   }
 

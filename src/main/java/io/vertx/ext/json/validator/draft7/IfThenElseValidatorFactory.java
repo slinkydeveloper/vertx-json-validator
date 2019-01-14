@@ -51,7 +51,7 @@ public class IfThenElseValidatorFactory implements ValidatorFactory {
     }
 
     @Override
-    public void validateSync(Object in) throws ValidationException, AsyncValidatorException {
+    public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
       boolean conditionResult;
       try {
