@@ -23,7 +23,7 @@ public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
 
   @Override
   public boolean isObject() {
-    return true;
+    return !isNull();
   }
 
   @Override
@@ -38,7 +38,7 @@ public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
 
   @Override
   public boolean objectContainsKey(String key) {
-    return actualNode.getChilds().containsKey(key);
+    return (!isNull()) && actualNode.getChilds().containsKey(key);
   }
 
   @Override

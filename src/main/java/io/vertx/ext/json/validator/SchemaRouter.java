@@ -8,6 +8,8 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
 
+import java.util.List;
+
 @VertxGen
 public interface SchemaRouter {
 
@@ -43,6 +45,8 @@ public interface SchemaRouter {
    * @param actualPointer
    */
   void addSchema(Schema schema, JsonPointer actualPointer);
+
+  List<Schema> registeredSchemas();
 
   static SchemaRouter create(Vertx vertx) {
     return new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem());

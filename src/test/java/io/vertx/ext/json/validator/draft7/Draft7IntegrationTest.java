@@ -8,9 +8,10 @@ import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
 import org.assertj.core.util.Lists;
 import org.junit.runners.Parameterized;
 
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
@@ -64,9 +65,10 @@ public class Draft7IntegrationTest extends BaseIntegrationTest {
 
 
   @Override
-  public Schema buildSchemaFunction(Object schema) throws URISyntaxException {
+  public Map.Entry<SchemaParser, Schema> buildSchemaFunction(Object schema) {
     SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
-    return parser.parse(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
+    Schema s = parser.parse(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
+    return new AbstractMap.SimpleImmutableEntry<>(parser, s);
   }
 
   @Override

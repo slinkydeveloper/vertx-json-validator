@@ -35,12 +35,14 @@ public class SchemaRouterImpl implements SchemaRouter {
     if (!refURI.isAbsolute()) {
       // Fragment pointer or path pointer!
       if (refURI.getPath() != null && !refURI.getPath().isEmpty()) {
+        // Path pointer
         node = getParentsURIs(scope)
             .map(e -> URIUtils.resolvePath(e, refURI.getPath()))
             .map(absolutePaths::get)
             .filter(Objects::nonNull)
             .findFirst().orElse(null);
       } else { // Fallback to scope
+        // Fragment pointer
         node = absolutePaths.get(scope.getURIWithoutFragment());
       }
     } else {
@@ -125,6 +127,11 @@ public class SchemaRouterImpl implements SchemaRouter {
     }
   }
 
+  @Override
+  public List<Schema> registeredSchemas() {
+    return absolutePaths.values().stream().flatMap(RouterNode::flattened).map(RouterNode::getThisSchema).collect(Collectors.toList());
+  }
+
   // The idea is to traverse from base to actual scope all tree and find aliases
   private Stream<URI> getParentsURIs(JsonPointer scope) {
     Stream.Builder<URI> uriStreamBuilder = Stream.builder();
@@ -134,6 +141,8 @@ public class SchemaRouterImpl implements SchemaRouter {
     ));
     return uriStreamBuilder.build();
   }
+
+  // TODO extract observer logic from schema router
 
   private synchronized boolean isSchemaAlreadySolving(URI u) {
     return externalSchemasSolving.containsKey(u);
@@ -233,4 +242,82 @@ public class SchemaRouterImpl implements SchemaRouter {
       }
     }
   }
+
+  public boolean pleaseRunThisShit(RefSchema refSchema, JsonPointer refPointer, JsonPointer scope) {
+    if (refSchema.getParent() == null || !refSchema.getParent().isSync()) return false;
+    List<MutableStateValidator> parents = new ArrayList<>();
+    MutableStateValidator s = refSchema.getParent();
+    while (s != null) {
+      parents.add(s);
+      s = s.getParent();
+    }
+    URI refURI = refPointer.getURIWithoutFragment();
+    RouterNode node;
+    if (!refURI.isAbsolute()) {
+      // Fragment pointer or path pointer!
+      if (refURI.getPath() != null && !refURI.getPath().isEmpty()) {
+        node = getParentsURIs(scope)
+            .map(e -> URIUtils.resolvePath(e, refURI.getPath()))
+            .map(absolutePaths::get)
+            .filter(Objects::nonNull)
+            .findFirst().orElse(null);
+      } else { // Fallback to scope
+        node = absolutePaths.get(scope.getURIWithoutFragment());
+      }
+    } else {
+      node = absolutePaths.get(refURI);
+    }
+    if (node == null) return false;
+    RouterNode resultNode = (RouterNode) refPointer.query(new RouterNodeJsonPointerIterator(node));
+    List<Schema> referencedSchemasFromResolvedNode = resultNode
+        .flattened().map(RouterNode::getThisSchema)
+        .filter(Objects::nonNull).filter(x -> x instanceof RefSchema).map(x -> ((RefSchema)x).cachedSchema)
+        .filter(Objects::nonNull).collect(Collectors.toList());
+    return parents.stream().map(referencedSchemasFromResolvedNode::contains).reduce(false, Boolean::logicalOr);
+  } //TODO can i remove it?
+
+  public Future<Void> solveAllSchemaReferences(Schema schema) {
+    if (schema instanceof RefSchema) {
+      return ((RefSchema)schema).tryAsyncSolveSchema().compose(s -> {
+        RouterNode node = absolutePaths.get(s.getScope().getURIWithoutFragment());
+        node = (RouterNode) s.getScope().query(new RouterNodeJsonPointerIterator(node));
+        if (node == null) return Future.succeededFuture();
+        return CompositeFuture.all(
+            node
+                .flattened()
+                .map(RouterNode::getThisSchema)
+                .filter(Objects::nonNull)
+                .filter(s1 -> s1 instanceof RefSchema)
+                .map(r -> ((RefSchema)r).tryAsyncSolveSchema())
+                .collect(Collectors.toList())
+        ).compose(cf -> Future.succeededFuture());
+      });
+    } else {
+      RouterNode node = absolutePaths.get(schema.getScope().getURIWithoutFragment());
+      node = (RouterNode) schema.getScope().query(new RouterNodeJsonPointerIterator(node));
+      if (node == null) return Future.succeededFuture();
+      return CompositeFuture.all(
+          node
+              .reverseFlattened().collect(Collectors.toList())
+              .stream()
+              .map(RouterNode::getThisSchema)
+              .filter(Objects::nonNull)
+              .filter(s -> s instanceof RefSchema)
+              .map(r -> ((RefSchema)r).tryAsyncSolveSchema())
+              .collect(Collectors.toList())
+      ).compose(cf -> Future.succeededFuture());
+    }
+  } // TODO total refactor this function
+
+  public void optimizeShit() {
+    this.absolutePaths.values().forEach(this::recOptimizieThisShit);
+  } // TODO can i remove it?
+
+  private void recOptimizieThisShit(RouterNode node) {
+    if (node.getThisSchema() != null && node.getThisSchema() instanceof RefSchema) {
+      ((RefSchema)node.getThisSchema()).trySyncSolveSchema();
+    }
+    new ArrayList<>(node.getChilds().values()).forEach(this::recOptimizieThisShit); // Smarter way?
+  }
+
 }

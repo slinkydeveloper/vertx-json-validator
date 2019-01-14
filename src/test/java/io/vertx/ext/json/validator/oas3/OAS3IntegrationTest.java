@@ -11,7 +11,9 @@ import org.junit.runners.Parameterized;
 
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
@@ -58,9 +60,10 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
 
 
   @Override
-  public Schema buildSchemaFunction(Object schema) throws URISyntaxException {
+  public Map.Entry<SchemaParser, Schema> buildSchemaFunction(Object schema) throws URISyntaxException {
     SchemaParser parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
-    return parser.parse(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
+    Schema s = parser.parse(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
+    return new AbstractMap.SimpleImmutableEntry<>(parser, s);
   }
 
   @Override

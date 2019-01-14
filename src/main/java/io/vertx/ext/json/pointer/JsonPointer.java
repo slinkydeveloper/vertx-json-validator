@@ -18,6 +18,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
 import io.vertx.ext.json.pointer.impl.JsonPointerIteratorImpl;
+import io.vertx.ext.json.validator.generic.URIUtils;
 
 import java.net.URI;
 import java.util.List;
@@ -36,6 +37,15 @@ public interface JsonPointer {
    * @return
    */
   boolean isRootPointer();
+
+  /**
+   * Return true if the pointer is local (URI with only fragment)
+   *
+   * @return
+   */
+  boolean isLocalPointer();
+
+  boolean isParent(JsonPointer child);
 
   /**
    * Alias for toString()
@@ -197,6 +207,10 @@ public interface JsonPointer {
    */
   static JsonPointer fromURI(URI uri) {
     return new JsonPointerImpl(uri);
+  }
+
+  static JsonPointer mergeBaseURIAndJsonPointer(URI uri, JsonPointer pointer) {
+    return new JsonPointerImpl(URIUtils.replaceFragment(uri, pointer.buildURI().getFragment()));
   }
 
 }

@@ -36,8 +36,9 @@ public abstract class BaseMutableStateValidator implements MutableStateValidator
 
   @Override
   public void triggerUpdateIsSync() {
-    isSync.set(calculateIsSync());
-    if (getParent() != null)
+    boolean calculated = calculateIsSync();
+    boolean previous = isSync.getAndSet(calculated);
+    if (calculated != previous && getParent() != null)
       getParent().triggerUpdateIsSync();
   }
 

@@ -1,10 +1,12 @@
 package io.vertx.ext.json.validator;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.RunTestOnContext;
@@ -27,10 +29,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,10 +43,10 @@ public abstract class BaseIntegrationTest {
   public final JUnitSoftAssertions t = new JUnitSoftAssertions();
 
   @Rule
-  public final Timeout timeout = Timeout.seconds(2);
+  public final Timeout timeout = Timeout.seconds(60);
 
   @Rule
-  public final RunTestOnContext classContext = new RunTestOnContext(Vertx::vertx);
+  public final RunTestOnContext classContext = new RunTestOnContext(() -> Vertx.vertx(new VertxOptions().setBlockedThreadCheckInterval(10000)));
 
   public static final Logger log = LoggerFactory.getLogger(BaseIntegrationTest.class);
 
@@ -121,7 +120,7 @@ public abstract class BaseIntegrationTest {
     stopSchemaServer(context);
   }
 
-  private Optional<Schema> buildSchema(Object schema) {
+  private Optional<Map.Entry<SchemaParser, Schema>> buildSchema(Object schema) {
     try {
       return Optional.of(buildSchemaFunction(schema));
     } catch (Exception e) {
@@ -130,44 +129,56 @@ public abstract class BaseIntegrationTest {
     }
   }
 
-  private void assertThrow(Runnable r, Class<? extends Throwable> t, TestContext context) {
+  private void assertThrow(Runnable r, Class<? extends Throwable> throwable, String testName, String testCaseName) {
     try {
       r.run();
-      context.fail("No exception thrown");
+      t.fail("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
     } catch (Throwable throwed) {
-      context.assertEquals(t, throwed.getClass());
+      t.assertThat(throwed).as("\"%s\" -> \"%s\" should be of type ValidationException", testName, testCaseName).isInstanceOf(throwable);
     }
   }
 
-  private void assertNotThrow(Runnable r, TestContext context) {
+  private void assertNotThrow(Runnable r, String testName, String testCaseName) {
     try {
       r.run();
     } catch (Throwable throwed) {
-      context.fail(throwed);
+      t.fail(String.format("\"%s\" -> \"%s\" should be valid", testName, testCaseName), throwed);
     }
   }
 
-  private void validateSuccess(Schema schema, Object obj, String testCaseName, TestContext context) {
+  private void validateSuccess(Schema schema, SchemaParser parser, Object obj, String testCaseName, TestContext context) {
     Async async = context.async();
     schema.validateAsync(obj).setHandler(event -> {
       if (event.failed())
         t.fail(String.format("\"%s\" -> \"%s\" should be valid", testName, testCaseName), event.cause());
-      context.assertTrue(schema.isSync());
-      assertNotThrow(() -> schema.validateSync(obj), context);
-      async.complete();
+      ((SchemaRouterImpl)parser.getSchemaRouter()).solveAllSchemaReferences(schema).setHandler(ar -> {
+        t.assertThat(ar.succeeded()).isTrue().withFailMessage("Failed schema refs resolving with cause {}", ar.cause());
+        t.assertThat(schema.isSync()).isTrue();
+        assertNotThrow(() -> schema.validateSync(obj), testName, testCaseName);
+        async.complete();
+      });
+//      t.assertThat(schema.isSync()).isTrue();
+//      assertNotThrow(() -> schema.validateSync(obj), testName, testCaseName);
+//      async.complete();
     });
   }
 
-  private void validateFailure(Schema schema, Object obj, String testCaseName, TestContext context) {
+  private void validateFailure(Schema schema, SchemaParser parser, Object obj, String testCaseName, TestContext context) {
     Async async = context.async();
     schema.validateAsync(obj).setHandler(event -> {
       if (event.succeeded())
         t.fail("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
       else
         log.debug(event.cause().toString());
-      context.assertTrue(schema.isSync());
-      assertThrow(() -> schema.validateSync(obj), ValidationException.class, context);
-      async.complete();
+      ((SchemaRouterImpl)parser.getSchemaRouter()).solveAllSchemaReferences(schema).setHandler(ar -> {
+        t.assertThat(ar.succeeded()).isTrue().withFailMessage("Failed schema refs resolving with cause {}", ar.cause());
+        t.assertThat(schema.isSync()).isTrue();
+        assertThrow(() -> schema.validateSync(obj), ValidationException.class, testName, testCaseName);
+        async.complete();
+      });
+//      t.assertThat(schema.isSync()).isTrue();
+//      assertThrow(() -> schema.validateSync(obj), ValidationException.class, testName, testCaseName);
+//      async.complete();
     });
   }
 
@@ -175,18 +186,18 @@ public abstract class BaseIntegrationTest {
   @Test
   public void test(TestContext context) {
     buildSchema(test.getValue("schema"))
-        .ifPresent(schema -> {
+        .ifPresent(t -> {
           for (Object tc : test.getJsonArray("tests").stream().collect(Collectors.toList())) {
             JsonObject testCase = (JsonObject) tc;
             if (testCase.getBoolean("valid"))
-              validateSuccess(schema, testCase.getValue("data"), testCase.getString("description"), context);
+              validateSuccess(t.getValue(), t.getKey(), testCase.getValue("data"), testCase.getString("description"), context);
             else
-              validateFailure(schema, testCase.getValue("data"), testCase.getString("description"), context);
+              validateFailure(t.getValue(), t.getKey(), testCase.getValue("data"), testCase.getString("description"), context);
           }
         });
   }
 
-  public abstract Schema buildSchemaFunction(Object schema) throws URISyntaxException;
+  public abstract Map.Entry<SchemaParser, Schema> buildSchemaFunction(Object schema) throws URISyntaxException;
 
   public abstract String getSchemasPath();
 

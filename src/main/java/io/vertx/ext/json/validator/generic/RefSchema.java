@@ -2,10 +2,10 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 
@@ -17,7 +17,7 @@ public class RefSchema extends SchemaImpl {
 
   private final JsonPointer refPointer;
   private final SchemaParser schemaParser;
-  private Schema cachedSchema;
+  protected Schema cachedSchema;
 
   public RefSchema(JsonObject schema, JsonPointer scope, SchemaParser schemaParser, MutableStateValidator parent) {
     super(schema, scope, parent);
@@ -35,82 +35,125 @@ public class RefSchema extends SchemaImpl {
     }
   }
 
-  private synchronized void removeOverrides() {
-    // In draft-6 and openapi the ref schema should not care about other keywords! from draft-8 this function makes sense
-    //    this.getValidators().removeIf(validator ->
-    //      ((SchemaImpl)cachedSchema).getValidators().stream().map(v -> validator.getClass().equals(v.getClass())).filter(b -> b).findFirst().orElse(false)
-    //    );
-    //    this.getValidators().addAll(((SchemaImpl)this.cachedSchema).getValidators());
-    this.getValidators().clear();
-    this.getValidators().addAll(((SchemaImpl)this.cachedSchema).getValidators());
-    super.initializeIsSync();
-  }
-
   private synchronized void registerCachedSchema(Schema s) {
     this.cachedSchema = s;
+    if (s instanceof SchemaImpl)
+      ((SchemaImpl)s).registerReferredSchema(this);
+  }
+
+  public synchronized void prePropagateSyncState() {
+    isSync.set(true);
+    if (getParent() != null)
+      getParent().triggerUpdateIsSync();
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public Future<Void> validateAsync(Object in) {
+    if (isSync()) return validateSyncAsAsync(in);
     if (cachedSchema == null) {
       return FutureUtils.andThen(
           schemaParser.getSchemaRouter().resolveRef(refPointer, this.getScope(), schemaParser),
           s -> {
             if (s == null) return Future.failedFuture(REF_ERROR.createException("Cannot resolve reference " + this.refPointer.buildURI(), "$ref", in));
             registerCachedSchema(s);
+            if (log.isDebugEnabled()) log.debug("Solved schema {}", s.getScope());
             if (s instanceof RefSchema) {
               // We need to call solved schema validateAsync to solve upper ref, then we can merge validators
               return s.validateAsync(in).compose(f -> {
-                removeOverrides();
-                return super.validateAsync(in);
+                  this.triggerUpdateIsSync();
+                  return Future.succeededFuture();
               });
-            } else if (FalseSchema.getInstance() == s || TrueSchema.getInstance() == s) {
-              return s.validateAsync(in);
             } else {
-              if (log.isDebugEnabled()) log.debug("Solved schema {}", s.getScope());
-              removeOverrides();
-              return super.validateAsync(in);
+              this.triggerUpdateIsSync();
+              return s.validateAsync(in);
             }
           },
           err -> Future.failedFuture(REF_ERROR.createException("Error while resolving reference " + this.refPointer.buildURI(), err, "$ref", in))
           );
     } else {
-      if (FalseSchema.getInstance() == cachedSchema || TrueSchema.getInstance() == cachedSchema)
-        return cachedSchema.validateAsync(in);
-      else
-        return super.validateAsync(in);
+      return cachedSchema.validateAsync(in);
     }
   }
 
   @Override
   public void validateSync(Object in) throws ValidationException {
+    this.checkSync();
     if (cachedSchema == null) {
         Schema s = schemaParser.getSchemaRouter().resolveCachedSchema(refPointer, this.getScope(), schemaParser);
         if (s == null) throw REF_ERROR.createException("Cannot resolve reference " + this.refPointer.buildURI() + " SYNCHRONOUSLY. Maybe this is a remote reference?", "$ref", in);
         registerCachedSchema(s);
+        if (!s.isSync()) throw new NoSyncValidationException();
         if (s instanceof RefSchema) {
-          // We need to call solved schema validateAsync to solve upper ref, then we can merge validators
+          // We need to call solved schema validateSync to solve upper ref, then we can merge validators
           s.validateSync(in);
-          removeOverrides();
-          super.validateSync(in);
-        } else if (FalseSchema.getInstance() == s || TrueSchema.getInstance() == s) {
-          s.validateSync(in);
+          this.triggerUpdateIsSync();
         } else {
           if (log.isDebugEnabled()) log.debug("Solved schema {}", s.getScope());
-          removeOverrides();
-          super.validateSync(in);
+          cachedSchema.validateSync(in);
+          this.triggerUpdateIsSync();
         }
     } else {
-      if (FalseSchema.getInstance() == cachedSchema || TrueSchema.getInstance() == cachedSchema)
-        cachedSchema.validateSync(in);
-      else
-        super.validateSync(in);
+      cachedSchema.validateSync(in);
     }
   }
 
   @Override
   public boolean calculateIsSync() {
-    return cachedSchema != null && (FalseSchema.getInstance() == cachedSchema || TrueSchema.getInstance() == cachedSchema || super.calculateIsSync());
+    //return cachedSchema != null && (cachedSchema.isSync() || ((SchemaRouterImpl)schemaParser.getSchemaRouter()).pleaseRunThisShit(this, refPointer, getScope()));
+    return cachedSchema != null && cachedSchema.isSync(); //TODO?!
+  }
+
+  @Override
+  protected void initializeIsSync() {
+    // A local pointer could reefer to an asynchronous schema!
+//    isSync.set(
+//        refPointer.isLocalPointer() &&
+//            JsonPointer.mergeBaseURIAndJsonPointer(this.getScope().getURIWithoutFragment(), this.refPointer).isParent(this.getScope())
+//    );
+    isSync.set(false);
+    log.debug("Initialized sync state to false");
+  }
+
+  //todo protected and move call to schema parser
+  public synchronized void trySyncSolveSchema() {
+    if (cachedSchema == null) {
+      Schema s = schemaParser.getSchemaRouter().resolveCachedSchema(refPointer, this.getScope(), schemaParser);
+      if (s != null) {
+        registerCachedSchema(s);
+        log.info("RefSchema presolved ref {} with schema {}", refPointer, this.getSchema());
+        if (s instanceof RefSchema) {
+          ((RefSchema)s).trySyncSolveSchema();
+        }
+        this.triggerUpdateIsSync();
+        log.info("This schema sync state: {}, Resolved schema sync state {}", isSync(), s.isSync());
+      }
+    }
+  }
+
+  public synchronized Future<Schema> tryAsyncSolveSchema() {
+    if (cachedSchema == null) {
+      return FutureUtils.andThen(
+          schemaParser.getSchemaRouter().resolveRef(refPointer, this.getScope(), schemaParser),
+          s -> {
+            if (s == null) return Future.failedFuture(REF_ERROR.createException("Cannot resolve reference " + this.refPointer.buildURI(), "$ref", null));
+            registerCachedSchema(s);
+            if (log.isDebugEnabled()) log.debug("Solved schema {}", s.getScope());
+            if (s instanceof RefSchema) {
+              // We need to call solved schema validateAsync to solve upper ref, then we can merge validators
+              return ((RefSchema) s).tryAsyncSolveSchema().map(cachedSchema);
+            }
+            this.triggerUpdateIsSync();
+            return Future.succeededFuture(cachedSchema);
+          },
+          err -> Future.failedFuture(REF_ERROR.createException("Error while resolving reference " + this.refPointer.buildURI(), err, "$ref", null))
+      );
+    } else return Future.succeededFuture(cachedSchema);
+  }
+
+  protected void setIsSync(boolean s) {
+    isSync.set(s);
+    if (getParent() != null)
+      getParent().triggerUpdateIsSync();
   }
 }

@@ -2,6 +2,7 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
+import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -21,12 +22,15 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
 
   private final JsonObject schema;
   private final JsonPointer scope;
-  private ConcurrentSkipListSet<Validator> validators;
+  ConcurrentSkipListSet<Validator> validators;
+
+  private final ConcurrentHashSet<RefSchema> referringSchemas;
 
   public SchemaImpl(JsonObject schema, JsonPointer scope, MutableStateValidator parent) {
     super(parent);
     this.schema = schema;
     this.scope = scope;
+    referringSchemas = new ConcurrentHashSet<>();
   }
 
   @Override
@@ -36,6 +40,18 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
 
   public JsonObject getSchema() {
     return schema;
+  }
+
+  @Override
+  public synchronized void triggerUpdateIsSync() {
+    boolean calculated = calculateIsSync();
+    boolean previous = isSync.getAndSet(calculated);
+    if (calculated != previous) {
+      if (!referringSchemas.isEmpty())
+        referringSchemas.forEach(r -> r.setIsSync(calculated));
+      if (getParent() != null)
+        getParent().triggerUpdateIsSync();
+    }
   }
 
   @Override
@@ -102,5 +118,16 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
     } else {
       return Future.failedFuture(NO_MATCH.createException("Error while validating", (Throwable) e, null, in));
     }
+  }
+
+  void registerReferredSchema(RefSchema ref) {
+      referringSchemas.add(ref);
+      if (log.isDebugEnabled()) {
+        log.debug("Ref schema {} reefers to schema {}",  ref, this);
+        log.debug("Ref schemas that refeers to {}: {}", this, this.referringSchemas.size());
+      }
+      referringSchemas.forEach(RefSchema::prePropagateSyncState);
+      referringSchemas.forEach(r -> r.setIsSync(this.isSync.get()));
+
   }
 }

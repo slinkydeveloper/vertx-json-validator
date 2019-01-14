@@ -48,6 +48,7 @@ public class IfThenElseValidatorFactory implements ValidatorFactory {
       this.condition = condition;
       this.thenBranch = thenBranch;
       this.elseBranch = elseBranch;
+      this.initializeIsSync();
     }
 
     @Override

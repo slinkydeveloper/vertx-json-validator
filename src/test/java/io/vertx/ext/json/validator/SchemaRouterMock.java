@@ -3,7 +3,9 @@ package io.vertx.ext.json.validator;
 import io.vertx.core.Future;
 import io.vertx.ext.json.pointer.JsonPointer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SchemaRouterMock implements SchemaRouter {
@@ -31,5 +33,10 @@ public class SchemaRouterMock implements SchemaRouter {
   @Override
   public void addSchema(Schema schema, JsonPointer scope) {
     schemas.put(scope, schema);
+  }
+
+  @Override
+  public List<Schema> registeredSchemas() {
+    return new ArrayList<>();
   }
 }

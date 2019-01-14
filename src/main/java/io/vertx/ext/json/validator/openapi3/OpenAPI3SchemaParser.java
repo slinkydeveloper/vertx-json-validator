@@ -9,7 +9,7 @@ import io.vertx.ext.json.validator.ValidatorFactory;
 import io.vertx.ext.json.validator.generic.*;
 
 import java.net.URI;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class OpenAPI3SchemaParser extends BaseSchemaParser {
@@ -20,7 +20,8 @@ public class OpenAPI3SchemaParser extends BaseSchemaParser {
 
   @Override
   protected List<ValidatorFactory> initValidatorFactories() {
-    List<ValidatorFactory> factories = new ArrayList<>();
+    List<ValidatorFactory> factories = new LinkedList<>();
+    factories.add(new DefinitionsValidatorFactory());
     factories.add(new FormatValidatorFactory());
     factories.add(new MaximumValidatorFactory());
     factories.add(new MinimumValidatorFactory());
@@ -43,7 +44,6 @@ public class OpenAPI3SchemaParser extends BaseSchemaParser {
     factories.add(new PropertiesValidatorFactory());
     factories.add(new RequiredValidatorFactory());
     factories.add(new UniqueItemsValidatorFactory());
-    factories.add(new DefinitionsValidatorFactory());
     return factories;
   }
 

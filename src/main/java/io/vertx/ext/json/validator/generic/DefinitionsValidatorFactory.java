@@ -14,7 +14,7 @@ public class DefinitionsValidatorFactory implements ValidatorFactory {
       JsonObject definitions = schema.getJsonObject("definitions");
       JsonPointer basePointer = scope.append("definitions");
       definitions.forEach(e -> {
-        parser.parse((e.getValue() instanceof Map) ? new JsonObject((Map<String, Object>) e.getValue()) : e.getValue(), basePointer.copy().append(e.getKey()), parent);
+        parser.parse((e.getValue() instanceof Map) ? new JsonObject((Map<String, Object>) e.getValue()) : e.getValue(), basePointer.copy().append(e.getKey()), null);
       });
       return null;
     } catch (ClassCastException e) {

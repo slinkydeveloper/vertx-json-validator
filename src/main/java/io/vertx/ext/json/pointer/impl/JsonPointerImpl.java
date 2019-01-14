@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
@@ -103,6 +104,20 @@ public class JsonPointerImpl implements JsonPointer {
   @Override
   public boolean isRootPointer() {
     return decodedTokens == null || decodedTokens.size() == 0 || (decodedTokens.size() == 1 && "".equals(decodedTokens.get(0)));
+  }
+
+  @Override
+  public boolean isLocalPointer() {
+    return startingUri == null || startingUri.getSchemeSpecificPart() == null || startingUri.getSchemeSpecificPart().isEmpty();
+  }
+
+  @Override
+  public boolean isParent(JsonPointer child) {
+    return child != null &&
+        (child.getURIWithoutFragment() == null && this.getURIWithoutFragment() == null || child.getURIWithoutFragment().equals(this.getURIWithoutFragment())) &&
+        IntStream.range(0, decodedTokens.size() - 1)
+            .mapToObj(i -> this.decodedTokens.get(i).equals(((JsonPointerImpl) child).decodedTokens.get(i)))
+            .reduce(Boolean::logicalAnd).orElse(false);
   }
 
   @Override
