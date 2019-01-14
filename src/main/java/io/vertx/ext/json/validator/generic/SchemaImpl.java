@@ -46,11 +46,11 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
     List<Future> futures = new ArrayList<>();
     for (Validator validator : validators) {
       if (!validator.isSync()) {
-        Future<Void> asyncValidate = validator.validateAsync(in);
+        Future<Void> asyncValidate = ((AsyncValidator)validator).validateAsync(in);
         asyncValidate = asyncValidate.recover(t -> fillException(t, in));
         futures.add(asyncValidate);
       } else try {
-        validator.validateSync(in);
+        ((SyncValidator)validator).validateSync(in);
       } catch (ValidationException e) {
         e.setSchema(this);
         e.setScope(this.scope);
@@ -70,7 +70,7 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
     this.checkSync();
     for (Validator validator : validators) {
       try {
-        validator.validateSync(in);
+        ((SyncValidator)validator).validateSync(in);
       } catch (ValidationException e) {
         e.setSchema(this);
         e.setScope(this.scope);
@@ -81,7 +81,7 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
 
   @Override
   public boolean calculateIsSync() {
-    return validators.stream().map(Validator::isSync).reduce(true, Boolean::logicalAnd);
+    return validators.isEmpty() || validators.stream().map(Validator::isSync).reduce(true, Boolean::logicalAnd);
   }
 
   public Set<Validator> getValidators() {

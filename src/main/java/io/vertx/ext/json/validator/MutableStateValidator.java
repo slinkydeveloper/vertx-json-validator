@@ -1,6 +1,6 @@
 package io.vertx.ext.json.validator;
 
-public interface MutableStateValidator extends Validator {
+public interface MutableStateValidator extends AsyncValidator, SyncValidator {
 
   //TODO comment
   MutableStateValidator getParent();
