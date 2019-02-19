@@ -63,7 +63,9 @@ public class JsonPointerImpl implements JsonPointer {
     if (VALID_POINTER_PATTERN.matcher(pointer).matches()) {
       return Arrays
           .stream(pointer.split("\\/", -1))
-          .map(this::unescape).collect(Collectors.toCollection(ArrayList::new));
+          .skip(1) //Ignore first element
+          .map(this::unescape)
+          .collect(Collectors.toCollection(ArrayList::new));
     } else
       throw new IllegalArgumentException("The provided pointer is not a valid JSON Pointer");
   }

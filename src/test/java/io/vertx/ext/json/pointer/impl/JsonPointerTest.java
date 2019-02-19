@@ -31,7 +31,8 @@ public class JsonPointerTest {
   @Test
   public void testParsing() {
     JsonPointer pointer = JsonPointer.from("/hello/world");
-    assertThat(pointer.build()).isEqualTo("/hello/world");
+    assertThat(pointer.build())
+        .isEqualTo("/hello/world");
   }
 
   @Test
@@ -42,7 +43,6 @@ public class JsonPointerTest {
   @Test
   public void testEncodingParsing() {
     List<String> keys = new ArrayList<>();
-    keys.add("");
     keys.add("hell/o");
     keys.add("worl~d");
     JsonPointer pointer = new JsonPointerImpl(URI.create("#"), keys);
@@ -66,7 +66,6 @@ public class JsonPointerTest {
   @Test
   public void testBuilding() {
     List<String> keys = new ArrayList<>();
-    keys.add("");
     keys.add("hello");
     keys.add("world");
     JsonPointer pointer = new JsonPointerImpl(URI.create("#"), keys);
