@@ -8,41 +8,30 @@ import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.SchemaRouter;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static io.vertx.ext.json.validator.TestUtils.buildBaseUri;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
 public class LocalRefTest {
 
-  public Vertx vertx;
   public SchemaParser parser;
   public SchemaRouter router;
 
-  @Before
-  public void setUp() throws Exception {
-    vertx = Vertx.vertx();
+  @BeforeEach
+  public void setUp(Vertx vertx) throws Exception {
     router = SchemaRouter.create(vertx);
     parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), router);
-  }
-
-  private JsonObject loadJson(URI uri) throws IOException {
-    return new JsonObject(String.join("", Files.readAllLines(Paths.get(uri))));
-  }
-
-  private Path buildBasePath(String filename) {
-    return Paths.get(".","src", "test", "resources", "ref_test", filename);
   }
 
   private void assertThatSchemaContainsXid(SchemaRouter router, JsonPointer jp, JsonPointer scope, String id) {
@@ -53,55 +42,74 @@ public class LocalRefTest {
   }
 
   @Test
-  public void absoluteLocalRef(TestContext context) {
-    URI sampleURI = buildBasePath("sample.json").toAbsolutePath().toUri();
+  public void absoluteLocalRef(VertxTestContext context) {
+    URI sampleURI = buildBaseUri("ref_test", "sample.json");
     JsonObject mainSchemaUnparsed = new JsonObject().put("$ref", sampleURI.toString());
-    Schema mainSchema = parser.parse(mainSchemaUnparsed, buildBasePath("test_1.json").toAbsolutePath().toUri());
-    mainSchema.validateAsync("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
-      assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
-      assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+    Schema mainSchema = parser.parse(mainSchemaUnparsed, buildBaseUri("ref_test", "test_1.json"));
+    mainSchema.validateAsync("").setHandler(context.succeeding(o -> { // Trigger validation to start solve refs
+      context.verify(() -> {
+        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
+        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+      });
+      context.completeNow();
     }));
   }
 
   @Test
-  public void relativeLocalRef(TestContext context) {
+  public void relativeLocalRef(VertxTestContext context) {
     URI sampleURI = URI.create("./sample.json");
     JsonObject mainSchemaUnparsed = new JsonObject().put("$ref", sampleURI.toString());
-    Schema mainSchema = parser.parse(mainSchemaUnparsed, buildBasePath("test_2.json").toUri());
-    mainSchema.validateAsync("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
-      assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
-      assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+    Schema mainSchema = parser.parse(mainSchemaUnparsed, Paths.get(".","src", "test", "resources", "ref_test", "test_2.json").toUri());
+    mainSchema.validateAsync("").setHandler(context.succeeding(o -> { // Trigger validation to start solve refs
+      context.verify(() -> {
+        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
+        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+      });
+      context.completeNow();
     }));
   }
 
   @Test
-  public void relativeLocalRefFromResources(TestContext context) throws URISyntaxException {
+  public void relativeLocalRefFromResources(VertxTestContext context) throws URISyntaxException {
     URI sampleURI = getClass().getResource("/ref_test/sample.json").toURI();
     JsonObject mainSchemaUnparsed = new JsonObject().put("$ref", sampleURI.toString());
     Schema mainSchema = parser.parse(mainSchemaUnparsed, sampleURI.resolve("test_1.json"));
-    mainSchema.validateAsync("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
-      assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
-      assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+    mainSchema.validateAsync("").setHandler(context.succeeding(o -> { // Trigger validation to start solve refs
+      context.verify(() -> {
+        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
+        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+      });
+      context.completeNow();
     }));
   }
 
   @Test
-  public void jarURIRelativization(TestContext context) throws URISyntaxException {
+  public void jarURIRelativization(VertxTestContext context) throws URISyntaxException {
     URI sampleURI = getClass().getClassLoader().getResource("sample_in_jar.json").toURI();
     URI replaced1 = URIUtils.resolvePath(sampleURI, "empty_in_jar.json");
     URI replaced2 = URIUtils.resolvePath(sampleURI, "./empty_in_jar.json");
-    context.assertEquals(replaced1, getClass().getClassLoader().getResource("empty_in_jar.json").toURI());
-    context.assertEquals(replaced2, getClass().getClassLoader().getResource("empty_in_jar.json").toURI());
+    context.verify(() -> {
+      try {
+        assertThat(getClass().getClassLoader().getResource("empty_in_jar.json").toURI()).isEqualTo(replaced1);
+        assertThat(getClass().getClassLoader().getResource("empty_in_jar.json").toURI()).isEqualTo(replaced2);
+      } catch (URISyntaxException e) {
+        fail("Wrong URI syntax", e);
+      }
+    });
+    context.completeNow();
   }
 
   @Test
-  public void relativeLocalRefFromClassLoader(TestContext context) throws URISyntaxException {
+  public void relativeLocalRefFromClassLoader(VertxTestContext context) throws URISyntaxException {
     URI sampleURI = getClass().getClassLoader().getResource("sample_in_jar.json").toURI();
     JsonObject mainSchemaUnparsed = new JsonObject().put("$ref", sampleURI.toString());
     Schema mainSchema = parser.parse(mainSchemaUnparsed, URIUtils.resolvePath(sampleURI, "test_1.json"));
-    mainSchema.validateAsync("").setHandler(context.asyncAssertSuccess(o -> { // Trigger validation to start solve refs
-      assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
-      assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+    mainSchema.validateAsync("").setHandler(context.succeeding(o -> { // Trigger validation to start solve refs
+      context.verify(() -> {
+        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
+        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+      });
+      context.completeNow();
     }));
   }
 

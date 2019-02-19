@@ -8,39 +8,35 @@ import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.SchemaRouter;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
-import org.junit.Before;
-import org.junit.Test;
+import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
+import static io.vertx.ext.json.validator.TestUtils.buildBaseUri;
+import static io.vertx.ext.json.validator.TestUtils.loadJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(VertxExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SchemaRouterTest {
 
-  public Vertx vertx;
   public SchemaParser parser;
   public SchemaRouter schemaRouter;
 
-  @Before
-  public void setUp() throws Exception {
-    vertx = Vertx.vertx();
+  @BeforeAll
+  public void setUp(Vertx vertx) {
     schemaRouter = SchemaRouter.create(vertx);
     parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), schemaRouter);
   }
 
-  private JsonObject loadJson(URI uri) throws IOException {
-    return new JsonObject(String.join("", Files.readAllLines(Paths.get(uri))));
-  }
-
-  private URI buildBaseUri(String filename) {
-    return Paths.get("src", "test", "resources", "id_test", filename).toAbsolutePath().toUri();
-  }
-
   private void assertThatSchemaContainsXid(SchemaRouter router, JsonPointer jp, JsonPointer scope, String id) {
-    assertThat(router.resolveCachedSchema(jp, scope, parser)).isNotNull().matches(
+    assertThat(router.resolveCachedSchema(jp, scope, parser))
+        .isNotNull()
+        .matches(
         s -> id.equals(((SchemaImpl) s).getSchema().getString("x-id")),
         "x-id should match " + id
     );
@@ -48,7 +44,7 @@ public class SchemaRouterTest {
 
   @Test
   public void testNoIdKeyword() throws Exception {
-    URI baseURI = buildBaseUri("no_id_keyword.json");
+    URI baseURI = buildBaseUri("id_test", "no_id_keyword.json");
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     parser.parse(baseSchemaJson, baseURI);
@@ -70,7 +66,7 @@ public class SchemaRouterTest {
 
   @Test
   public void testIdURNKeywordFromBaseScope() throws Exception {
-    URI baseURI = buildBaseUri("id_urn_keyword.json");
+    URI baseURI = buildBaseUri("id_test", "id_urn_keyword.json");
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     parser.parse(baseSchemaJson, baseURI);
@@ -85,7 +81,7 @@ public class SchemaRouterTest {
 
   @Test
   public void testIdURNKeywordFromInnerScope() throws Exception {
-    URI baseURI = buildBaseUri("id_urn_keyword.json");
+    URI baseURI = buildBaseUri("id_test", "id_urn_keyword.json");
     JsonObject baseSchemaJson = loadJson(baseURI);
     parser.parse(baseSchemaJson, baseURI);
     JsonPointer scope = schemaRouter.resolveCachedSchema(JsonPointer.fromURI(URI.create("urn:uuid:77ed19ca-1127-42dd-8194-3e48661ce672")), JsonPointer.fromURI(baseURI), parser).getScope();
@@ -127,7 +123,7 @@ public class SchemaRouterTest {
 
   @Test
   public void testRFCIDKeywordFromBaseScope() throws Exception {
-    URI baseURI = buildBaseUri("rfc_id_keyword.json");
+    URI baseURI = buildBaseUri("id_test", "rfc_id_keyword.json");
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     parser.parse(baseSchemaJson, baseURI);
@@ -155,7 +151,7 @@ public class SchemaRouterTest {
 
   @Test
   public void testRFCIDKeywordFromInnerScope() throws Exception {
-    URI baseURI = buildBaseUri("rfc_id_keyword.json");
+    URI baseURI = buildBaseUri("id_test", "rfc_id_keyword.json");
     JsonPointer basePointer = new JsonPointerImpl(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     parser.parse(baseSchemaJson, baseURI);

@@ -35,3 +35,12 @@ Future validationResult = schema.validate(objectToValidate);
 
 ## Extend the validator
 To support custom keywords, you can create a new `ValidatorFactory` and register to a `SchemaParser` with `SchemaParserOptions.putAdditionalValidatorFactory()`
+
+## TODO
+
+* Align logging to vertx official packages
+* Write documentation
+* Javadocs of io.vertx.ext.json interfaces
+* NoSyncValidationException must be filled with error values
+* Enable vertx codegen
+* Default apply?

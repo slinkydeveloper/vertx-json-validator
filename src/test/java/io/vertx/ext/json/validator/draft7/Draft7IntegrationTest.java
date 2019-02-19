@@ -1,29 +1,33 @@
 package io.vertx.ext.json.validator.draft7;
 
+import io.vertx.core.Vertx;
 import io.vertx.ext.json.validator.BaseIntegrationTest;
 import io.vertx.ext.json.validator.Schema;
 import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
-import org.assertj.core.util.Lists;
-import org.junit.runners.Parameterized;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
  */
 public class Draft7IntegrationTest extends BaseIntegrationTest {
-  public Draft7IntegrationTest(Object testName, Object testFileName, Object testObject) {
-    super(testName, testFileName, testObject);
+
+  @Override
+  public Map.Entry<SchemaParser, Schema> buildSchemaFunction(Vertx vertx, Object schema, String testFileName) {
+    SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
+    Schema s = parser.parse(schema, Paths.get(this.getTckPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
+    return new AbstractMap.SimpleImmutableEntry<>(parser, s);
   }
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Iterable<Object[]> data() throws Exception {
-    List<String> tests = Lists.newArrayList(
+  @Override
+  public Stream<String> getTestFiles() {
+    return Stream.of(
         "additionalItems",
         "additionalProperties",
         "allOf",
@@ -60,24 +64,15 @@ public class Draft7IntegrationTest extends BaseIntegrationTest {
         "type",
         "uniqueItems"
     );
-    return BaseIntegrationTest.buildParameters(tests, Paths.get("src", "test", "resources", "tck", "draft7"));
-  }
-
-
-  @Override
-  public Map.Entry<SchemaParser, Schema> buildSchemaFunction(Object schema) {
-    SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
-    Schema s = parser.parse(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
-    return new AbstractMap.SimpleImmutableEntry<>(parser, s);
   }
 
   @Override
-  public String getSchemasPath() {
-    return "src/test/resources/tck/draft7";
+  public Path getTckPath() {
+    return Paths.get("src",  "test", "resources",  "tck", "draft7");
   }
 
   @Override
-  public String getRemotesPath() {
-    return "src/test/resources/tck/draft7/remotes";
+  public Path getRemotesPath() {
+    return Paths.get("src", "test", "resources", "tck", "draft7", "remotes");
   }
 }

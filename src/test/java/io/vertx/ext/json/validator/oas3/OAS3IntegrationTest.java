@@ -1,31 +1,34 @@
 package io.vertx.ext.json.validator.oas3;
 
+import io.vertx.core.Vertx;
 import io.vertx.ext.json.validator.BaseIntegrationTest;
 import io.vertx.ext.json.validator.Schema;
 import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
-import org.assertj.core.util.Lists;
-import org.junit.runners.Parameterized;
 
-import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
  */
 public class OAS3IntegrationTest extends BaseIntegrationTest {
-  public OAS3IntegrationTest(Object testName, Object testFileName, Object testObject) {
-    super(testName, testFileName, testObject);
+
+  @Override
+  public Map.Entry<SchemaParser, Schema> buildSchemaFunction(Vertx vertx, Object schema, String testFileName) {
+    SchemaParser parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
+    Schema s = parser.parse(schema, Paths.get(this.getTckPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
+    return new AbstractMap.SimpleImmutableEntry<>(parser, s);
   }
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Iterable<Object[]> data() throws Exception {
-    List<String> tests = Lists.newArrayList(
+  @Override
+  public Stream<String> getTestFiles() {
+    return Stream.of(
         "additionalProperties",
         "allOf",
         "anyOf",
@@ -55,24 +58,15 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
         "type",
         "uniqueItems"
     );
-    return BaseIntegrationTest.buildParameters(tests, Paths.get("src", "test", "resources", "tck", "openapi3"));
-  }
-
-
-  @Override
-  public Map.Entry<SchemaParser, Schema> buildSchemaFunction(Object schema) throws URISyntaxException {
-    SchemaParser parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
-    Schema s = parser.parse(schema, Paths.get(this.getSchemasPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
-    return new AbstractMap.SimpleImmutableEntry<>(parser, s);
   }
 
   @Override
-  public String getSchemasPath() {
-    return "src/test/resources/tck/openapi3";
+  public Path getTckPath() {
+    return Paths.get("src", "test", "resources", "tck", "openapi3");
   }
 
   @Override
-  public String getRemotesPath() {
-    return "src/test/resources/tck/openapi3/remotes";
+  public Path getRemotesPath() {
+    return Paths.get("src", "test", "resources", "tck", "openapi3", "remotes");
   }
 }

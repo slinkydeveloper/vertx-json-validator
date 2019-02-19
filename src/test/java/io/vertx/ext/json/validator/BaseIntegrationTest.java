@@ -1,26 +1,25 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.RunTestOnContext;
-import io.vertx.ext.unit.junit.Timeout;
-import io.vertx.ext.unit.junit.VertxUnitRunnerWithParametersFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
-import org.assertj.core.api.JUnitSoftAssertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,38 +28,131 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
  */
-@RunWith(Parameterized.class)
-@Parameterized.UseParametersRunnerFactory(VertxUnitRunnerWithParametersFactory.class)
+@ExtendWith(VertxExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class BaseIntegrationTest {
 
-  @Rule
-  public final JUnitSoftAssertions t = new JUnitSoftAssertions();
-
-  @Rule
-  public final Timeout timeout = Timeout.seconds(60);
-
-  @Rule
-  public final RunTestOnContext classContext = new RunTestOnContext(() -> Vertx.vertx(new VertxOptions().setBlockedThreadCheckInterval(10000)));
-
   public static final Logger log = LoggerFactory.getLogger(BaseIntegrationTest.class);
-
   public static final int SCHEMA_SERVER_PORT = 1234;
 
-  public Vertx vertx;
-  HttpServer schemaServer;
-  String testName;
-  public String testFileName;
-  JsonObject test;
+  private HttpServer schemaServer;
 
-  public static Iterable<Object[]> buildParameters(List<String> tests, Path tckPath) {
-    return tests.stream()
-        .map(f -> new AbstractMap.SimpleImmutableEntry<>(f, tckPath.resolve(f + ".json")))
+  private void startSchemaServer(Vertx vertx, Handler<AsyncResult<Void>> completion) {
+    Router r = Router.router(vertx);
+    r.route("/*")
+      .produces("application/json")
+      .handler(StaticHandler.create(getRemotesPath().toString()).setCachingEnabled(true));
+    schemaServer = vertx.createHttpServer(new HttpServerOptions().setPort(SCHEMA_SERVER_PORT))
+      .requestHandler(r)
+      .listen(l -> completion.handle(Future.succeededFuture()));
+  }
+
+  private void stopSchemaServer(Handler<AsyncResult<Void>> completion) {
+    if (schemaServer != null) {
+      try {
+        schemaServer.close((asyncResult) -> {
+          completion.handle(Future.succeededFuture());
+        });
+      } catch (IllegalStateException e) { // Server is already open
+        completion.handle(Future.succeededFuture());
+      }
+    }
+  }
+
+  @BeforeAll
+  public void setUp(Vertx vertx, VertxTestContext testContext) {
+    startSchemaServer(vertx, testContext.completing());
+  }
+
+  @AfterAll
+  public void tearDown(VertxTestContext testContext) {
+    stopSchemaServer(testContext.completing());
+  }
+
+  private Optional<Map.Entry<SchemaParser, Schema>> buildSchema(Vertx vertx, Object schema, String testName, String testFileName) {
+    try {
+      return Optional.of(buildSchemaFunction(vertx, schema, testFileName));
+    } catch (Exception e) {
+      fail("Something went wrong during schema initialization for test \"" + testName + "\"", e);
+      return Optional.empty();
+    }
+  }
+
+  private void validateSuccess(Schema schema, SchemaParser parser, Object obj, String testName, String testCaseName, VertxTestContext context) {
+    schema.validateAsync(obj).setHandler(event -> {
+      if (event.failed())
+        context.verify(() -> fail(String.format("\"%s\" -> \"%s\" should be valid", testName, testCaseName), event.cause()));
+
+      ((SchemaRouterImpl)parser.getSchemaRouter()).solveAllSchemaReferences(schema).setHandler(ar -> {
+        context.verify(() -> {
+          assertThat(ar.succeeded())
+              .isTrue()
+              .withFailMessage("Failed schema refs resolving with cause {}", ar.cause());
+          assertThat(schema.isSync())
+              .isTrue();
+          assertThatCode(() -> schema.validateSync(obj))
+              .as("\"%s\" -> \"%s\" should be valid", testName, testCaseName)
+              .doesNotThrowAnyException();
+        });
+        context.completeNow();
+      });
+    });
+  }
+
+  private void validateFailure(Schema schema, SchemaParser parser, Object obj, String testName, String testCaseName, VertxTestContext context) {
+    schema.validateAsync(obj).setHandler(event -> {
+      if (event.succeeded())
+        context.verify(() -> fail(String.format("\"%s\" -> \"%s\" should be invalid", testName, testCaseName)));
+      else if (log.isDebugEnabled())
+        log.debug(event.cause().toString());
+
+      ((SchemaRouterImpl)parser.getSchemaRouter()).solveAllSchemaReferences(schema).setHandler(ar -> {
+        context.verify(() -> {
+          assertThat(ar.succeeded())
+              .isTrue()
+              .withFailMessage("Failed schema refs resolving with cause {}", ar.cause());
+          assertThat(schema.isSync())
+              .isTrue();
+          assertThatExceptionOfType(ValidationException.class)
+              .isThrownBy(() -> schema.validateSync(obj))
+              .as("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
+        });
+        context.completeNow();
+      });
+    });
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("buildParameters")
+  public void test(String testName, String testFileName, JsonObject testObj, Vertx vertx, VertxTestContext context) {
+    buildSchema(vertx, testObj.getValue("schema"), testName, testFileName)
+        .ifPresent(t -> {
+          for (Object tc : testObj.getJsonArray("tests").stream().collect(Collectors.toList())) {
+            JsonObject testCase = (JsonObject) tc;
+            if (testCase.getBoolean("valid"))
+              validateSuccess(t.getValue(), t.getKey(), testCase.getValue("data"), testName, testCase.getString("description"), context);
+            else
+              validateFailure(t.getValue(), t.getKey(), testCase.getValue("data"), testName, testCase.getString("description"), context);
+          }
+        });
+  }
+
+  public Stream<Arguments> buildParameters() {
+    return getTestFiles()
+        .map(f -> new AbstractMap.SimpleImmutableEntry<>(f, getTckPath().resolve(f + ".json")))
         .map(p -> {
           try {
             return new AbstractMap.SimpleImmutableEntry<>(p.getKey(), Files.readAllLines(p.getValue(), Charset.forName("UTF8")));
@@ -75,131 +167,15 @@ public abstract class BaseIntegrationTest {
         .flatMap(t -> t.getValue()
             .stream()
             .map(JsonObject.class::cast)
-            .map(o -> new Object[]{t.getKey() + ": " + o.getString("description"), t.getKey(), o})
-        )
-        .collect(Collectors.toList());
+            .map(o -> arguments(t.getKey() + ": " + o.getString("description"), t.getKey(), o))
+        );
   }
 
-  private void startSchemaServer(TestContext context) throws Exception {
-    Router r = Router.router(vertx);
-    r.route("/*")
-      .produces("application/json")
-      .handler(StaticHandler.create(getRemotesPath()).setCachingEnabled(true));
-    schemaServer = vertx.createHttpServer(new HttpServerOptions().setPort(SCHEMA_SERVER_PORT))
-      .requestHandler(r::accept)
-      .listen(context.asyncAssertSuccess());
-  }
+  public abstract Stream<String> getTestFiles();
 
-  private void stopSchemaServer(TestContext context) throws Exception {
-    if (schemaServer != null) {
-      Async async = context.async();
-      try {
-        schemaServer.close((asyncResult) -> {
-          async.complete();
-        });
-      } catch (IllegalStateException e) { // Server is already open
-        async.complete();
-      }
-    }
-  }
+  public abstract Map.Entry<SchemaParser, Schema> buildSchemaFunction(Vertx vertx, Object schema, String testFileName) throws URISyntaxException;
 
-  public BaseIntegrationTest(Object testName, Object testFileName, Object testObject) {
-    this.testName = (String) testName;
-    this.testFileName = (String) testFileName;
-    this.test = (JsonObject) testObject;
-  }
+  public abstract Path getTckPath();
 
-  @Before
-  public void setUp(TestContext context) throws Exception {
-    vertx = classContext.vertx();
-    startSchemaServer(context);
-  }
-
-  @After
-  public void tearDown(TestContext context) throws Exception {
-    stopSchemaServer(context);
-  }
-
-  private Optional<Map.Entry<SchemaParser, Schema>> buildSchema(Object schema) {
-    try {
-      return Optional.of(buildSchemaFunction(schema));
-    } catch (Exception e) {
-      t.fail("Something went wrong during schema initialization for test \"" + testName + "\"", e);
-      return Optional.empty();
-    }
-  }
-
-  private void assertThrow(Runnable r, Class<? extends Throwable> throwable, String testName, String testCaseName) {
-    try {
-      r.run();
-      t.fail("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
-    } catch (Throwable throwed) {
-      t.assertThat(throwed).as("\"%s\" -> \"%s\" should be of type ValidationException", testName, testCaseName).isInstanceOf(throwable);
-    }
-  }
-
-  private void assertNotThrow(Runnable r, String testName, String testCaseName) {
-    try {
-      r.run();
-    } catch (Throwable throwed) {
-      t.fail(String.format("\"%s\" -> \"%s\" should be valid", testName, testCaseName), throwed);
-    }
-  }
-
-  private void validateSuccess(Schema schema, SchemaParser parser, Object obj, String testCaseName, TestContext context) {
-    Async async = context.async();
-    schema.validateAsync(obj).setHandler(event -> {
-      if (event.failed())
-        t.fail(String.format("\"%s\" -> \"%s\" should be valid", testName, testCaseName), event.cause());
-      ((SchemaRouterImpl)parser.getSchemaRouter()).solveAllSchemaReferences(schema).setHandler(ar -> {
-        t.assertThat(ar.succeeded()).isTrue().withFailMessage("Failed schema refs resolving with cause {}", ar.cause());
-        t.assertThat(schema.isSync()).isTrue();
-        assertNotThrow(() -> schema.validateSync(obj), testName, testCaseName);
-        async.complete();
-      });
-//      t.assertThat(schema.isSync()).isTrue();
-//      assertNotThrow(() -> schema.validateSync(obj), testName, testCaseName);
-//      async.complete();
-    });
-  }
-
-  private void validateFailure(Schema schema, SchemaParser parser, Object obj, String testCaseName, TestContext context) {
-    Async async = context.async();
-    schema.validateAsync(obj).setHandler(event -> {
-      if (event.succeeded())
-        t.fail("\"%s\" -> \"%s\" should be invalid", testName, testCaseName);
-      else
-        log.debug(event.cause().toString());
-      ((SchemaRouterImpl)parser.getSchemaRouter()).solveAllSchemaReferences(schema).setHandler(ar -> {
-        t.assertThat(ar.succeeded()).isTrue().withFailMessage("Failed schema refs resolving with cause {}", ar.cause());
-        t.assertThat(schema.isSync()).isTrue();
-        assertThrow(() -> schema.validateSync(obj), ValidationException.class, testName, testCaseName);
-        async.complete();
-      });
-//      t.assertThat(schema.isSync()).isTrue();
-//      assertThrow(() -> schema.validateSync(obj), ValidationException.class, testName, testCaseName);
-//      async.complete();
-    });
-  }
-
-
-  @Test
-  public void test(TestContext context) {
-    buildSchema(test.getValue("schema"))
-        .ifPresent(t -> {
-          for (Object tc : test.getJsonArray("tests").stream().collect(Collectors.toList())) {
-            JsonObject testCase = (JsonObject) tc;
-            if (testCase.getBoolean("valid"))
-              validateSuccess(t.getValue(), t.getKey(), testCase.getValue("data"), testCase.getString("description"), context);
-            else
-              validateFailure(t.getValue(), t.getKey(), testCase.getValue("data"), testCase.getString("description"), context);
-          }
-        });
-  }
-
-  public abstract Map.Entry<SchemaParser, Schema> buildSchemaFunction(Object schema) throws URISyntaxException;
-
-  public abstract String getSchemasPath();
-
-  public abstract String getRemotesPath();
+  public abstract Path getRemotesPath();
 }
