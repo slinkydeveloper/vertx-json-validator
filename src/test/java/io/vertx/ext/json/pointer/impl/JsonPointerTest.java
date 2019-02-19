@@ -9,12 +9,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 
-package io.vertx.ext.json.pointer;
+package io.vertx.ext.json.pointer.impl;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
-import io.vertx.ext.json.pointer.impl.JsonPointerIteratorImpl;
+import io.vertx.ext.json.pointer.JsonPointer;
 import org.junit.Test;
 
 import java.net.URI;
@@ -34,13 +33,18 @@ public class JsonPointerTest {
     assertEquals("/hello/world", pointer.build());
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testParsingError() {
+    JsonPointer.from("bla/hello/world");
+  }
+
   @Test
   public void testEncodingParsing() {
     List<String> keys = new ArrayList<>();
     keys.add("");
     keys.add("hell/o");
     keys.add("worl~d");
-    JsonPointer pointer = new JsonPointerImpl(keys);
+    JsonPointer pointer = new JsonPointerImpl(URI.create("#"), keys);
     assertEquals("/hell~1o/worl~0d", pointer.build());
   }
 
@@ -64,7 +68,7 @@ public class JsonPointerTest {
     keys.add("");
     keys.add("hello");
     keys.add("world");
-    JsonPointer pointer = new JsonPointerImpl(keys);
+    JsonPointer pointer = new JsonPointerImpl(URI.create("#"), keys);
     assertEquals("/hello/world", pointer.build());
   }
 
@@ -109,7 +113,7 @@ public class JsonPointerTest {
             new JsonObject().put("world", "wrong").put("worl", "wrong")
         ));
     assertEquals(1, JsonPointer.from("/1/hello/world").queryJson(array));
-    assertEquals(1, JsonPointer.fromURI(URI.create("#1/hello/world")).queryJson(array));
+    assertEquals(1, JsonPointer.fromURI(URI.create("#/1/hello/world")).queryJson(array));
   }
 
   @Test
@@ -209,7 +213,7 @@ public class JsonPointerTest {
             new JsonObject().put("world", "wrong").put("worl", "wrong")
         );
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
-    assertTrue(JsonPointer.from("/hello/francesco").writeObject(obj, toInsert));
+    assertTrue(JsonPointer.from("/hello/francesco").writeJson(obj, toInsert));
     assertEquals(toInsert, JsonPointer.from("/hello/francesco").queryJson(obj));
   }
 
@@ -235,7 +239,7 @@ public class JsonPointerTest {
             new JsonObject().put("world", "wrong").put("worl", "wrong")
         );
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
-    assertTrue(JsonPointer.from("/hello/world").writeObject(obj, toInsert));
+    assertTrue(JsonPointer.from("/hello/world").writeJson(obj, toInsert));
     assertEquals(toInsert, JsonPointer.from("/hello/world").queryJson(obj));
   }
 
@@ -251,7 +255,7 @@ public class JsonPointerTest {
     array.add(obj.copy());
     array.add(obj.copy());
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
-    assertTrue(JsonPointer.from("/0/hello/world/francesco").writeArray(array, toInsert));
+    assertTrue(JsonPointer.from("/0/hello/world/francesco").writeJson(array, toInsert));
     assertEquals(toInsert, JsonPointer.from("/0/hello/world/francesco").queryJson(array));
     assertNotEquals(array.getValue(0), array.getValue(1));
   }
@@ -268,7 +272,7 @@ public class JsonPointerTest {
     array.add(obj.copy());
     array.add(obj.copy());
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
-    assertTrue(JsonPointer.from("/-").writeArray(array, toInsert));
+    assertTrue(JsonPointer.from("/-").writeJson(array, toInsert));
     assertEquals(toInsert, JsonPointer.from("/2").queryJson(array));
     assertEquals(array.getValue(0), array.getValue(1));
   }
@@ -285,7 +289,7 @@ public class JsonPointerTest {
     array.add(obj.copy());
     array.add(obj.copy());
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
-    assertTrue(JsonPointer.from("/0").writeArray(array, toInsert));
+    assertTrue(JsonPointer.from("/0").writeJson(array, toInsert));
     assertEquals(toInsert, JsonPointer.from("/0").queryJson(array));
     assertNotEquals(array.getValue(0), array.getValue(1));
   }
@@ -304,20 +308,20 @@ public class JsonPointerTest {
     JsonObject root = new JsonObject().put("array", array);
 
     Object toInsert = new JsonObject().put("github", "slinkydeveloper");
-    assertTrue(JsonPointer.from("/array/0").writeObject(root, toInsert));
+    assertTrue(JsonPointer.from("/array/0").writeJson(root, toInsert));
     assertEquals(toInsert, JsonPointer.from("/array/0").queryJson(root));
   }
 
   @Test(expected = IllegalStateException.class)
   public void testIllegalUsageOfWriteJsonArray() {
     JsonArray array = new JsonArray();
-    JsonPointer.create().writeArray(array, new JsonObject());
+    JsonPointer.create().writeJson(array, new JsonObject());
   }
 
   @Test(expected = IllegalStateException.class)
   public void testIllegalUsageOfWrite() {
     JsonObject object = new JsonObject();
-    JsonPointer.create().writeObject(object, new JsonArray());
+    JsonPointer.create().writeJson(object, new JsonArray());
   }
 
 }

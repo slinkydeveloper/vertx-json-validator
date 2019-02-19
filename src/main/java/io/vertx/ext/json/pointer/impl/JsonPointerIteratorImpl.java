@@ -36,15 +36,23 @@ public class JsonPointerIteratorImpl implements JsonPointerIterator {
   }
 
   @Override
-  public boolean nextObjectParameter(String parameterName) {
-    if (objectContainsKey(parameterName)) {
-      value = jsonifyValue(((JsonObject)value).getValue(parameterName));
+  public boolean nextObjectParameter(String key, boolean createOnMissing) {
+    if (isObject()) {
+      if (!objectContainsKey(key)) {
+        if (createOnMissing) {
+          writeObjectParameter(key, new JsonObject());
+        } else {
+          return false;
+        }
+      }
+      value = jsonifyValue(((JsonObject) value).getValue(key));
       return true;
-    } else return false;
+    }
+    return false;
   }
 
   @Override
-  public boolean nextArrayElement(Integer i) {
+  public boolean nextArrayElement(int i) {
     if (isArray()) {
       try {
         value = jsonifyValue(((JsonArray)value).getValue(i));
@@ -52,16 +60,17 @@ public class JsonPointerIteratorImpl implements JsonPointerIterator {
       } catch (IndexOutOfBoundsException e) {
         return false;
       }
-    } else return false;
+    }
+    return false;
   }
 
   @Override
-  public void setRawValue(Object value) {
-    this.value = value;
+  public void empty() {
+    this.value = null;
   }
 
   @Override
-  public Object getRawValue() {
+  public Object getCurrentValue() {
     return value;
   }
 
@@ -75,7 +84,7 @@ public class JsonPointerIteratorImpl implements JsonPointerIterator {
 
   @SuppressWarnings("unchecked")
   @Override
-  public boolean writeArrayElement(Integer i, Object el) {
+  public boolean writeArrayElement(int i, Object el) {
     if (isArray()) {
       try {
       ((JsonArray)value).getList().add(i, el);
@@ -92,13 +101,6 @@ public class JsonPointerIteratorImpl implements JsonPointerIterator {
       ((JsonArray)value).add(el);
       return true;
     } else return false;
-  }
-
-  @Override
-  public boolean createNewContainerAndNext(String k) {
-    boolean result = writeObjectParameter(k, new JsonObject());
-    if (result) return nextObjectParameter(k);
-    else return false;
   }
 
   @SuppressWarnings("unchecked")

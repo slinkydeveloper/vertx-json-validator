@@ -1,5 +1,6 @@
 package io.vertx.ext.json.validator.generic;
 
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.ext.json.pointer.JsonPointerIterator;
 import io.vertx.ext.json.validator.Schema;
 
@@ -10,15 +11,14 @@ public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
   RouterNode actualNode;
   final Consumer<RouterNode> onNext;
 
+  public RouterNodeJsonPointerIterator(RouterNode actualNode) {
+    this(actualNode, null);
+  }
+
   public RouterNodeJsonPointerIterator(RouterNode actualNode, Consumer<RouterNode> onNext) {
     this.actualNode = actualNode;
     this.onNext = onNext;
-    onNext.accept(this.actualNode);
-  }
-
-  public RouterNodeJsonPointerIterator(RouterNode actualNode) {
-    this.actualNode = actualNode;
-    this.onNext = null;
+    invokeOnNext();
   }
 
   @Override
@@ -42,34 +42,43 @@ public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
   }
 
   @Override
-  public boolean nextObjectParameter(String parameterName) {
-    if (objectContainsKey(parameterName)) {
-      actualNode = actualNode.getChilds().get(parameterName);
-      if (onNext != null) onNext.accept(actualNode);
+  public boolean nextObjectParameter(String key, boolean createOnMissing) {
+    if (isObject()) {
+      if (!objectContainsKey(key)) {
+        if (createOnMissing) {
+          RouterNode node = new RouterNode();
+          this.actualNode.getChilds().put(key, node);
+        } else {
+          return false;
+        }
+      }
+
+      actualNode = actualNode.getChilds().get(key);
+      invokeOnNext();
       return true;
     }
     return false;
   }
 
   @Override
-  public boolean nextArrayElement(Integer i) {
+  public boolean nextArrayElement(int i) {
     return false;
   }
 
   @Override
-  public void setRawValue(Object value) {
-    actualNode = (RouterNode) value;
+  public void empty() {
+    actualNode = null;
   }
 
   @Override
-  public Object getRawValue() {
+  public Object getCurrentValue() {
     return actualNode;
   }
 
   @Override
   public boolean writeObjectParameter(String key, Object value) {
     if (value instanceof Schema) {
-      this.createNewContainerAndNext(key);
+      this.nextObjectParameter(key, true);
       this.actualNode.setThisSchema((Schema) value);
       return true;
     } else if (value instanceof RouterNode) {
@@ -80,7 +89,7 @@ public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
   }
 
   @Override
-  public boolean writeArrayElement(Integer i, Object value) {
+  public boolean writeArrayElement(int i, @Nullable Object value) {
     return false;
   }
 
@@ -89,12 +98,7 @@ public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
     return false;
   }
 
-  @Override
-  public boolean createNewContainerAndNext(String k) {
-    RouterNode node = new RouterNode();
-    this.actualNode.getChilds().put(k, node);
-    this.actualNode = node;
-    if (onNext != null) onNext.accept(actualNode);
-    return true;
+  private void invokeOnNext() {
+    if (onNext != null) onNext.accept(this.actualNode);
   }
 }

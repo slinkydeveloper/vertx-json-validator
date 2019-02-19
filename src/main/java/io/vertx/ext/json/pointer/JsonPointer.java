@@ -14,17 +14,14 @@ package io.vertx.ext.json.pointer;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
 import io.vertx.ext.json.pointer.impl.JsonPointerIteratorImpl;
-import io.vertx.ext.json.validator.generic.URIUtils;
 
 import java.net.URI;
 import java.util.List;
 
 /**
- * Implementation of <a href="https://tools.ietf.org/html/rfc6901">RFC6901</a> Json Pointers.
+ * Implementation of <a href="https://tools.ietf.org/html/rfc6901">RFC6901 Json Pointers</a>.
  *
  * @author Francesco Guardiani <a href="https://slinkydeveloper.github.io/">@slinkydeveloper</a>
  */
@@ -118,59 +115,36 @@ public interface JsonPointer {
    * Write a value with the selected pointer. The path token "-" is handled as append to end of array. <br/>
    * This function does not support root pointers.
    *
-   * @param object object to queryJson and write
+   * @param iterator iterator to query and write
    * @param value  object to insert
-   * @param buildOnMissing create objects/arrays when missing
+   * @param createOnMissing create objects when missing a object key or an array index
    * @return true if the write is completed, false otherwise
    * @throws IllegalStateException if the pointer is a root pointer
    */
-  boolean write(JsonPointerIterator object, Object value, boolean buildOnMissing);
+  boolean write(JsonPointerIterator iterator, Object value, boolean createOnMissing);
 
   /**
    * Write a value in the selected pointer. The path token "-" is handled as append to end of array. <br/>
    * This function does not support root pointers.
    *
-   * @param object object to queryJson and write
-   * @param value  object to insert
+   * @param json json to query and write
+   * @param valueToInsert json to insert
    * @return true if the write is completed, false otherwise
    * @throws IllegalStateException if the pointer is a root pointer
    */
-  default boolean writeObject(JsonObject object, Object value) { return writeObject(object, value, false); }
+  default boolean writeJson(Object json, Object valueToInsert) { return writeJson(json, valueToInsert, false); }
 
   /**
    * Write a value in the selected pointer. The path token "-" is handled as append to end of array. <br/>
    * This function does not support root pointers.
    *
-   * @param object object to queryJson and write
-   * @param value  object to insert
-   * @param buildOnMissing create objects/arrays when missing
+   * @param json json to query and write
+   * @param valueToInsert json to insert
+   * @param createOnMissing create JsonObject when missing a object key or an array index
    * @return true if the write is completed, false otherwise
    * @throws IllegalStateException if the pointer is a root pointer
    */
-  default boolean writeObject(JsonObject object, Object value, boolean buildOnMissing) { return write(new JsonPointerIteratorImpl(object), value, buildOnMissing); }
-
-  /**
-   * Write a value in the selected pointer. The path token "-" is handled as append to end of array. <br/>
-   * This function does not support root pointers.
-   *
-   * @param array
-   * @param value
-   * @return true if the write is completed, false otherwise
-   * @throws IllegalStateException if the pointer is a root pointer
-   */
-  default boolean writeArray(JsonArray array, Object value) { return writeArray(array, value, false); }
-
-  /**
-   * Write a value in the selected pointer. The path token "-" is handled as append to end of array. <br/>
-   * This function does not support root pointers.
-   *
-   * @param array
-   * @param value
-   * @param buildOnMissing create objects/arrays when missing
-   * @return true if the write is completed, false otherwise
-   * @throws IllegalStateException if the pointer is a root pointer
-   */
-  default boolean writeArray(JsonArray array, Object value, boolean buildOnMissing) { return write(new JsonPointerIteratorImpl(array), value, buildOnMissing); }
+  default boolean writeJson(Object json, Object valueToInsert, boolean createOnMissing) { return write(new JsonPointerIteratorImpl(json), valueToInsert, createOnMissing); }
 
   /**
    * Copy a JsonPointer
@@ -200,17 +174,14 @@ public interface JsonPointer {
   }
 
   /**
-   * Build a JsonPointer from a URI
+   * Build a JsonPointer from a URI.
    *
    * @param uri uri representing a json pointer
    * @return new instance of JsonPointer
+   * @throws IllegalArgumentException if the pointer provided is not valid
    */
   static JsonPointer fromURI(URI uri) {
     return new JsonPointerImpl(uri);
-  }
-
-  static JsonPointer mergeBaseURIAndJsonPointer(URI uri, JsonPointer pointer) {
-    return new JsonPointerImpl(URIUtils.replaceFragment(uri, pointer.buildURI().getFragment()));
   }
 
 }

@@ -1,5 +1,6 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -22,7 +23,7 @@ public interface SchemaRouter {
    * @return
    * @throws SchemaException If was found an unparsed schema that is an invalid json schema
    */
-  Schema resolveCachedSchema(JsonPointer refPointer, JsonPointer schemaScope, SchemaParser parser);
+  @Nullable Schema resolveCachedSchema(JsonPointer refPointer, JsonPointer schemaScope, SchemaParser parser);
 
   /**
    * Resolve $ref. <br/>
