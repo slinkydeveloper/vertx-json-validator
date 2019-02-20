@@ -100,35 +100,12 @@ public class RefSchema extends SchemaImpl {
 
   @Override
   public boolean calculateIsSync() {
-    //return cachedSchema != null && (cachedSchema.isSync() || ((SchemaRouterImpl)schemaParser.getSchemaRouter()).pleaseRunThisShit(this, refPointer, getScope()));
-    return cachedSchema != null && cachedSchema.isSync(); //TODO?!
+    return cachedSchema != null && cachedSchema.isSync();
   }
 
   @Override
   protected void initializeIsSync() {
-    // A local pointer could reefer to an asynchronous schema!
-//    isSync.set(
-//        refPointer.isLocalPointer() &&
-//            JsonPointer.mergeBaseURIAndJsonPointer(this.getScope().getURIWithoutFragment(), this.refPointer).isParent(this.getScope())
-//    );
     isSync.set(false);
-    log.debug("Initialized sync state to false");
-  }
-
-  //todo protected and move call to schema parser
-  public synchronized void trySyncSolveSchema() {
-    if (cachedSchema == null) {
-      Schema s = schemaParser.getSchemaRouter().resolveCachedSchema(refPointer, this.getScope(), schemaParser);
-      if (s != null) {
-        registerCachedSchema(s);
-        log.info("RefSchema presolved ref {} with schema {}", refPointer, this.getJson());
-        if (s instanceof RefSchema) {
-          ((RefSchema)s).trySyncSolveSchema();
-        }
-        this.triggerUpdateIsSync();
-        log.info("This schema sync state: {}, Resolved schema sync state {}", isSync(), s.isSync());
-      }
-    }
   }
 
   public synchronized Future<Schema> tryAsyncSolveSchema() {

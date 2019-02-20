@@ -38,7 +38,7 @@ public abstract class BaseSchemaParser implements SchemaParser {
       ConcurrentSkipListSet<Validator> validators = new ConcurrentSkipListSet<>(ValidatorPriority.VALIDATOR_COMPARATOR);
 
       SchemaImpl s = createSchema(json, scope, parent);
-      router.addSchema(s, scope);
+      router.addSchema(s);
 
       for (ValidatorFactory factory : validatorFactories) {
         if (factory.canConsumeSchema(json)) {
@@ -50,7 +50,7 @@ public abstract class BaseSchemaParser implements SchemaParser {
       return s;
     } else if (jsonSchema instanceof Boolean) {
       Schema s = ((Boolean) jsonSchema) ? TrueSchema.getInstance() : FalseSchema.getInstance();
-      router.addSchema(s, scope);
+      router.addSchema(s);
       return s;
     } else
       throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(jsonSchema, "Schema should be a JsonObject or a Boolean");

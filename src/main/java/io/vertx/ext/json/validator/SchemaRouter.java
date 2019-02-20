@@ -41,11 +41,10 @@ public interface SchemaRouter {
 
   /**
    * Add a parsed schema to local cache
+   *  @param schema
    *
-   * @param schema
-   * @param actualPointer
    */
-  void addSchema(Schema schema, JsonPointer actualPointer);
+  void addSchema(Schema schema);
 
   List<Schema> registeredSchemas();
 

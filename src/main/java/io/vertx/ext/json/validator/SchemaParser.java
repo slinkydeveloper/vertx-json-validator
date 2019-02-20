@@ -20,7 +20,15 @@ public interface SchemaParser {
    */
   Schema parse(Object jsonSchema, JsonPointer scope, MutableStateValidator parent);
 
-  //TODO where i put this shit?
+  /**
+   * Build a schema without a parent from provided json. This method registers the parsed schema (and relative subschemas) to the schema router
+   *
+   * @param jsonSchema JSON representing the schema. Must be a JsonObject or a Boolean
+   * @param scope Scope of schema. Must be a JSONPointer with absolute URI
+   * @return the schema instance
+   * @throws IllegalArgumentException If scope is relative
+   * @throws SchemaException If schema is invalid
+   */
   default Schema parse(Object jsonSchema, JsonPointer scope) { return parse(jsonSchema, scope, null); }
 
   /**
@@ -35,7 +43,15 @@ public interface SchemaParser {
    */
   default Schema parse(Object jsonSchema, URI scope, MutableStateValidator parent) { return this.parse(jsonSchema, JsonPointer.fromURI(scope), parent); }
 
-  //TODO where i put this shit?
+  /**
+   * Same as {@link SchemaParser#parse(Object, JsonPointer)}
+   *
+   * @param jsonSchema JSON representing the schema. Must be a JsonObject or a Boolean
+   * @param scope Scope of schema. Must be an absolute URI
+   * @return the schema instance
+   * @throws IllegalArgumentException If scope is relative
+   * @throws SchemaException If schema is invalid
+   */
   default Schema parse(Object jsonSchema, URI scope) { return parse(jsonSchema, scope, null); }
 
   /**
@@ -50,7 +66,15 @@ public interface SchemaParser {
    */
   Schema parseSchemaFromString(String unparsedJson, JsonPointer scope, MutableStateValidator parent);
 
-  //TODO where i put this shit?
+  /**
+   * Build a schema without a parent from provided unparsed json. This method registers the parsed schema (and relative subschemas) to the schema router
+   *
+   * @param unparsedJson Unparsed JSON representing the schema.
+   * @param scope Scope of schema. Must be a JSONPointer with absolute URI
+   * @return the schema instance
+   * @throws IllegalArgumentException If scope is relative
+   * @throws SchemaException If schema is invalid
+   */
   default Schema parseSchemaFromString(String unparsedJson, JsonPointer scope) { return parseSchemaFromString(unparsedJson, scope,  null); };
 
   /**
@@ -65,7 +89,15 @@ public interface SchemaParser {
    */
   default Schema parseSchemaFromString(String unparsedJson, URI scope, MutableStateValidator parent) { return this.parseSchemaFromString(unparsedJson, JsonPointer.fromURI(scope), parent); }
 
-  //TODO where i put this shit?
+  /**
+   * Same as {@link SchemaParser#parseSchemaFromString(String, JsonPointer)}
+   *
+   * @param unparsedJson Unparsed JSON representing the schema.
+   * @param scope Scope of schema. Must be an absolute URI
+   * @return the schema instance
+   * @throws IllegalArgumentException If scope is relative
+   * @throws SchemaException If schema is invalid
+   */
   default Schema parseSchemaFromString(String unparsedJson, URI scope) { return this.parseSchemaFromString(unparsedJson, JsonPointer.fromURI(scope), null); }
 
   /**

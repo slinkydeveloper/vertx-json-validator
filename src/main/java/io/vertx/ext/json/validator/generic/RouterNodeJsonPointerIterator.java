@@ -71,7 +71,7 @@ public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
   }
 
   @Override
-  public Object getCurrentValue() {
+  public RouterNode getCurrentValue() {
     return actualNode;
   }
 
