@@ -14,6 +14,10 @@ public enum SchemaErrorType {
   NULL_KEYWORD_VALUE;
 
   public SchemaException createException(Object schema, String message) {
-    return new SchemaException(message, schema, this);
+    return new SchemaException(message, schema, this, null);
+  }
+
+  public SchemaException createException(Object schema, String message, Throwable cause) {
+    return new SchemaException(message, schema, this, cause);
   }
 }

@@ -117,11 +117,11 @@ public class SchemaRouterImpl implements SchemaRouter {
                 .collect(Collectors.toList());
             uris.forEach(u -> absolutePaths.put(u, insertedSchemaNode));
           }
-          JsonPointer idPointer = JsonPointer.fromURI(id);
+          JsonPointer idPointer = URIUtils.createJsonPointerFromURI(id);
           if (!idPointer.isRootPointer())
             idPointer.write(new RouterNodeJsonPointerIterator(baseNodeOfInferredScope), insertedSchemaNode, true);
         } catch (IllegalArgumentException e) {
-          throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "$id keyword should be a valid URI");
+          throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "$id keyword should be a valid URI", e);
         }
       }
     }

@@ -24,7 +24,7 @@ public class RefSchema extends SchemaImpl {
     this.schemaParser = schemaParser;
     try {
       String unparsedUri = schema.getString("$ref");
-      refPointer = JsonPointer.fromURI(URI.create(unparsedUri));
+      refPointer = URIUtils.createJsonPointerFromURI(URI.create(unparsedUri));
       if (log.isDebugEnabled()) log.debug("Parsed {} ref for schema {}", refPointer, schema);
     } catch (NullPointerException e) {
       throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null $ref keyword");

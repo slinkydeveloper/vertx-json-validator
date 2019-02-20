@@ -1,5 +1,7 @@
 package io.vertx.ext.json.validator.generic;
 
+import io.vertx.ext.json.pointer.JsonPointer;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -36,6 +38,19 @@ public class URIUtils {
       e.printStackTrace();
       return null;
     }
+  }
+
+  /**
+   * This function converts eventual "#a" to valid json pointer "#/a"
+   * @param original
+   * @return
+   */
+  public static JsonPointer createJsonPointerFromURI(URI original) {
+    String frag = original.getFragment();
+    if (frag != null && !frag.isEmpty()) {
+      if (frag.charAt(0) != '/') frag = "/" + frag;
+    }
+    return JsonPointer.fromURI(replaceFragment(original, frag));
   }
 
 }

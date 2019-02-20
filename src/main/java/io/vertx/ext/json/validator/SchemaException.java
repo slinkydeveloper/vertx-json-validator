@@ -14,8 +14,8 @@ public class SchemaException extends VertxException {
   private Object schema;
   private SchemaErrorType errorType;
 
-  public SchemaException(String message, Object schema, SchemaErrorType errorType) {
-    super(message);
+  public SchemaException(String message, Object schema, SchemaErrorType errorType, Throwable cause) {
+    super(message, cause);
     this.schema = schema;
     this.errorType = errorType;
   }
