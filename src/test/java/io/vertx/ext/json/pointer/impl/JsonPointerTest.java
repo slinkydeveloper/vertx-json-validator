@@ -14,14 +14,14 @@ package io.vertx.ext.json.pointer.impl;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.ext.json.pointer.JsonPointerIterator;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
@@ -137,6 +137,20 @@ public class JsonPointerTest {
     assertThat(pointer.queryJson(array)).isEqualTo(array);
     assertThat(pointer.queryJson(obj)).isEqualTo(obj);
     assertThat(pointer.queryJson("hello")).isEqualTo("hello");
+  }
+
+  @Test
+  public void testWrongRootPointerWrite() {
+    JsonPointer pointer = JsonPointer.create();
+    assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> pointer.writeJson(new JsonObject(), new JsonArray()));
+  }
+
+  @Test
+  public void testRootPointerWrite() {
+    JsonPointer pointer = JsonPointer.create();
+    JsonPointerIterator iterator = JsonPointerIterator.create(new JsonObject());
+    assertThatCode(() -> pointer.write(iterator, new JsonArray(), false)).doesNotThrowAnyException();
+    assertThat(iterator.getCurrentValue()).isEqualTo(new JsonArray());
   }
 
   @Test

@@ -76,6 +76,15 @@ public class RouterNodeJsonPointerIterator implements JsonPointerIterator {
   }
 
   @Override
+  public void setCurrentValue(Object value) {
+    if (value instanceof Schema) {
+      this.actualNode.setThisSchema((Schema) value);
+    } else if (value instanceof RouterNode) {
+      this.actualNode = (RouterNode) value;
+    }
+  }
+
+  @Override
   public boolean writeObjectParameter(String key, Object value) {
     if (value instanceof Schema) {
       this.nextObjectParameter(key, true);

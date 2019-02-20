@@ -112,8 +112,7 @@ public interface JsonPointer {
   default @Nullable Object queryJson(Object object) {return query(new JsonPointerIteratorImpl(object)); }
 
   /**
-   * Write a value with the selected pointer. The path token "-" is handled as append to end of array. <br/>
-   * This function does not support root pointers.
+   * Write a value with the selected pointer. The path token "-" is handled as append to end of array
    *
    * @param iterator iterator to query and write
    * @param value  object to insert
@@ -144,7 +143,11 @@ public interface JsonPointer {
    * @return true if the write is completed, false otherwise
    * @throws IllegalStateException if the pointer is a root pointer
    */
-  default boolean writeJson(Object json, Object valueToInsert, boolean createOnMissing) { return write(new JsonPointerIteratorImpl(json), valueToInsert, createOnMissing); }
+  default boolean writeJson(Object json, Object valueToInsert, boolean createOnMissing) {
+    if (isRootPointer())
+      throw new IllegalStateException("writeJson() doesn't support root pointers. You must use write() and manually create the iterator");
+    return write(new JsonPointerIteratorImpl(json), valueToInsert, createOnMissing);
+  }
 
   /**
    * Copy a JsonPointer

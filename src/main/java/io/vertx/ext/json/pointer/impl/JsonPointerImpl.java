@@ -188,9 +188,10 @@ public class JsonPointerImpl implements JsonPointer {
 
   @Override
   public boolean write(JsonPointerIterator input, Object value, boolean createOnMissing) {
-    if (isRootPointer())
-      throw new IllegalStateException("writeObject() doesn't support root pointers");
-    else {
+    if (isRootPointer()) {
+      input.setCurrentValue(value);
+      return true;
+    } else {
       walkTillLastElement(input, createOnMissing);
       return !input.isNull() && writeLastElement(input, value);
     }

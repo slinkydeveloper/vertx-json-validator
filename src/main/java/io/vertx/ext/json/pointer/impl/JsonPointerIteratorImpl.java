@@ -75,6 +75,11 @@ public class JsonPointerIteratorImpl implements JsonPointerIterator {
   }
 
   @Override
+  public void setCurrentValue(Object obj) {
+    this.value = obj;
+  }
+
+  @Override
   public boolean writeObjectParameter(String key, Object el) {
     if (isObject()) {
       ((JsonObject)value).put(key, el);

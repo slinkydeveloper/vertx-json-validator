@@ -65,6 +65,12 @@ public interface JsonPointerIterator {
   @Nullable Object getCurrentValue();
 
   /**
+   * Set current iterator value
+   *
+   */
+  void setCurrentValue(Object obj);
+
+  /**
    * Write object parameter at specified key
    *
    * @param key
