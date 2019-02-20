@@ -36,7 +36,7 @@ public class LocalRefTest {
 
   private void assertThatSchemaContainsXid(SchemaRouter router, JsonPointer jp, JsonPointer scope, String id) {
     assertThat(router.resolveCachedSchema(jp, scope, parser)).isNotNull().matches(
-        s -> id.equals(((SchemaImpl) s).getSchema().getString("x-id")),
+        s -> id.equals(((SchemaImpl) s).getJson().getString("x-id")),
         "x-id should match " + id
     );
   }

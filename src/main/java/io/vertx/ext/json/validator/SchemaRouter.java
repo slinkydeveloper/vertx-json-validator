@@ -23,7 +23,7 @@ public interface SchemaRouter {
    * @return
    * @throws SchemaException If was found an unparsed schema that is an invalid json schema
    */
-  @Nullable Schema resolveCachedSchema(JsonPointer refPointer, JsonPointer schemaScope, SchemaParser parser);
+  @Nullable Schema resolveCachedSchema(JsonPointer refPointer, JsonPointer schemaScope, SchemaParser parser) throws SchemaException;
 
   /**
    * Resolve $ref. <br/>

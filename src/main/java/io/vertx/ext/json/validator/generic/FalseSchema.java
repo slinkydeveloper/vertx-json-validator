@@ -46,6 +46,11 @@ public class FalseSchema implements Schema {
   }
 
   @Override
+  public Boolean getJson() {
+    return false;
+  }
+
+  @Override
   public MutableStateValidator getParent() {
     return parent;
   }

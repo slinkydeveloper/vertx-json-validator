@@ -86,6 +86,18 @@ public class JsonPointerTest {
   }
 
   @Test
+  public void testNullQuerying() {
+    JsonPointer pointer = JsonPointer.from("/hello/world");
+    assertThat(pointer.queryJson(null)).isNull();
+  }
+
+  @Test
+  public void testNullQueryingRootPointer() {
+    JsonPointer pointer = JsonPointer.create();
+    assertThat(pointer.queryJson(null)).isNull();
+  }
+
+  @Test
   public void testJsonObjectQuerying() {
     JsonObject obj = new JsonObject()
         .put("hello",

@@ -44,6 +44,11 @@ public class TrueSchema implements Schema {
   }
 
   @Override
+  public Boolean getJson() {
+    return true;
+  }
+
+  @Override
   public MutableStateValidator getParent() {
     return parent;
   }

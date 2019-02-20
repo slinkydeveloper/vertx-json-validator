@@ -13,4 +13,11 @@ public interface Schema extends MutableStateValidator {
    */
   JsonPointer getScope();
 
+  /**
+   * Get Json representation of the schema
+   *
+   * @return
+   */
+  Object getJson();
+
 }

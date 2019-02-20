@@ -26,6 +26,10 @@ public class URIUtils {
     return "http".equals(uri.getScheme()) || "https".equals(uri.getScheme());
   }
 
+  public static boolean isLocalURI(URI uri) {
+    return "jar".equals(uri.getScheme()) || "file".equals(uri.getScheme());
+  }
+
   public static URI resolvePath(URI oldURI, String path) {
     try {
       if ("jar".equals(oldURI.getScheme())) {

@@ -38,7 +38,8 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
     return scope;
   }
 
-  public JsonObject getSchema() {
+  @Override
+  public JsonObject getJson() {
     return schema;
   }
 

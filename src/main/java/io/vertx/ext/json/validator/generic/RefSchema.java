@@ -121,7 +121,7 @@ public class RefSchema extends SchemaImpl {
       Schema s = schemaParser.getSchemaRouter().resolveCachedSchema(refPointer, this.getScope(), schemaParser);
       if (s != null) {
         registerCachedSchema(s);
-        log.info("RefSchema presolved ref {} with schema {}", refPointer, this.getSchema());
+        log.info("RefSchema presolved ref {} with schema {}", refPointer, this.getJson());
         if (s instanceof RefSchema) {
           ((RefSchema)s).trySyncSolveSchema();
         }
