@@ -48,6 +48,8 @@ public interface SchemaRouter {
 
   List<Schema> registeredSchemas();
 
+  Future<Schema> solveAllSchemaReferences(Schema schema);
+
   static SchemaRouter create(Vertx vertx) {
     return new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem());
   }

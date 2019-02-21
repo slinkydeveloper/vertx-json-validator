@@ -26,7 +26,7 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
 
   private final ConcurrentHashSet<RefSchema> referringSchemas;
 
-  public SchemaImpl(JsonObject schema, JsonPointer scope, MutableStateValidator parent) {
+  SchemaImpl(JsonObject schema, JsonPointer scope, MutableStateValidator parent) {
     super(parent);
     this.schema = schema;
     this.scope = scope;
@@ -105,7 +105,7 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
     return validators;
   }
 
-  public void setValidators(ConcurrentSkipListSet<Validator> validators) {
+  void setValidators(ConcurrentSkipListSet<Validator> validators) {
     this.validators = validators;
     this.initializeIsSync();
   }
@@ -121,12 +121,17 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
     }
   }
 
-  void registerReferredSchema(RefSchema ref) {
+  synchronized void registerReferredSchema(RefSchema ref) {
       referringSchemas.add(ref);
       if (log.isDebugEnabled()) {
         log.debug("Ref schema {} reefers to schema {}",  ref, this);
         log.debug("Ref schemas that refeers to {}: {}", this, this.referringSchemas.size());
       }
+      // This is a trick to solve the circular references.
+      // 1. for each ref that reefers to this schema we propagate isSync = true to the upper levels.
+      //    If this schema isSync = false only because its childs contains refs to itself, after the pre propagation
+      //    this schema isSync = true, otherwise is still false
+      // 2. for each ref schema we set the isSync calculated and propagate to upper levels of refs
       referringSchemas.forEach(RefSchema::prePropagateSyncState);
       referringSchemas.forEach(r -> r.setIsSync(this.isSync.get()));
 

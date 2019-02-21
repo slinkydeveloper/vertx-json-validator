@@ -41,6 +41,6 @@ To support custom keywords, you can create a new `ValidatorFactory` and register
 * Align logging to vertx official packages
 * Write documentation
 * Javadocs of io.vertx.ext.json interfaces
-* NoSyncValidationException must be filled with error values
 * Enable vertx codegen
 * Default apply?
+* Schema keyword

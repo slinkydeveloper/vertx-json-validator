@@ -19,11 +19,12 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 
 import static io.vertx.ext.json.validator.TestUtils.buildBaseUri;
+import static io.vertx.ext.json.validator.asserts.MyAssertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 @ExtendWith(VertxExtension.class)
-public class LocalRefTest {
+public class SchemaRouterLocalRefTest {
 
   public SchemaParser parser;
   public SchemaRouter router;
@@ -34,13 +35,6 @@ public class LocalRefTest {
     parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), router);
   }
 
-  private void assertThatSchemaContainsXid(SchemaRouter router, JsonPointer jp, JsonPointer scope, String id) {
-    assertThat(router.resolveCachedSchema(jp, scope, parser)).isNotNull().matches(
-        s -> id.equals(((SchemaImpl) s).getJson().getString("x-id")),
-        "x-id should match " + id
-    );
-  }
-
   @Test
   public void absoluteLocalRef(VertxTestContext context) {
     URI sampleURI = buildBaseUri("ref_test", "sample.json");
@@ -48,8 +42,8 @@ public class LocalRefTest {
     Schema mainSchema = parser.parse(mainSchemaUnparsed, buildBaseUri("ref_test", "test_1.json"));
     mainSchema.validateAsync("").setHandler(context.succeeding(o -> { // Trigger validation to start solve refs
       context.verify(() -> {
-        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
-        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+        assertThat(router).canResolveSchema(JsonPointer.fromURI(sampleURI), mainSchema.getScope(), parser).hasXIdEqualsTo("main");
+        assertThat(router).canResolveSchema(JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), parser).hasXIdEqualsTo("sub1");
       });
       context.completeNow();
     }));
@@ -62,8 +56,8 @@ public class LocalRefTest {
     Schema mainSchema = parser.parse(mainSchemaUnparsed, Paths.get(".","src", "test", "resources", "ref_test", "test_2.json").toUri());
     mainSchema.validateAsync("").setHandler(context.succeeding(o -> { // Trigger validation to start solve refs
       context.verify(() -> {
-        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
-        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+        assertThat(router).canResolveSchema(JsonPointer.fromURI(sampleURI), mainSchema.getScope(), parser).hasXIdEqualsTo("main");
+        assertThat(router).canResolveSchema(JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), parser).hasXIdEqualsTo("sub1");
       });
       context.completeNow();
     }));
@@ -76,8 +70,8 @@ public class LocalRefTest {
     Schema mainSchema = parser.parse(mainSchemaUnparsed, sampleURI.resolve("test_1.json"));
     mainSchema.validateAsync("").setHandler(context.succeeding(o -> { // Trigger validation to start solve refs
       context.verify(() -> {
-        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
-        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+        assertThat(router).canResolveSchema(JsonPointer.fromURI(sampleURI), mainSchema.getScope(), parser).hasXIdEqualsTo("main");
+        assertThat(router).canResolveSchema(JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), parser).hasXIdEqualsTo("sub1");
       });
       context.completeNow();
     }));
@@ -106,8 +100,8 @@ public class LocalRefTest {
     Schema mainSchema = parser.parse(mainSchemaUnparsed, URIUtils.resolvePath(sampleURI, "test_1.json"));
     mainSchema.validateAsync("").setHandler(context.succeeding(o -> { // Trigger validation to start solve refs
       context.verify(() -> {
-        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI), mainSchema.getScope(), "main");
-        assertThatSchemaContainsXid(router, JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), "sub1");
+        assertThat(router).canResolveSchema(JsonPointer.fromURI(sampleURI), mainSchema.getScope(), parser).hasXIdEqualsTo("main");
+        assertThat(router).canResolveSchema(JsonPointer.fromURI(sampleURI).append("definitions").append("sub1"), mainSchema.getScope(), parser).hasXIdEqualsTo("sub1");
       });
       context.completeNow();
     }));

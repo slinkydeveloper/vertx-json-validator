@@ -44,7 +44,7 @@ class RouterNode {
 
   public Stream<RouterNode> reverseFlattened() {
     return Stream.concat(
-        childs.values().stream().flatMap(RouterNode::flattened),
+        childs.values().stream().flatMap(RouterNode::reverseFlattened),
         (schema == null) ? Stream.empty() : Stream.of(this)
     );
   }

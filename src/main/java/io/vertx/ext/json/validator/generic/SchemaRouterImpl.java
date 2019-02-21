@@ -199,27 +199,27 @@ public class SchemaRouterImpl implements SchemaRouter {
     });
   }
 
-  // TODO total refactor this function
-  public Future<Void> solveAllSchemaReferences(Schema schema) {
+  @Override
+  public Future<Schema> solveAllSchemaReferences(Schema schema) {
     if (schema instanceof RefSchema) {
-      return ((RefSchema)schema).tryAsyncSolveSchema().compose(s -> {
-        if (s != schema) return solveAllSchemaReferences(s);
-        else return Future.succeededFuture();
-      });
+      return ((RefSchema) schema)
+          .trySolveSchema()
+          .compose(s -> (s != schema) ? solveAllSchemaReferences(s).map(schema) : Future.succeededFuture(schema));
     } else {
       RouterNode node = absolutePaths.get(schema.getScope().getURIWithoutFragment());
       node = (RouterNode) schema.getScope().query(new RouterNodeJsonPointerIterator(node));
-      if (node == null) return Future.succeededFuture();
       return CompositeFuture.all(
           node
-              .reverseFlattened().collect(Collectors.toList())
+              .reverseFlattened()
+              .collect(Collectors.toList())// Must create a collection to avoid ConcurrentModificationException
               .stream()
               .map(RouterNode::getSchema)
               .filter(Objects::nonNull)
               .filter(s -> s instanceof RefSchema)
-              .map(r -> ((RefSchema)r).tryAsyncSolveSchema())
+              .map(s -> (RefSchema)s)
+              .map(RefSchema::trySolveSchema)
               .collect(Collectors.toList())
-      ).compose(cf -> Future.succeededFuture());
+      ).map(schema);
     }
   }
 
