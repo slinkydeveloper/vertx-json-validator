@@ -7,6 +7,7 @@ import io.vertx.ext.json.validator.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Predicate;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
@@ -21,7 +22,6 @@ public abstract class BaseSchemaParser implements SchemaParser {
     this.options = options;
     this.router = router;
     this.validatorFactories = initValidatorFactories();
-    loadOptions();
   }
 
   @Override
@@ -63,17 +63,21 @@ public abstract class BaseSchemaParser implements SchemaParser {
 
   protected abstract List<ValidatorFactory> initValidatorFactories();
 
-  protected void loadOptions() {
-    // Load additional validators
-    this.validatorFactories.addAll(this.options.getAdditionalValidatorFactories());
+  @Override
+  public SchemaParser withValidatorFactory(ValidatorFactory factory) {
+    this.validatorFactories.add(factory);
+    return this;
+  }
 
-    // Load additional string formats
-    ValidatorFactory f = validatorFactories
+  @Override
+  public SchemaParser withStringFormatValidator(String formatName, Predicate<String> predicate) {
+    BaseFormatValidatorFactory f = (BaseFormatValidatorFactory) validatorFactories
         .stream()
         .filter(factory -> factory instanceof BaseFormatValidatorFactory)
         .findFirst()
         .orElseThrow(() -> new IllegalStateException("This json schema version doesn't support format keyword"));
-    this.options.getAdditionalStringFormatValidators().forEach(((BaseFormatValidatorFactory) f)::addStringFormatValidator);
+    f.addStringFormatValidator(formatName, predicate);
+    return this;
   }
 
   @Override

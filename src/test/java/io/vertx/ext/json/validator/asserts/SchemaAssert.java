@@ -32,7 +32,7 @@ public class SchemaAssert extends AbstractAssert<SchemaAssert, Schema> {
     return this;
   }
 
-  public SchemaAssert isNotSync() {
+  public SchemaAssert isAsync() {
     assertThat(actual.isSync()).isFalse();
     return this;
   }

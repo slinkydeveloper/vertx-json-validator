@@ -40,7 +40,7 @@ public class MutableSchemaTest {
     JsonObject obj = loadJson(u);
     Schema schema = Draft7SchemaParser.parse(vertx, obj, u);
 
-    assertThat(schema).isNotSync();
+    assertThat(schema).isAsync();
 
     assertThatThrownBy(() -> schema.validateSync(new JsonObject().put("hello", "francesco")))
         .isInstanceOf(NoSyncValidationException.class);
@@ -66,7 +66,7 @@ public class MutableSchemaTest {
     SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), router);
     Schema schema = parser.parse(obj, u);
 
-    assertThat(schema).isNotSync();
+    assertThat(schema).isAsync();
 
     assertThatThrownBy(() -> schema.validateSync(new JsonObject().put("hello", "francesco")))
         .isInstanceOf(NoSyncValidationException.class);
@@ -97,7 +97,7 @@ public class MutableSchemaTest {
     SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), router);
     Schema schema = parser.parse(obj, u);
 
-    assertThat(schema).isNotSync();
+    assertThat(schema).isAsync();
 
     assertThatThrownBy(() -> schema.validateSync(new JsonObject()))
         .isInstanceOf(NoSyncValidationException.class);

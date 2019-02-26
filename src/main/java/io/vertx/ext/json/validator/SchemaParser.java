@@ -1,9 +1,11 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.ext.json.pointer.JsonPointer;
 
 import java.net.URI;
+import java.util.function.Predicate;
 
 @VertxGen
 public interface SchemaParser {
@@ -105,4 +107,10 @@ public interface SchemaParser {
    * @return
    */
   SchemaRouter getSchemaRouter();
+
+  @Fluent
+  SchemaParser withValidatorFactory(ValidatorFactory factory);
+
+  @Fluent
+  SchemaParser withStringFormatValidator(String formatName, Predicate<String> predicate);
 }
