@@ -27,11 +27,11 @@ public class RefSchema extends SchemaImpl {
       refPointer = URIUtils.createJsonPointerFromURI(URI.create(unparsedUri));
       if (log.isDebugEnabled()) log.debug("Parsed {} ref for schema {}", refPointer, schema);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null $ref keyword");
+      throw new SchemaException(schema, "Null $ref keyword", e);
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for $ref keyword");
+      throw new SchemaException(schema, "Wrong type for $ref keyword", e);
     } catch (IllegalArgumentException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "$ref URI is invalid: " + e.getMessage());
+      throw new SchemaException(schema, "$ref URI is invalid: " + e.getMessage(), e);
     }
   }
 

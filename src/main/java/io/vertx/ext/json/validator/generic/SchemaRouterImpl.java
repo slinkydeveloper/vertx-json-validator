@@ -6,7 +6,10 @@ import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.*;
+import io.vertx.ext.json.validator.Schema;
+import io.vertx.ext.json.validator.SchemaException;
+import io.vertx.ext.json.validator.SchemaParser;
+import io.vertx.ext.json.validator.SchemaRouter;
 
 import java.net.URI;
 import java.util.*;
@@ -99,7 +102,7 @@ public class SchemaRouterImpl implements SchemaRouter {
         if (!idPointer.isRootPointer())
           idPointer.write(new RouterNodeJsonPointerIterator(parentNode), iterator.getCurrentValue(), true);
       } catch (IllegalArgumentException e) {
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "$id keyword should be a valid URI", e);
+        throw new SchemaException(schema, "$id keyword should be a valid URI", e);
       }
     }
   }

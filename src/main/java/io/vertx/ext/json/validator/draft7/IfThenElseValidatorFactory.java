@@ -23,9 +23,9 @@ public class IfThenElseValidatorFactory implements ValidatorFactory {
       validator.configure(conditionSchema, thenSchema, elseSchema);
       return validator;
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for if/then/else keyword");
+      throw new SchemaException(schema, "Wrong type for if/then/else keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null if/then/else keyword");
+      throw new SchemaException(schema, "Null if/then/else keyword", e);
     }
   }
 

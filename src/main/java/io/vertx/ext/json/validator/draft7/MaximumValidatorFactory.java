@@ -13,9 +13,9 @@ public class MaximumValidatorFactory implements ValidatorFactory {
       Number maximum = (Number) schema.getValue("maximum");
       return new MaximumValidator(maximum.doubleValue());
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for maximum keyword");
+      throw new SchemaException(schema, "Wrong type for maximum keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null maximum keyword");
+      throw new SchemaException(schema, "Null maximum keyword", e);
     }
   }
 

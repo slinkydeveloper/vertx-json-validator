@@ -13,12 +13,12 @@ public class MaxLengthValidatorFactory implements ValidatorFactory {
     try {
       Number maximum = (Number) schema.getValue("maxLength");
       if (maximum.intValue() < 0)
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "maxLength must be >= 0");
+        throw new SchemaException(schema, "maxLength must be >= 0");
       return new MaxLengthValidator(maximum.intValue());
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for maxLength keyword");
+      throw new SchemaException(schema, "Wrong type for maxLength keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null maxLength keyword");
+      throw new SchemaException(schema, "Null maxLength keyword", e);
     }
   }
 

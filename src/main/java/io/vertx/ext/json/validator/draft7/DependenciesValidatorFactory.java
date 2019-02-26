@@ -37,9 +37,9 @@ public class DependenciesValidatorFactory implements ValidatorFactory {
       validator.configure(keyDeps, keySchemaDeps);
       return validator;
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for dependencies keyword");
+      throw new SchemaException(schema, "Wrong type for dependencies keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null dependencies keyword");
+      throw new SchemaException(schema, "Null dependencies keyword", e);
     }
   }
 

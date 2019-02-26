@@ -18,9 +18,9 @@ public class RequiredValidatorFactory implements ValidatorFactory {
       JsonArray keys = (JsonArray) schema.getValue("required");
       return new RequiredValidator(new HashSet(keys.getList()));
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for enum keyword");
+      throw new SchemaException(schema, "Wrong type for enum keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null enum keyword");
+      throw new SchemaException(schema, "Null enum keyword", e);
     }
   }
 

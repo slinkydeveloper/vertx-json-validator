@@ -29,9 +29,9 @@ public class UniqueItemsValidatorFactory implements ValidatorFactory {
       if (unique) return UNIQUE_VALIDATOR;
       else return null;
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for uniqueItems keyword");
+      throw new SchemaException(schema, "Wrong type for uniqueItems keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null uniqueItems keyword");
+      throw new SchemaException(schema, "Null uniqueItems keyword", e);
     }
   }
 

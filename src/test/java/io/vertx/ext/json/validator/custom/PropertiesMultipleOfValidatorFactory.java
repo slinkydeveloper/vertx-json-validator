@@ -14,9 +14,9 @@ public class PropertiesMultipleOfValidatorFactory implements ValidatorFactory {
       Number multipleOf = (Number) schema.getValue("propertiesMultipleOf");
       return new PropertiesMultipleOfValidator(multipleOf.intValue());
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for propertiesMultipleOf keyword");
+      throw new SchemaException(schema, "Wrong type for propertiesMultipleOf keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null propertiesMultipleOf keyword");
+      throw new SchemaException(schema, "Null propertiesMultipleOf keyword", e);
     }
   }
 

@@ -18,9 +18,9 @@ public class DefinitionsValidatorFactory implements ValidatorFactory {
       });
       return null;
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for definitions keyword");
+      throw new SchemaException(schema, "Wrong type for definitions keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null definitions keyword");
+      throw new SchemaException(schema, "Null definitions keyword", e);
     }
   }
 

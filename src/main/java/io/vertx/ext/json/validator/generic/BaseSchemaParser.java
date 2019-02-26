@@ -53,7 +53,7 @@ public abstract class BaseSchemaParser implements SchemaParser {
       router.addSchema(s);
       return s;
     } else
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(jsonSchema, "Schema should be a JsonObject or a Boolean");
+      throw new SchemaException(jsonSchema, "Schema must be a JsonObject or a Boolean");
   }
 
   protected SchemaImpl createSchema(JsonObject schema, JsonPointer scope, MutableStateValidator parent) {

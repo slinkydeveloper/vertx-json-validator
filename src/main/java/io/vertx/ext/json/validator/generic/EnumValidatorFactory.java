@@ -28,9 +28,9 @@ public class EnumValidatorFactory implements ValidatorFactory {
           ).collect(Collectors.toSet());
       return new EnumValidator(allowedValuesParsed);
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for enum keyword");
+      throw new SchemaException(schema, "Wrong type for enum keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null enum keyword");
+      throw new SchemaException(schema, "Null enum keyword", e);
     }
   }
 

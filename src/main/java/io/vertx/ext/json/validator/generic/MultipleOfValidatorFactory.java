@@ -14,9 +14,9 @@ public class MultipleOfValidatorFactory implements ValidatorFactory {
       Number multipleOf = (Number) schema.getValue("multipleOf");
       return new MultipleOfValidator(multipleOf.doubleValue());
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for multipleOf keyword");
+      throw new SchemaException(schema, "Wrong type for multipleOf keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null multipleOf keyword");
+      throw new SchemaException(schema, "Null multipleOf keyword", e);
     }
   }
 

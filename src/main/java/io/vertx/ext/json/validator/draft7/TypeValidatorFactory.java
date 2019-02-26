@@ -30,9 +30,9 @@ public class TypeValidatorFactory implements ValidatorFactory {
       if (allowNull) allowedTypes.remove(JsonSchemaType.NULL);
       return new TypeValidator(allowedTypes.toArray(new JsonSchemaType[allowedTypes.size()]), allowNull);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null type keyword");
+      throw new SchemaException(schema, "Null type keyword", e);
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for type or format keyword");
+      throw new SchemaException(schema, "Wrong type for type or format keyword", e);
     }
   }
 
@@ -58,7 +58,7 @@ public class TypeValidatorFactory implements ValidatorFactory {
       case "null":
         return JsonSchemaType.NULL;
       default:
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Unknown type: " + type);
+        throw new SchemaException(schema, "Unknown type: " + type);
     }
   }
 

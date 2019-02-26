@@ -13,9 +13,9 @@ public class ExclusiveMinimumValidatorFactory implements ValidatorFactory {
       Number maximum = (Number) schema.getValue("exclusiveMinimum");
       return new ExclusiveMinimumValidator(maximum.doubleValue());
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for exclusiveMinimum keyword");
+      throw new SchemaException(schema, "Wrong type for exclusiveMinimum keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null exclusiveMinimum keyword");
+      throw new SchemaException(schema, "Null exclusiveMinimum keyword", e);
     }
   }
 

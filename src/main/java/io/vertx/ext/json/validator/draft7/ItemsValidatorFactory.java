@@ -34,7 +34,7 @@ public class ItemsValidatorFactory extends io.vertx.ext.json.validator.generic.I
           validator.configure(parsedSchemas.toArray(new Schema[parsedSchemas.size()]), null);
         return validator;
       } catch (NullPointerException e) {
-        throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null items keyword");
+        throw new SchemaException(schema, "Null items keyword", e);
       }
     } else {
       return super.createValidator(schema, scope, parser, parent);

@@ -12,20 +12,19 @@ import io.vertx.core.VertxException;
 public class SchemaException extends VertxException {
 
   private Object schema;
-  private SchemaErrorType errorType;
 
-  public SchemaException(String message, Object schema, SchemaErrorType errorType, Throwable cause) {
+  public SchemaException(Object schema, String message, Throwable cause) {
     super(message, cause);
     this.schema = schema;
-    this.errorType = errorType;
+  }
+
+  public SchemaException(Object schema, String message) {
+    super(message);
+    this.schema = schema;
   }
 
   public Object schema() {
     return schema;
-  }
-
-  public SchemaErrorType errorType() {
-    return errorType;
   }
 
   @Override
@@ -33,7 +32,6 @@ public class SchemaException extends VertxException {
     return "SchemaException{" +
         "message=\'" + getMessage() + "\'" +
         ", schema=" + schema +
-        ", errorType=" + errorType.toString() +
         '}';
   }
 }

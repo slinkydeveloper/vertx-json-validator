@@ -23,9 +23,9 @@ public class NullableValidatorFactory implements ValidatorFactory {
       if (nullable == null || !nullable) return NULL_VALIDATOR;
       else return null;
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for nullable keyword");
+      throw new SchemaException(schema, "Wrong type for nullable keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null nullable keyword");
+      throw new SchemaException(schema, "Null nullable keyword", e);
     }
   }
 

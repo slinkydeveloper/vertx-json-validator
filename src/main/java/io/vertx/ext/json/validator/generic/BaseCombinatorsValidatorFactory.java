@@ -14,7 +14,7 @@ public abstract class BaseCombinatorsValidatorFactory implements ValidatorFactor
     try {
       JsonArray allOfSchemas = schema.getJsonArray(getKeyword());
       if (allOfSchemas.size() == 0)
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, getKeyword() + " must have at least one element");
+        throw new SchemaException(schema, getKeyword() + " must have at least one element");
       JsonPointer basePointer = scope.append(getKeyword());
       List<Schema> parsedSchemas = new ArrayList<>();
 
@@ -25,9 +25,9 @@ public abstract class BaseCombinatorsValidatorFactory implements ValidatorFactor
       validator.setSchemas(parsedSchemas);
       return validator;
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for " + getKeyword() + " keyword");
+      throw new SchemaException(schema, "Wrong type for " + getKeyword() + " keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null " + getKeyword() + " keyword");
+      throw new SchemaException(schema, "Null " + getKeyword() + " keyword", e);
     }
   }
 

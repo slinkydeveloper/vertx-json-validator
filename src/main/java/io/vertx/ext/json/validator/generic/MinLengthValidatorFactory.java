@@ -13,12 +13,12 @@ public class MinLengthValidatorFactory implements ValidatorFactory {
     try {
       Number minimum = (Number) schema.getValue("minLength");
       if (minimum.intValue() < 0)
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "minLength must be >= 0");
+        throw new SchemaException(schema, "minLength must be >= 0");
       return new MinLengthValidator(minimum.intValue());
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for minLength keyword");
+      throw new SchemaException(schema, "Wrong type for minLength keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null minLength keyword");
+      throw new SchemaException(schema, "Null minLength keyword", e);
     }
   }
 

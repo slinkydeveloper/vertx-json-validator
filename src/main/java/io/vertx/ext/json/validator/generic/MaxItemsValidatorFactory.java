@@ -14,12 +14,12 @@ public class MaxItemsValidatorFactory implements ValidatorFactory {
     try {
       Number maximum = (Number) schema.getValue("maxItems");
       if (maximum.intValue() < 0)
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "maxItems must be >= 0");
+        throw new SchemaException(schema, "maxItems must be >= 0");
       return new MaxItemsValidator(maximum.intValue());
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for maxItems keyword");
+      throw new SchemaException(schema, "Wrong type for maxItems keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null maxItems keyword");
+      throw new SchemaException(schema, "Null maxItems keyword", e);
     }
   }
 

@@ -14,12 +14,12 @@ public class MinItemsValidatorFactory implements ValidatorFactory {
     try {
       Number minimum = (Number) schema.getValue("minItems");
       if (minimum.intValue() < 0)
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "minItems must be >= 0");
+        throw new SchemaException(schema, "minItems must be >= 0");
       return new MinItemsValidator(minimum.intValue());
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for minItems keyword");
+      throw new SchemaException(schema, "Wrong type for minItems keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null minItems keyword");
+      throw new SchemaException(schema, "Null minItems keyword", e);
     }
   }
 

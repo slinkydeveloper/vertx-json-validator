@@ -22,9 +22,9 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
     try {
       return parser.parse(obj, scope.copy().append("additionalProperties"), parent);
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(obj, "Wrong type for additionalProperties keyword");
+      throw new SchemaException(obj, "Wrong type for additionalProperties keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(obj, "Null additionalProperties keyword");
+      throw new SchemaException(obj, "Null additionalProperties keyword", e);
     }
   }
 
@@ -39,7 +39,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
             parent
         ));
       } catch (ClassCastException | NullPointerException e) {
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(obj, "Property descriptor " + entry.getKey() + " should be a not null JsonObject");
+        throw new SchemaException(obj, "Property descriptor " + entry.getKey() + " should be a not null JsonObject", e);
       }
     }
     return parsedSchemas;
@@ -56,9 +56,9 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
             parent
         ));
       } catch (PatternSyntaxException e) {
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(obj, "Invalid pattern for pattern keyword");
+        throw new SchemaException(obj, "Invalid pattern for pattern keyword", e);
       } catch (ClassCastException | NullPointerException e) {
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(obj, "Property descriptor " + entry.getKey() + " should be a not null JsonObject");
+        throw new SchemaException(obj, "Property descriptor " + entry.getKey() + " should be a not null JsonObject", e);
       }
     }
     return parsedSchemas;
@@ -85,7 +85,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
       }
       return validator;
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for properties/patternProperties keyword");
+      throw new SchemaException(schema, "Wrong type for properties/patternProperties keyword", e);
     }
   }
 

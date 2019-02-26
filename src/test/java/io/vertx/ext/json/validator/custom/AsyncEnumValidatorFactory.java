@@ -24,9 +24,9 @@ public class AsyncEnumValidatorFactory implements ValidatorFactory {
       String address = (String) schema.getValue("asyncEnum");
       return new AsyncEnumValidator(vertx, address);
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for propertiesMultipleOf keyword");
+      throw new SchemaException(schema, "Wrong type for propertiesMultipleOf keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null propertiesMultipleOf keyword");
+      throw new SchemaException(schema, "Null propertiesMultipleOf keyword", e);
     }
   }
 

@@ -13,12 +13,12 @@ public class MinPropertiesValidatorFactory implements ValidatorFactory {
     try {
       Number minimum = (Number) schema.getValue("minProperties");
       if (minimum.intValue() < 0)
-        throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "minProperties must be >= 0");
+        throw new SchemaException(schema, "minProperties must be >= 0");
       return new MinPropertiesValidator(minimum.intValue());
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for minProperties keyword");
+      throw new SchemaException(schema, "Wrong type for minProperties keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null minProperties keyword");
+      throw new SchemaException(schema, "Null minProperties keyword", e);
     }
   }
 

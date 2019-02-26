@@ -16,9 +16,9 @@ public class MaximumValidatorFactory implements ValidatorFactory {
         return new ExclusiveMaximumValidator(maximum.doubleValue());
       return new MaximumValidator(maximum.doubleValue());
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for maximum or exclusiveMaximum keyword");
+      throw new SchemaException(schema, "Wrong type for maximum or exclusiveMaximum keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null maximum or exclusiveMaximum keyword");
+      throw new SchemaException(schema, "Null maximum or exclusiveMaximum keyword", e);
     }
   }
 

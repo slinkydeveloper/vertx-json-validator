@@ -18,11 +18,11 @@ public class PatternValidatorFactory implements ValidatorFactory {
       String pattern = (String) schema.getValue("pattern");
       return new PatternValidator(Pattern.compile(pattern));
     } catch (ClassCastException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Wrong type for pattern keyword");
+      throw new SchemaException(schema, "Wrong type for pattern keyword", e);
     } catch (NullPointerException e) {
-      throw SchemaErrorType.NULL_KEYWORD_VALUE.createException(schema, "Null pattern keyword");
+      throw new SchemaException(schema, "Null pattern keyword", e);
     } catch (PatternSyntaxException e) {
-      throw SchemaErrorType.WRONG_KEYWORD_VALUE.createException(schema, "Invalid pattern in pattern keyword");
+      throw new SchemaException(schema, "Invalid pattern in pattern keyword", e);
     }
   }
 
