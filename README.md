@@ -23,14 +23,14 @@ SchemaRouter router = SchemaRouter.create(vertx)
 SchemaParserOptions options = new SchemaParserOptions();
 SchemaParser parser = Draft7SchemaParser.create(options, router);
 Schema schema = parser.parse(schema, scope);
-Future validationResult = schema.validate(objectToValidate);
+Future validationResult = schema.validateAsync(objectToValidate);
 ````
 
 Or shorthand
 
 ```java
 Schema schema = Draft7SchemaParser.parse(vertx, schema, scope);
-Future validationResult = schema.validate(objectToValidate);
+Future validationResult = schema.validateAsync(objectToValidate);
 ```
 
 ## Extend the validator

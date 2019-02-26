@@ -15,22 +15,27 @@ public class ValidationException extends VertxException {
 
   final private String keyword;
   final private Object input;
-  final private ValidationErrorType errorType;
   private Schema schema;
   private JsonPointer scope;
 
-  protected ValidationException(String message, String keyword, Object input, ValidationErrorType errorType) {
+  protected ValidationException(String message, String keyword, Object input) {
     super(message);
     this.keyword = keyword;
     this.input = input;
-    this.errorType = errorType;
   }
 
-  protected ValidationException(String message, Throwable cause, String keyword, Object input, ValidationErrorType errorType) {
+  protected ValidationException(String message, Throwable cause, String keyword, Object input) {
     super(message, cause);
     this.keyword = keyword;
     this.input = input;
-    this.errorType = errorType;
+  }
+
+  public static ValidationException createException(String message, String keyword, Object input, Throwable cause) {
+    return new ValidationException(message, cause, keyword,  input);
+  }
+
+  public static ValidationException createException(String message, String keyword, Object input) {
+    return new ValidationException(message, keyword, input);
   }
 
   @Nullable public String keyword() {
@@ -39,10 +44,6 @@ public class ValidationException extends VertxException {
 
   public Object input() {
     return input;
-  }
-
-  public ValidationErrorType errorType() {
-    return errorType;
   }
 
   public Schema schema() {
@@ -67,7 +68,6 @@ public class ValidationException extends VertxException {
         "message='" + getMessage() + '\'' +
         ", keyword='" + keyword + '\'' +
         ", input=" + input +
-        ", errorType=" + errorType +
         ", schema=" + schema +
         ", scope=" + scope +
         '}';

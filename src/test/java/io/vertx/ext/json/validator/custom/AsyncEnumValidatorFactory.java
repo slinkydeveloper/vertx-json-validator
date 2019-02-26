@@ -8,7 +8,7 @@ import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.BaseAsyncValidator;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class AsyncEnumValidatorFactory implements ValidatorFactory {
 
@@ -50,7 +50,7 @@ public class AsyncEnumValidatorFactory implements ValidatorFactory {
       Future<Void> fut = Future.future();
       vertx.eventBus().send(address, new JsonObject(), ar -> {
         JsonArray enumValues = (JsonArray) ar.result().body();
-        if (!enumValues.contains(in)) fut.fail(NO_MATCH.createException("Not matching async enum", "asyncEnum", in));
+        if (!enumValues.contains(in)) fut.fail(createException("Not matching async enum", "asyncEnum", in));
         else fut.complete();
       });
       return fut;

@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class SchemaImpl extends BaseMutableStateValidator implements Schema {
 
@@ -138,7 +138,7 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
       ve.setScope(this.scope);
       return Future.failedFuture(ve);
     } else {
-      return Future.failedFuture(NO_MATCH.createException("Error while validating", (Throwable) e, null, in));
+      return Future.failedFuture(createException("Error while validating", null, in, e));
     }
   }
 

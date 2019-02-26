@@ -11,7 +11,7 @@ import io.vertx.ext.json.validator.generic.BaseMutableStateValidator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class CachedAsyncEnumValidatorFactory implements ValidatorFactory {
 
@@ -58,7 +58,7 @@ public class CachedAsyncEnumValidatorFactory implements ValidatorFactory {
     @Override
     public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
-      if (!this.cache.get().get().contains(in)) throw NO_MATCH.createException("Not matching cached async enum", "asyncEnum", in);
+      if (!this.cache.get().get().contains(in)) throw createException("Not matching cached async enum", "asyncEnum", in);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class CachedAsyncEnumValidatorFactory implements ValidatorFactory {
         this.cache.set(Optional.of(enumValues));
         this.triggerUpdateIsSync();
 
-        if (!enumValues.contains(in)) fut.fail(NO_MATCH.createException("Not matching async enum", "asyncEnum", in));
+        if (!enumValues.contains(in)) fut.fail(createException("Not matching async enum", "asyncEnum", in));
         else fut.complete();
       });
       return fut;

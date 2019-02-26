@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class DependenciesValidatorFactory implements ValidatorFactory {
   @Override
@@ -67,7 +67,7 @@ public class DependenciesValidatorFactory implements ValidatorFactory {
       Set<String> objKeys = obj.getMap().keySet();
       for (Map.Entry<String, Set<String>> dependency : keyDeps.entrySet()) {
         if (obj.containsKey(dependency.getKey()) && !objKeys.containsAll(dependency.getValue()))
-          throw NO_MATCH.createException("dependencies of key " + dependency.getKey() + " are not satisfied: " + dependency.getValue().toString(), "dependencies", obj);
+          throw createException("dependencies of key " + dependency.getKey() + " are not satisfied: " + dependency.getValue().toString(), "dependencies", obj);
       }
     }
 

@@ -5,12 +5,14 @@ import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.BaseSyncValidator;
 
+import static io.vertx.ext.json.validator.ValidationException.createException;
+
 public class NullableValidatorFactory implements ValidatorFactory {
 
   private final static BaseSyncValidator NULL_VALIDATOR = new BaseSyncValidator() {
     @Override
     public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
-      if (in == null) throw ValidationErrorType.NO_MATCH.createException("input cannot be null", "nullable", in);
+      if (in == null) throw createException("input cannot be null", "nullable", in);
     }
   };
 

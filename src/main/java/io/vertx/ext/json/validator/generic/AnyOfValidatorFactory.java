@@ -10,6 +10,8 @@ import io.vertx.ext.json.validator.ValidationException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import static io.vertx.ext.json.validator.ValidationException.createException;
+
 public class AnyOfValidatorFactory extends BaseCombinatorsValidatorFactory {
 
   @Override
@@ -46,11 +48,11 @@ public class AnyOfValidatorFactory extends BaseCombinatorsValidatorFactory {
     @Override
     public Future<Void> validateAsync(Object in) {
       if (isSync()) return validateSyncAsAsync(in);
-      return CompositeFuture.any(
-          Arrays.stream(this.schemas)
-              .map(s -> s.validateAsync(in))
-              .collect(Collectors.toList())
-      ).compose(cf -> Future.succeededFuture());
+      return FutureUtils.andThen(
+          CompositeFuture.any(Arrays.stream(this.schemas).map(s -> s.validateAsync(in)).collect(Collectors.toList())),
+              res -> Future.succeededFuture(),
+              err -> Future.failedFuture(createException("anyOf subschemas don't match", "anyOf", in, err))
+      );
     }
 
   }

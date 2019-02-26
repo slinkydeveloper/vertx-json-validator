@@ -8,7 +8,7 @@ import io.vertx.ext.json.validator.*;
 import java.util.HashSet;
 import java.util.Set;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class RequiredValidatorFactory implements ValidatorFactory {
 
@@ -41,7 +41,7 @@ public class RequiredValidatorFactory implements ValidatorFactory {
       if (in instanceof JsonObject) {
         JsonObject obj = (JsonObject) in;
         for (String k : requiredKeys) {
-          if (!obj.containsKey(k)) throw NO_MATCH.createException("provided object should contain property " + k, "required", in);
+          if (!obj.containsKey(k)) throw createException("provided object should contain property " + k, "required", in);
         }
       }
     }

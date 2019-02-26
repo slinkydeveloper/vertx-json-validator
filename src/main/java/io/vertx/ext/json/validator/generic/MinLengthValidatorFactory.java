@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class MinLengthValidatorFactory implements ValidatorFactory {
 
@@ -38,7 +38,7 @@ public class MinLengthValidatorFactory implements ValidatorFactory {
     public void validateSync(Object in) throws ValidationException {
       if (in instanceof String) {
         if (((String) in).codePointCount(0, ((String) in).length()) < minimum) {
-          throw NO_MATCH.createException("provided string should have size >= " + minimum, "minLength", in);
+          throw createException("provided string should have size >= " + minimum, "minLength", in);
         }
       }
     }

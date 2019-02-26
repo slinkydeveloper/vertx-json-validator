@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.vertx.ext.json.validator.ValidationException.createException;
+
 public class TypeValidatorFactory implements ValidatorFactory {
 
   @Override
@@ -79,8 +81,8 @@ public class TypeValidatorFactory implements ValidatorFactory {
     public void validateSync(Object in) throws ValidationException {
       if (in != null) {
         for (JsonSchemaType type : types) if (type.checkInstance(in)) return;
-        throw ValidationErrorType.NO_MATCH.createException("input don't match any of types " + Arrays.deepToString(types), "type", in);
-      } else if (!nullIsValid) throw ValidationErrorType.NO_MATCH.createException("input don't match any of types " + Arrays.deepToString(types), "type", in);
+        throw createException("input don't match any of types " + Arrays.deepToString(types), "type", in);
+      } else if (!nullIsValid) throw createException("input don't match any of types " + Arrays.deepToString(types), "type", in);
     }
   }
 }

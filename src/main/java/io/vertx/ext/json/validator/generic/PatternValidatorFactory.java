@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class PatternValidatorFactory implements ValidatorFactory {
 
@@ -43,7 +43,7 @@ public class PatternValidatorFactory implements ValidatorFactory {
       if (in instanceof String) {
         Matcher m = pattern.matcher((String) in);
         if (!(m.matches() || m.lookingAt() || m.find())) {
-          throw NO_MATCH.createException("provided string should respect pattern " + pattern, "pattern", in);
+          throw createException("provided string should respect pattern " + pattern, "pattern", in);
         }
       }
     }

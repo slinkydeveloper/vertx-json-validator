@@ -12,7 +12,7 @@ import io.vertx.ext.json.validator.generic.FutureUtils;
 
 import java.util.stream.Collectors;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class ContainsValidatorFactory extends BaseSingleSchemaValidatorFactory {
 
@@ -36,13 +36,13 @@ public class ContainsValidatorFactory extends BaseSingleSchemaValidatorFactory {
     public Future<Void> validateAsync(Object in) {
       if (isSync()) return validateSyncAsAsync(in);
       if (in instanceof JsonArray){
-        if (((JsonArray)in).isEmpty()) return Future.failedFuture(NO_MATCH.createException("provided array should not be empty", "contains", in));
+        if (((JsonArray)in).isEmpty()) return Future.failedFuture(createException("provided array should not be empty", "contains", in));
         else return FutureUtils.andThen(
             CompositeFuture.any(
               ((JsonArray) in).stream().map(schema::validateAsync).collect(Collectors.toList())
             ),
             cf -> Future.succeededFuture(),
-            err -> Future.failedFuture(NO_MATCH.createException("provided array doesn't contain an element matching the contains schema", err, "contains", in))
+            err -> Future.failedFuture(createException("provided array doesn't contain an element matching the contains schema", "contains", in, err))
         );
       } else return Future.succeededFuture();
     }
@@ -60,7 +60,7 @@ public class ContainsValidatorFactory extends BaseSingleSchemaValidatorFactory {
             t = e;
           }
         }
-        throw NO_MATCH.createException("provided array doesn't contain an element matching the contains schema", t, "contains", in);
+        throw createException("provided array doesn't contain an element matching the contains schema", "contains", in, t);
       }
     }
 

@@ -12,7 +12,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
 
@@ -58,7 +58,7 @@ public abstract class BaseFormatValidatorFactory implements ValidatorFactory {
     public void validateSync(Object in) throws ValidationException {
       if (in instanceof String) {
         if (!validator.test((String) in)) {
-          throw NO_MATCH.createException("Provided value don't match pattern", "pattern", in);
+          throw createException("Provided value don't match pattern", "pattern", in);
         }
       }
     }

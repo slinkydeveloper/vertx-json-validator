@@ -10,7 +10,7 @@ import io.vertx.ext.json.validator.ValidationException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class AllOfValidatorFactory extends BaseCombinatorsValidatorFactory {
 
@@ -42,7 +42,7 @@ public class AllOfValidatorFactory extends BaseCombinatorsValidatorFactory {
       return FutureUtils.andThen(
           CompositeFuture.all(Arrays.stream(schemas).map(s -> s.validateAsync(in)).collect(Collectors.toList())),
           res -> Future.succeededFuture(),
-          err -> Future.failedFuture(NO_MATCH.createException("allOf subschema don't match", err, "allOf", in)));
+          err -> Future.failedFuture(createException("allOf subschema don't match", "allOf", in, err)));
     }
   }
 

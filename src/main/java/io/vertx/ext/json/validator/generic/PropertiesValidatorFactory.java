@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class PropertiesValidatorFactory implements ValidatorFactory {
 
@@ -95,7 +95,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
   }
 
   private Future<Void> fillAdditionalPropertyException(Throwable t, Object in) {
-    return Future.failedFuture(NO_MATCH.createException("additionalProperties schema should match", t, "additionalProperties", in));
+    return Future.failedFuture(createException("additionalProperties schema should match", "additionalProperties", in, t));
   }
 
   class PropertiesValidator extends BaseMutableStateValidator implements ValidatorWithDefaultApply {
@@ -189,7 +189,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
                 }
               }
             } else {
-              return Future.failedFuture(NO_MATCH.createException("provided object should not contain additional properties", "additionalProperties", in));
+              return Future.failedFuture(createException("provided object should not contain additional properties", "additionalProperties", in));
             }
           }
         }
@@ -226,7 +226,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
                 additionalPropertiesSchema.validateSync(entry.getValue());
               }
             } else {
-              throw NO_MATCH.createException("provided object should not contain additional properties", "additionalProperties", in);
+              throw createException("provided object should not contain additional properties", "additionalProperties", in);
             }
           }
         }

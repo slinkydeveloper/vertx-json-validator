@@ -6,6 +6,8 @@ import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.BaseSyncValidator;
 import io.vertx.ext.json.validator.generic.JsonSchemaType;
 
+import static io.vertx.ext.json.validator.ValidationException.createException;
+
 public class TypeValidatorFactory implements ValidatorFactory {
 
   @Override
@@ -60,7 +62,7 @@ public class TypeValidatorFactory implements ValidatorFactory {
     @Override
     public void validateSync(Object in) throws ValidationException {
       if (in != null) {
-        if (!type.checkInstance(in)) throw ValidationErrorType.NO_MATCH.createException("input don't match type " + type.name(), "type", in);
+        if (!type.checkInstance(in)) throw createException("input don't match type " + type.name(), "type", in);
       }
     }
   }

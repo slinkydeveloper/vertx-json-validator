@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class MultipleOfValidatorFactory implements ValidatorFactory {
 
@@ -36,7 +36,7 @@ public class MultipleOfValidatorFactory implements ValidatorFactory {
     public void validateSync(Object in) throws ValidationException {
       if (in instanceof Number) {
         if (((Number) in).doubleValue() % multipleOf != 0) {
-          throw NO_MATCH.createException("provided number should be multiple of " + multipleOf, "multipleOf", in);
+          throw createException("provided number should be multiple of " + multipleOf, "multipleOf", in);
         }
       }
     }

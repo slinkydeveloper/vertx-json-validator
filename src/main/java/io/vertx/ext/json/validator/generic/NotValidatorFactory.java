@@ -5,7 +5,7 @@ import io.vertx.ext.json.validator.MutableStateValidator;
 import io.vertx.ext.json.validator.NoSyncValidationException;
 import io.vertx.ext.json.validator.ValidationException;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class NotValidatorFactory extends BaseSingleSchemaValidatorFactory {
 
@@ -37,7 +37,7 @@ public class NotValidatorFactory extends BaseSingleSchemaValidatorFactory {
     @Override
     public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
-      if (isValidSync(in)) throw NO_MATCH.createException("input should be invalid", "not", in);
+      if (isValidSync(in)) throw createException("input should be invalid", "not", in);
     }
 
     @SuppressWarnings("unchecked")
@@ -46,7 +46,7 @@ public class NotValidatorFactory extends BaseSingleSchemaValidatorFactory {
       if (isSync()) return validateSyncAsAsync(in);
       return FutureUtils.andThen(
           schema.validateAsync(in),
-          res -> Future.failedFuture(NO_MATCH.createException("input should be invalid", "not", in)),
+          res -> Future.failedFuture(createException("input should be invalid", "not", in)),
           err -> Future.succeededFuture()
       );
     }

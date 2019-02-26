@@ -5,6 +5,8 @@ import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.BaseSyncValidator;
 
+import static io.vertx.ext.json.validator.ValidationException.createException;
+
 public class PropertiesMultipleOfValidatorFactory implements ValidatorFactory {
   @Override
   public Validator createValidator(JsonObject schema, JsonPointer scope, SchemaParser parser, MutableStateValidator parent) {
@@ -35,7 +37,7 @@ public class PropertiesMultipleOfValidatorFactory implements ValidatorFactory {
     public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       if (in instanceof JsonObject) {
         if (((JsonObject)in).size() % multipleOf != 0)
-          throw ValidationErrorType.NO_MATCH.createException("The provided object size is not a multiple of " + multipleOf, "propertiesMultipleOf", in);
+          throw createException("The provided object size is not a multiple of " + multipleOf, "propertiesMultipleOf", in);
       }
     }
   }

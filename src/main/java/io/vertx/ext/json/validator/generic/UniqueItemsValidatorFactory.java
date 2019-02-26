@@ -7,6 +7,8 @@ import io.vertx.ext.json.validator.*;
 
 import java.util.HashSet;
 
+import static io.vertx.ext.json.validator.ValidationException.createException;
+
 public class UniqueItemsValidatorFactory implements ValidatorFactory {
 
   private final static BaseSyncValidator UNIQUE_VALIDATOR = new BaseSyncValidator() {
@@ -15,7 +17,7 @@ public class UniqueItemsValidatorFactory implements ValidatorFactory {
       if (in instanceof JsonArray) {
         JsonArray arr = (JsonArray) in;
         if (new HashSet(arr.getList()).size() != arr.size())
-          throw ValidationErrorType.NO_MATCH.createException("array elements must be unique", "uniqueItems", in);
+          throw createException("array elements must be unique", "uniqueItems", in);
       }
     }
   };

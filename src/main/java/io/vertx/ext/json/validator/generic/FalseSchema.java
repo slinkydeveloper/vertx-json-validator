@@ -4,6 +4,8 @@ import io.vertx.core.Future;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
+import static io.vertx.ext.json.validator.ValidationException.createException;
+
 public class FalseSchema implements Schema {
 
   private static class FalseSchemaHolder {
@@ -32,12 +34,12 @@ public class FalseSchema implements Schema {
 
   @Override
   public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
-    throw ValidationErrorType.NO_MATCH.createException("False schema always fail validation", null, in);
+    throw createException("False schema always fail validation", null, in);
   }
 
   @Override
   public Future<Void> validateAsync(Object in) {
-    return Future.failedFuture(ValidationErrorType.NO_MATCH.createException("False schema always fail validation", null, in));
+    return Future.failedFuture(createException("False schema always fail validation", null, in));
   }
 
   @Override

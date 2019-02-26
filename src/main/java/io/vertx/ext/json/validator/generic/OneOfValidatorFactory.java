@@ -9,7 +9,7 @@ import io.vertx.ext.json.validator.ValidationException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class OneOfValidatorFactory extends BaseCombinatorsValidatorFactory {
 
@@ -42,8 +42,8 @@ public class OneOfValidatorFactory extends BaseCombinatorsValidatorFactory {
     public void validateSync(Object in) throws ValidationException, NoSyncValidationException {
       this.checkSync();
       long validCount = Arrays.stream(schemas).map(s -> isValidSync(s, in)).filter(b -> b.equals(true)).count();
-      if (validCount > 1) throw NO_MATCH.createException("More than one schema valid", "oneOf", in);
-      else if (validCount == 0) throw NO_MATCH.createException("No schema matches", "oneOf", in);
+      if (validCount > 1) throw createException("More than one schema valid", "oneOf", in);
+      else if (validCount == 0) throw createException("No schema matches", "oneOf", in);
     }
 
     @Override

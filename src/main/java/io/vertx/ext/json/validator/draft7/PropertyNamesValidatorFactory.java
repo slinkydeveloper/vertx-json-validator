@@ -5,13 +5,14 @@ import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.validator.MutableStateValidator;
 import io.vertx.ext.json.validator.NoSyncValidationException;
-import io.vertx.ext.json.validator.ValidationErrorType;
 import io.vertx.ext.json.validator.ValidationException;
 import io.vertx.ext.json.validator.generic.BaseSingleSchemaValidator;
 import io.vertx.ext.json.validator.generic.BaseSingleSchemaValidatorFactory;
 import io.vertx.ext.json.validator.generic.FutureUtils;
 
 import java.util.stream.Collectors;
+
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class PropertyNamesValidatorFactory extends BaseSingleSchemaValidatorFactory {
 
@@ -48,7 +49,7 @@ public class PropertyNamesValidatorFactory extends BaseSingleSchemaValidatorFact
               ((JsonObject) in).getMap().keySet().stream().map(schema::validateAsync).collect(Collectors.toList())
             ),
             cf -> Future.succeededFuture(),
-            err -> Future.failedFuture(ValidationErrorType.NO_MATCH.createException("provided object contains a key not matching the propertyNames schema", err, "propertyNames", in))
+            err -> Future.failedFuture(createException("provided object contains a key not matching the propertyNames schema", "propertyNames", in, err))
         );
       } else return Future.succeededFuture();
     }

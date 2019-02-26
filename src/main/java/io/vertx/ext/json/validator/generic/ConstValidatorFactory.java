@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class ConstValidatorFactory implements ValidatorFactory {
 
@@ -37,8 +37,8 @@ public class ConstValidatorFactory implements ValidatorFactory {
     public void validateSync(Object in) throws ValidationException {
       if (allowedValue != null) {
         if (!allowedValue.equals(in))
-          throw NO_MATCH.createException("Input doesn't match const: " + allowedValue, "const", in);
-      } else if (in != null) throw NO_MATCH.createException("Input doesn't match const: " + allowedValue, "const", in);
+          throw createException("Input doesn't match const: " + allowedValue, "const", in);
+      } else if (in != null) throw createException("Input doesn't match const: " + allowedValue, "const", in);
     }
   }
 

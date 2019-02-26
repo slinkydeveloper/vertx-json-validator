@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static io.vertx.ext.json.validator.ValidationErrorType.NO_MATCH;
+import static io.vertx.ext.json.validator.ValidationException.createException;
 
 public class EnumValidatorFactory implements ValidatorFactory {
 
@@ -53,7 +53,7 @@ public class EnumValidatorFactory implements ValidatorFactory {
 
     @Override
     public void validateSync(Object in) throws ValidationException {
-      if (!allowedValues.contains(in)) throw NO_MATCH.createException("Input doesn't match one of allowed values of enum: " + allowedValues, "enum", in);
+      if (!allowedValues.contains(in)) throw createException("Input doesn't match one of allowed values of enum: " + allowedValues, "enum", in);
     }
   }
 
