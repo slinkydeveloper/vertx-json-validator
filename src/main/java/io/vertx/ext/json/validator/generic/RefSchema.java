@@ -86,6 +86,24 @@ public class RefSchema extends SchemaImpl {
     isSync.set(false);
   }
 
+  @Override
+  public Object getDefaultValue() {
+    this.checkSync();
+    return cachedSchema.getDefaultValue();
+  }
+
+  @Override
+  public boolean hasDefaultValue() {
+    this.checkSync();
+    return cachedSchema.hasDefaultValue();
+  }
+
+  @Override
+  public void applyDefaultValues(Object obj) {
+    this.checkSync();
+    cachedSchema.applyDefaultValues(obj);
+  }
+
   synchronized Future<Schema> trySolveSchema() {
     if (cachedSchema == null) {
       return FutureUtils.andThen(

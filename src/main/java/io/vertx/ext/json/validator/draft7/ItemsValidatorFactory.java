@@ -7,6 +7,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.BaseMutableStateValidator;
+import io.vertx.ext.json.validator.generic.ValidatorWithDefaultApply;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,7 +41,7 @@ public class ItemsValidatorFactory extends io.vertx.ext.json.validator.generic.I
     }
   }
 
-  class ItemByItemValidator extends BaseMutableStateValidator {
+  class ItemByItemValidator extends BaseMutableStateValidator implements ValidatorWithDefaultApply {
 
     Schema[] schemas;
     Schema additionalItems;
@@ -97,6 +98,20 @@ public class ItemsValidatorFactory extends io.vertx.ext.json.validator.generic.I
     @Override
     public boolean calculateIsSync() {
       return (additionalItems == null || additionalItems.isSync()) && Arrays.stream(schemas).map(Schema::isSync).reduce(true, Boolean::logicalAnd);
+    }
+
+    @Override
+    public void applyDefaultValue(Object value) {
+      if (value instanceof JsonArray) {
+        JsonArray arr = (JsonArray) value;
+        for (int i = 0; i < arr.size(); i++) {
+          if (i >= schemas.length) {
+            if (additionalItems != null)
+              additionalItems.applyDefaultValues(arr.getValue(i));
+          } else
+            schemas[i].applyDefaultValues(arr.getValue(i));
+        }
+      }
     }
   }
 

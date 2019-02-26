@@ -42,6 +42,6 @@ To support custom keywords, you can create a new `ValidatorFactory` and register
 * Write documentation
 * Javadocs of io.vertx.ext.json interfaces
 * Enable vertx codegen
-* Default apply?
 * Schema keyword
 * Move schema parser options directly into schema parser
+* test custom keywords

@@ -20,4 +20,25 @@ public interface Schema extends MutableStateValidator {
    */
   Object getJson();
 
+  /**
+   * Return the default value defined in the schema
+   *
+   * @return
+   */
+  Object getDefaultValue();
+
+  /**
+   * Return true if the schema has a default value defined
+   *
+   * @return
+   */
+  boolean hasDefaultValue();
+
+  /**
+   * This function mutates obj applying default values in key/pair objects.
+   *
+   * @param obj
+   */
+  void applyDefaultValues(Object obj);
+
 }

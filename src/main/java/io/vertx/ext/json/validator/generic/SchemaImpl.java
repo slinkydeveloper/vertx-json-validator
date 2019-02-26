@@ -3,6 +3,7 @@ package io.vertx.ext.json.validator.generic;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.impl.ConcurrentHashSet;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -41,6 +42,26 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
   @Override
   public JsonObject getJson() {
     return schema;
+  }
+
+  @Override
+  public Object getDefaultValue() {
+    return schema.getValue("default");
+  }
+
+  @Override
+  public boolean hasDefaultValue() {
+    return schema.containsKey("default");
+  }
+
+  @Override
+  public void applyDefaultValues(Object obj) {
+    if (!(obj instanceof JsonObject || obj instanceof JsonArray)) return;
+    for (Validator v : validators) {
+      if (v instanceof ValidatorWithDefaultApply) {
+        ((ValidatorWithDefaultApply) v).applyDefaultValue(obj);
+      }
+    }
   }
 
   @Override

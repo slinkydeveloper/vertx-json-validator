@@ -51,6 +51,19 @@ public class FalseSchema implements Schema {
   }
 
   @Override
+  public Object getDefaultValue() {
+    return null;
+  }
+
+  @Override
+  public boolean hasDefaultValue() {
+    return false;
+  }
+
+  @Override
+  public void applyDefaultValues(Object obj) { }
+
+  @Override
   public MutableStateValidator getParent() {
     return parent;
   }

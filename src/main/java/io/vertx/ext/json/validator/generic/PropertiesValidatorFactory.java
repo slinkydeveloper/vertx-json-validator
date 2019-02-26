@@ -98,7 +98,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
     return Future.failedFuture(NO_MATCH.createException("additionalProperties schema should match", t, "additionalProperties", in));
   }
 
-  class PropertiesValidator extends BaseMutableStateValidator {
+  class PropertiesValidator extends BaseMutableStateValidator implements ValidatorWithDefaultApply {
 
     private Map<String, Schema> properties;
     private Map<Pattern, Schema> patternProperties;
@@ -228,6 +228,20 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
             } else {
               throw NO_MATCH.createException("provided object should not contain additional properties", "additionalProperties", in);
             }
+          }
+        }
+      }
+    }
+
+    @Override
+    public void applyDefaultValue(Object value) {
+      if (value instanceof JsonObject) {
+        JsonObject obj = (JsonObject) value;
+        for (Map.Entry<String, Schema> e : properties.entrySet()) {
+          if (!obj.containsKey(e.getKey()) && e.getValue().hasDefaultValue()) {
+            obj.put(e.getKey(), e.getValue().getDefaultValue());
+          } else if (obj.containsKey(e.getKey())) {
+            e.getValue().applyDefaultValues(obj.getValue(e.getKey()));
           }
         }
       }

@@ -22,7 +22,7 @@ public class ItemsValidatorFactory extends BaseSingleSchemaValidatorFactory {
     return "items";
   }
 
-  class ItemsValidator extends BaseSingleSchemaValidator {
+  class ItemsValidator extends BaseSingleSchemaValidator implements ValidatorWithDefaultApply {
 
     public ItemsValidator(MutableStateValidator parent) {
       super(parent);
@@ -56,6 +56,13 @@ public class ItemsValidatorFactory extends BaseSingleSchemaValidatorFactory {
         else
           return CompositeFuture.all(futs).compose(cf -> Future.succeededFuture());
       } else return Future.succeededFuture();
+    }
+
+    @Override
+    public void applyDefaultValue(Object value) {
+      if (value instanceof JsonArray) {
+        ((JsonArray)value).forEach(schema::applyDefaultValues);
+      }
     }
   }
 }
