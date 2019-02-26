@@ -44,3 +44,4 @@ To support custom keywords, you can create a new `ValidatorFactory` and register
 * Enable vertx codegen
 * Default apply?
 * Schema keyword
+* Move schema parser options directly into schema parser

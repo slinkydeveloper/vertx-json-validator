@@ -1,6 +1,7 @@
 package io.vertx.ext.json.validator;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.validator.draft7.Draft7SchemaParser;
 import io.vertx.junit5.VertxExtension;
@@ -83,6 +84,43 @@ public class MutableSchemaTest {
                 .isInstanceOf(ValidationException.class);
             assertThat(router)
                 .containsCachedSchemasWithXIds("main", "hello_prop", "hello_def");
+          });
+          testContext.completeNow();
+        }));
+  }
+
+  @Test
+  public void testCircularRefs(Vertx vertx, VertxTestContext testContext) throws Exception {
+    URI u = buildBaseUri("mutable_schema_test", "circular.json");
+    JsonObject obj = loadJson(u);
+    SchemaRouter router = SchemaRouter.create(vertx);
+    SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), router);
+    Schema schema = parser.parse(obj, u);
+
+    assertThat(schema).isNotSync();
+
+    assertThatThrownBy(() -> schema.validateSync(new JsonObject()))
+        .isInstanceOf(NoSyncValidationException.class);
+
+    router
+        .solveAllSchemaReferences(schema)
+        .setHandler(testContext.succeeding(s -> {
+          testContext.verify(() -> {
+            assertThat(s).isSameAs(schema);
+            assertThat(schema)
+                .isSync();
+            assertThatCode(() -> schema.validateSync(new JsonObject()
+                .put("a", new JsonObject())
+                .put("c", new JsonArray().add(1).add(new JsonObject()))
+                .put("b", new JsonObject().put("sub-a", 1).put("sub-b", new JsonArray().add(1).add(new JsonObject().put("c", new JsonArray().add(1)))))
+            )).doesNotThrowAnyException();
+            assertThatThrownBy(() -> schema.validateSync(new JsonObject()
+                .put("a", new JsonObject())
+                .put("c", new JsonArray().add(1).add(new JsonObject()))
+                .put("b", new JsonObject().put("sub-a", 1).put("sub-b", new JsonArray().add(1).add(new JsonObject().put("c", new JsonArray().addNull()))))
+            )).isInstanceOf(ValidationException.class);
+            assertThat(router)
+                .containsCachedSchemasWithXIds("main", "a", "b", "c", "c-items", "sub", "sub-a", "sub-b", "sub-b-items");
           });
           testContext.completeNow();
         }));
