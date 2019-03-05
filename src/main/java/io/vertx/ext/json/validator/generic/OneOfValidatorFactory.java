@@ -49,7 +49,9 @@ public class OneOfValidatorFactory extends BaseCombinatorsValidatorFactory {
     @Override
     public Future<Void> validateAsync(Object in) {
       if (isSync()) return validateSyncAsAsync(in);
-      return FutureUtils.oneOf(Arrays.stream(schemas).map(s -> s.validateAsync(in)).collect(Collectors.toList()));
+      return FutureUtils
+          .oneOf(Arrays.stream(schemas).map(s -> s.validateAsync(in)).collect(Collectors.toList()))
+          .recover(err -> Future.failedFuture(createException("No schema matches", "oneOf", in, err)));
     }
   }
 
