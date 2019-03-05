@@ -42,10 +42,7 @@ public class JsonPointerTest {
 
   @Test
   public void testEncodingParsing() {
-    List<String> keys = new ArrayList<>();
-    keys.add("hell/o");
-    keys.add("worl~d");
-    JsonPointer pointer = new JsonPointerImpl(URI.create("#"), keys);
+    JsonPointer pointer = JsonPointer.create().append("hell/o").append("worl~d");
     assertThat(pointer.build()).isEqualTo("/hell~1o/worl~0d");
   }
 
@@ -61,6 +58,13 @@ public class JsonPointerTest {
     JsonPointer pointer = JsonPointer.fromURI(URI.create("http://www.example.org#/hello/world/%5Ea"));
     assertThat(pointer.build()).isEqualTo("/hello/world/^a");
     assertThat(pointer.buildURI()).isEqualTo(URI.create("http://www.example.org#/hello/world/%5Ea"));
+  }
+
+  @Test
+  public void testURIJsonPointerEncodedParsing() {
+    JsonPointer pointer = JsonPointer.fromURI(URI.create("http://www.example.org#/hell~1o/worl~0d"));
+    assertThat(pointer.build()).isEqualTo("/hell~1o/worl~0d");
+    assertThat(pointer.buildURI()).isEqualTo(URI.create("http://www.example.org#/hell~1o/worl~0d"));
   }
 
   @Test

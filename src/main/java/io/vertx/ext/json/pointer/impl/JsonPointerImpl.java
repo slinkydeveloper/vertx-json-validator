@@ -91,9 +91,11 @@ public class JsonPointerImpl implements JsonPointer {
   }
 
   @Override
-  public boolean isParent(JsonPointer child) {
+  public boolean isParent(JsonPointer c) {
+    JsonPointerImpl child = (JsonPointerImpl) c;
     return child != null &&
         (child.getURIWithoutFragment() == null && this.getURIWithoutFragment() == null || child.getURIWithoutFragment().equals(this.getURIWithoutFragment())) &&
+        decodedTokens.size() < child.decodedTokens.size() &&
         IntStream.range(0, decodedTokens.size() - 1)
             .mapToObj(i -> this.decodedTokens.get(i).equals(((JsonPointerImpl) child).decodedTokens.get(i)))
             .reduce(Boolean::logicalAnd).orElse(false);
@@ -114,7 +116,7 @@ public class JsonPointerImpl implements JsonPointer {
     } else
       return URIUtils.replaceFragment(
           this.startingUri,
-          "/" + String.join("/", decodedTokens)
+          "/" + String.join("/", decodedTokens.stream().map(this::escape).collect(Collectors.toList()))
       );
   }
 
