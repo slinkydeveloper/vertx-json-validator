@@ -29,7 +29,7 @@ public class FutureUtils {
         }
         if (p == len) {
           if (atLeastOneOk.get()) res.tryComplete(result.get());
-          else res.tryFail(new IllegalStateException("No future was completed"));
+          else res.tryFail(new IllegalStateException(ar.cause()));
         }
       });
     }
