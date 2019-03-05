@@ -96,9 +96,9 @@ public class JsonPointerImpl implements JsonPointer {
     return child != null &&
         (child.getURIWithoutFragment() == null && this.getURIWithoutFragment() == null || child.getURIWithoutFragment().equals(this.getURIWithoutFragment())) &&
         decodedTokens.size() < child.decodedTokens.size() &&
-        IntStream.range(0, decodedTokens.size() - 1)
-            .mapToObj(i -> this.decodedTokens.get(i).equals(((JsonPointerImpl) child).decodedTokens.get(i)))
-            .reduce(Boolean::logicalAnd).orElse(false);
+        IntStream.range(0, decodedTokens.size())
+            .mapToObj(i -> this.decodedTokens.get(i).equals(child.decodedTokens.get(i)))
+            .reduce(Boolean::logicalAnd).orElse(true);
   }
 
   @Override

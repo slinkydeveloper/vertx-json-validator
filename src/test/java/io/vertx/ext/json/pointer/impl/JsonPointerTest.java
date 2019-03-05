@@ -392,4 +392,28 @@ public class JsonPointerTest {
         .isThrownBy(() -> JsonPointer.create().writeJson(object, new JsonObject()));
   }
 
+  @Test
+  public void testIsParent() {
+    JsonPointer parent = JsonPointer.fromURI(URI.create("yaml/valid/refs/Circular.yaml#/properties"));
+    JsonPointer child = JsonPointer.fromURI(URI.create("yaml/valid/refs/Circular.yaml#/properties/parent"));
+    assertThat(parent.isParent(child)).isTrue();
+    assertThat(child.isParent(parent)).isFalse();
+  }
+
+  @Test
+  public void testIsParentDifferentURI() {
+    JsonPointer parent = JsonPointer.fromURI(URI.create("yaml/valid/refs/Circular.yaml#/properties"));
+    JsonPointer child = JsonPointer.fromURI(URI.create("json/valid/refs/Circular.yaml#/properties/parent"));
+    assertThat(parent.isParent(child)).isFalse();
+    assertThat(child.isParent(parent)).isFalse();
+  }
+
+  @Test
+  public void testIsParentWithRootPointer() {
+    JsonPointer parent = JsonPointer.fromURI(URI.create("yaml/valid/refs/Circular.yaml#"));
+    JsonPointer child = JsonPointer.fromURI(URI.create("yaml/valid/refs/Circular.yaml#/properties/parent"));
+    assertThat(parent.isParent(child)).isTrue();
+    assertThat(child.isParent(parent)).isFalse();
+  }
+
 }
