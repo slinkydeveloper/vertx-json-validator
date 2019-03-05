@@ -100,7 +100,17 @@ public interface JsonPointer {
    * @param object the readable json pointer iterator to query. This object will mutate internally
    * @return null if pointer points to not existing value, otherwise the requested value
    */
-  @Nullable Object query(JsonPointerIterator object);
+  default @Nullable Object query(JsonPointerIterator object) { return queryOrDefault(object, null); };
+
+  /**
+   * Query the provided readable json pointer iterator. If the query result is null, returns the default. <br/>
+   * Note: if this pointer is a root pointer, this function returns the provided object
+   *
+   * @param object the readable json pointer iterator to query. This object will mutate internally
+   * @param defaultValue default value if query result is null
+   * @return null if pointer points to not existing value, otherwise the requested value
+   */
+  Object queryOrDefault(JsonPointerIterator object, Object defaultValue);
 
   /**
    * Query the provided object. <br/>
@@ -110,6 +120,16 @@ public interface JsonPointer {
    * @return null if pointer points to not existing value, otherwise the requested value
    */
   default @Nullable Object queryJson(Object object) {return query(new JsonPointerIteratorImpl(object)); }
+
+  /**
+   * Query the provided object. If the query result is null, returns the default.<br/>
+   * Note: if this pointer is a root pointer, this function returns the provided object
+   *
+   * @param object the object to queryJson
+   * @param defaultValue default value if query result is null
+   * @return null if pointer points to not existing value, otherwise the requested value
+   */
+  default @Nullable Object queryJsonOrDefault(Object object, Object defaultValue) {return queryOrDefault(new JsonPointerIteratorImpl(object), defaultValue); }
 
   /**
    * Write a value with the selected pointer. The path token "-" is handled as append to end of array

@@ -98,6 +98,12 @@ public class JsonPointerTest {
   }
 
   @Test
+  public void testNullQueryingRootPointerDefault() {
+    JsonPointer pointer = JsonPointer.create();
+    assertThat(pointer.queryJsonOrDefault(null, 1)).isEqualTo(1);
+  }
+
+  @Test
   public void testJsonObjectQuerying() {
     JsonObject obj = new JsonObject()
         .put("hello",
@@ -107,6 +113,18 @@ public class JsonPointerTest {
         );
     JsonPointer pointer = JsonPointer.from("/hello/world");
     assertThat(pointer.queryJson(obj)).isEqualTo(1);
+  }
+
+  @Test
+  public void testJsonObjectQueryingDefaultValue() {
+    JsonObject obj = new JsonObject()
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        );
+    JsonPointer pointer = JsonPointer.from("/hello/world/my/friend");
+    assertThat(pointer.queryJsonOrDefault(obj, 1)).isEqualTo(1);
   }
 
   @Test
@@ -126,6 +144,24 @@ public class JsonPointerTest {
         ));
     assertThat(JsonPointer.from("/1/hello/world").queryJson(array)).isEqualTo(1);
     assertThat(JsonPointer.fromURI(URI.create("#/1/hello/world")).queryJson(array)).isEqualTo(1);
+  }
+
+  @Test
+  public void testJsonArrayQueryingOrDefault() {
+    JsonArray array = new JsonArray();
+    array.add(new JsonObject()
+        .put("hello",
+            new JsonObject().put("world", 2).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        ));
+    array.add(new JsonObject()
+        .put("hello",
+            new JsonObject().put("world", 1).put("worl", "wrong")
+        ).put("helo",
+            new JsonObject().put("world", "wrong").put("worl", "wrong")
+        ));
+    assertThat(JsonPointer.from("/5/hello/world").queryJsonOrDefault(array, 1)).isEqualTo(1);
   }
 
   @Test

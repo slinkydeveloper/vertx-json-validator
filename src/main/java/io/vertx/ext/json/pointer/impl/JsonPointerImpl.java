@@ -166,23 +166,23 @@ public class JsonPointerImpl implements JsonPointer {
   }
 
   @Override
-  public Object query(JsonPointerIterator input) {
+  public Object queryOrDefault(JsonPointerIterator input, Object defaultValue) {
     // I should threat this as a special condition because the empty string can be a json obj key!
     if (isRootPointer())
-      return input.getCurrentValue();
+      return (input.isNull()) ? defaultValue : input.getCurrentValue();
     else {
       walkTillLastElement(input, false);
       String lastKey = decodedTokens.get(decodedTokens.size() - 1);
       if (input.isObject()) {
-        return (input.nextObjectParameter(lastKey, false)) ? input.getCurrentValue() : null;
+        return (input.nextObjectParameter(lastKey, false) && !input.isNull()) ? input.getCurrentValue() : defaultValue;
       } else if (input.isArray() && !"-".equals(lastKey)) {
         try {
-          return (input.nextArrayElement(Integer.parseInt(lastKey))) ? input.getCurrentValue() : null;
+          return (input.nextArrayElement(Integer.parseInt(lastKey)) && !input.isNull()) ? input.getCurrentValue() : defaultValue;
         } catch (NumberFormatException e) {
-          return null;
+          return defaultValue;
         }
       } else
-        return null;
+        return defaultValue;
     }
   }
 
