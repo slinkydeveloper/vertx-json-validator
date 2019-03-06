@@ -3,10 +3,7 @@ package io.vertx.ext.json.validator.generic;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.Schema;
-import io.vertx.ext.json.validator.SchemaParser;
-import io.vertx.ext.json.validator.SchemaParserOptions;
-import io.vertx.ext.json.validator.SchemaRouter;
+import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -31,7 +28,7 @@ public class SchemaRouterLocalRefTest {
 
   @BeforeEach
   public void setUp(Vertx vertx) throws Exception {
-    router = SchemaRouter.create(vertx);
+    router = SchemaRouter.create(vertx, new SchemaRouterOptions());
     parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), router);
   }
 

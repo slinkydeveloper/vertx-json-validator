@@ -7,6 +7,7 @@ import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
 import io.vertx.ext.json.validator.SchemaParser;
 import io.vertx.ext.json.validator.SchemaParserOptions;
 import io.vertx.ext.json.validator.SchemaRouter;
+import io.vertx.ext.json.validator.SchemaRouterOptions;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
 import io.vertx.junit5.VertxExtension;
 import org.junit.jupiter.api.BeforeAll;
@@ -30,7 +31,7 @@ public class SchemaRouterIdTest {
 
   @BeforeAll
   public void setUp(Vertx vertx) {
-    schemaRouter = SchemaRouter.create(vertx);
+    schemaRouter = SchemaRouter.create(vertx, new SchemaRouterOptions());
     parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), schemaRouter);
   }
 

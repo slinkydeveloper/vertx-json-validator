@@ -27,6 +27,12 @@ public class SchemaRouterAssert extends AbstractAssert<SchemaRouterAssert, Schem
     }
   }
 
+  public SchemaRouterAssert cannotResolveSchema(JsonPointer jp, JsonPointer scope, SchemaParser parser) {
+    isNotNull();
+    assertThat(actual.resolveCachedSchema(jp, scope, parser)).isNull();
+    return this;
+  }
+
   public SchemaRouterAssert containsOnlyOneCachedSchemaWithXId(String expectedXId) {
     isNotNull();
 

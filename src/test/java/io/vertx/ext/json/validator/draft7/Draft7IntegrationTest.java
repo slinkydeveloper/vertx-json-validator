@@ -1,10 +1,7 @@
 package io.vertx.ext.json.validator.draft7;
 
 import io.vertx.core.Vertx;
-import io.vertx.ext.json.validator.BaseIntegrationTest;
-import io.vertx.ext.json.validator.Schema;
-import io.vertx.ext.json.validator.SchemaParser;
-import io.vertx.ext.json.validator.SchemaParserOptions;
+import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
 
 import java.nio.file.Path;
@@ -20,7 +17,7 @@ public class Draft7IntegrationTest extends BaseIntegrationTest {
 
   @Override
   public Map.Entry<SchemaParser, Schema> buildSchemaFunction(Vertx vertx, Object schema, String testFileName) {
-    SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
+    SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem(), new SchemaRouterOptions()));
     Schema s = parser.parse(schema, Paths.get(this.getTckPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
     return new AbstractMap.SimpleImmutableEntry<>(parser, s);
   }

@@ -86,7 +86,7 @@ public class DefaultValuesApplyTest {
   public void ref(Vertx vertx, VertxTestContext testContext) throws IOException {
     URI u = buildBaseUri("default_test", "ref.json");
     JsonObject obj = loadJson(u);
-    SchemaRouter router = SchemaRouter.create(vertx);
+    SchemaRouter router = SchemaRouter.create(vertx, new SchemaRouterOptions());
     SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), router);
     Schema schema = parser.parse(obj, u);
 
@@ -111,7 +111,7 @@ public class DefaultValuesApplyTest {
   public void circularRef(Vertx vertx, VertxTestContext testContext) throws IOException {
     URI u = buildBaseUri("default_test", "circular_ref.json");
     JsonObject obj = loadJson(u);
-    SchemaRouter router = SchemaRouter.create(vertx);
+    SchemaRouter router = SchemaRouter.create(vertx, new SchemaRouterOptions());
     SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), router);
     Schema schema = parser.parse(obj, u);
 

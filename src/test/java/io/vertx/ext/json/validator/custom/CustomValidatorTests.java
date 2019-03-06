@@ -33,7 +33,7 @@ public class CustomValidatorTests {
   public void propertiesMultipleOf(Vertx vertx) throws IOException {
     URI u = buildBaseUri("custom", "properties_multiple_of.json");
     JsonObject obj = loadJson(u);
-    SchemaRouter router = SchemaRouter.create(vertx);
+    SchemaRouter router = SchemaRouter.create(vertx, new SchemaRouterOptions());
     SchemaParser parser = Draft7SchemaParser
         .create(new SchemaParserOptions(), router)
         .withValidatorFactory(new PropertiesMultipleOfValidatorFactory());
@@ -66,7 +66,7 @@ public class CustomValidatorTests {
 
     URI u = buildBaseUri("custom", "async_with_ref.json");
     JsonObject obj = loadJson(u);
-    SchemaRouter router = SchemaRouter.create(vertx);
+    SchemaRouter router = SchemaRouter.create(vertx, new SchemaRouterOptions());
     SchemaParser parser = Draft7SchemaParser
         .create(new SchemaParserOptions(), router)
         .withValidatorFactory(new CachedAsyncEnumValidatorFactory(vertx));
@@ -120,7 +120,7 @@ public class CustomValidatorTests {
 
       URI u = buildBaseUri("custom", "async_with_ref.json");
       JsonObject obj = loadJson(u);
-      SchemaRouter router = SchemaRouter.create(vertx);
+      SchemaRouter router = SchemaRouter.create(vertx, new SchemaRouterOptions());
       SchemaParser parser = Draft7SchemaParser
           .create(new SchemaParserOptions(), router)
           .withValidatorFactory(new AsyncEnumValidatorFactory(vertx));

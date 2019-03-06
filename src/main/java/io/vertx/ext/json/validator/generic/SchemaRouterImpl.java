@@ -1,15 +1,14 @@
 package io.vertx.ext.json.validator.generic;
 
+import io.netty.handler.codec.http.QueryStringEncoder;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.validator.Schema;
-import io.vertx.ext.json.validator.SchemaException;
-import io.vertx.ext.json.validator.SchemaParser;
-import io.vertx.ext.json.validator.SchemaRouter;
+import io.vertx.ext.json.validator.*;
 
 import java.net.URI;
 import java.util.*;
@@ -23,12 +22,14 @@ public class SchemaRouterImpl implements SchemaRouter {
   final HttpClient client;
   final FileSystem fs;
   final Map<URI, ObservableFuture<Schema>> externalSchemasSolving;
+  final SchemaRouterOptions options;
 
-  public SchemaRouterImpl(HttpClient client, FileSystem fs) {
+  public SchemaRouterImpl(HttpClient client, FileSystem fs, SchemaRouterOptions options) {
     this.client = client;
     this.fs = fs;
     absolutePaths = new HashMap<>();
     this.externalSchemasSolving = new ConcurrentHashMap<>();
+    this.options = options;
   }
 
   @Override
@@ -139,20 +140,24 @@ public class SchemaRouterImpl implements SchemaRouter {
 
   private Future<String> solveRemoteRef(final URI ref) {
     Future<String> fut = Future.future();
-    client.getAbs(ref.toString(), res -> {
+    String uri = ref.toString();
+    if (!options.getAuthQueryParams().isEmpty()) {
+      QueryStringEncoder encoder = new QueryStringEncoder(uri);
+      options.getAuthQueryParams().forEach(encoder::addParam);
+      uri = encoder.toString();
+    }
+    HttpClientRequest req = client.getAbs(uri, res -> {
       res.exceptionHandler(fut::fail);
       if (res.statusCode() == 200) {
         res.bodyHandler(buf -> {
-          try {
-            fut.complete(buf.toString());
-          } catch (SchemaException e) {
-            fut.fail(e);
-          }
+          fut.complete(buf.toString());
         });
       } else {
-        fut.fail(new IllegalStateException("Wrong status code " + res.statusCode() + "received while resolving remote ref"));
+        fut.fail(new IllegalStateException("Wrong status code " + res.statusCode() + " " + res.statusMessage() + " received while resolving remote ref"));
       }
-    }).putHeader(HttpHeaders.ACCEPT.toString(), "application/json, application/schema+json").end();
+    }).putHeader(HttpHeaders.ACCEPT.toString(), "application/json, application/schema+json");
+    options.getAuthHeaders().forEach(req::putHeader);
+    req.end();
     return fut;
   }
 
@@ -161,11 +166,7 @@ public class SchemaRouterImpl implements SchemaRouter {
     String filePath = ("jar".equals(ref.getScheme())) ? ref.getSchemeSpecificPart().split("!")[1].substring(1) : ref.getPath();
     fs.readFile(filePath, res -> {
       if (res.succeeded()) {
-        try {
-          fut.complete(res.result().toString());
-        } catch (SchemaException e) {
-          fut.fail(e);
-        }
+        fut.complete(res.result().toString());
       } else {
         fut.fail(res.cause());
       }
@@ -188,15 +189,11 @@ public class SchemaRouterImpl implements SchemaRouter {
           CompositeFuture.any(
             candidatesURIs
               .map(u ->
-                  (URIUtils.isRemoteURI(u)) ?
-                      solveRemoteRef(u).map(s -> schemaParser.parseSchemaFromString(s, JsonPointer.fromURI(u))) :
-                      solveLocalRef(u).map(s -> schemaParser.parseSchemaFromString(s, JsonPointer.fromURI(u))))
-                .collect(Collectors.toList())
+                  ((URIUtils.isRemoteURI(u)) ? solveRemoteRef(u) : solveLocalRef(u))
+                      .map(s -> schemaParser.parseSchemaFromString(s, JsonPointer.fromURI(u)))
+              ).collect(Collectors.toList())
           ).map(cf ->
-            cf.list().stream()
-                .filter(Objects::nonNull)
-                .map(o -> (Schema)o)
-                .findFirst().orElse(null)
+            resolveCachedSchema(pointer, scope, schemaParser)
           )
       );
     });

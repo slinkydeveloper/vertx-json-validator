@@ -1,10 +1,7 @@
 package io.vertx.ext.json.validator.oas3;
 
 import io.vertx.core.Vertx;
-import io.vertx.ext.json.validator.BaseIntegrationTest;
-import io.vertx.ext.json.validator.Schema;
-import io.vertx.ext.json.validator.SchemaParser;
-import io.vertx.ext.json.validator.SchemaParserOptions;
+import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.SchemaRouterImpl;
 import io.vertx.ext.json.validator.openapi3.OpenAPI3SchemaParser;
 
@@ -21,7 +18,7 @@ public class OAS3IntegrationTest extends BaseIntegrationTest {
 
   @Override
   public Map.Entry<SchemaParser, Schema> buildSchemaFunction(Vertx vertx, Object schema, String testFileName) {
-    SchemaParser parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem()));
+    SchemaParser parser = OpenAPI3SchemaParser.create(new SchemaParserOptions(), new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem(), new SchemaRouterOptions()));
     Schema s = parser.parse(schema, Paths.get(this.getTckPath() + "/" + testFileName + ".json").toAbsolutePath().toUri());
     return new AbstractMap.SimpleImmutableEntry<>(parser, s);
   }

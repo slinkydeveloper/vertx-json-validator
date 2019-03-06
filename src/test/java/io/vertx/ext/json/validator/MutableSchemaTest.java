@@ -62,7 +62,7 @@ public class MutableSchemaTest {
   public void testRefToDependenciesPreSolved(Vertx vertx, VertxTestContext testContext) throws Exception {
     URI u = buildBaseUri("mutable_schema_test", "async_ref_1.json");
     JsonObject obj = loadJson(u);
-    SchemaRouter router = SchemaRouter.create(vertx);
+    SchemaRouter router = SchemaRouter.create(vertx, new SchemaRouterOptions());
     SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), router);
     Schema schema = parser.parse(obj, u);
 
@@ -93,7 +93,7 @@ public class MutableSchemaTest {
   public void testCircularRefs(Vertx vertx, VertxTestContext testContext) throws Exception {
     URI u = buildBaseUri("mutable_schema_test", "circular.json");
     JsonObject obj = loadJson(u);
-    SchemaRouter router = SchemaRouter.create(vertx);
+    SchemaRouter router = SchemaRouter.create(vertx, new SchemaRouterOptions());
     SchemaParser parser = Draft7SchemaParser.create(new SchemaParserOptions(), router);
     Schema schema = parser.parse(obj, u);
 

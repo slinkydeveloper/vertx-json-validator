@@ -2,10 +2,7 @@ package io.vertx.ext.json.validator.draft7;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.validator.Schema;
-import io.vertx.ext.json.validator.SchemaParserOptions;
-import io.vertx.ext.json.validator.SchemaRouter;
-import io.vertx.ext.json.validator.ValidatorFactory;
+import io.vertx.ext.json.validator.*;
 import io.vertx.ext.json.validator.generic.*;
 
 import java.net.URI;
@@ -74,6 +71,6 @@ public class Draft7SchemaParser extends BaseSchemaParser {
    * @throws io.vertx.ext.json.validator.SchemaException if schema is invalid
    */
   public static Schema parse(Vertx vertx, JsonObject schema, URI scope) {
-    return new Draft7SchemaParser(new SchemaParserOptions(), SchemaRouter.create(vertx)).parse(schema, scope);
+    return new Draft7SchemaParser(new SchemaParserOptions(), SchemaRouter.create(vertx, new SchemaRouterOptions())).parse(schema, scope);
   }
 }

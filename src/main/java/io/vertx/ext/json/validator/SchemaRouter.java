@@ -50,12 +50,12 @@ public interface SchemaRouter {
 
   Future<Schema> solveAllSchemaReferences(Schema schema);
 
-  static SchemaRouter create(Vertx vertx) {
-    return new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem());
+  static SchemaRouter create(Vertx vertx, SchemaRouterOptions schemaRouterOptions) {
+    return new SchemaRouterImpl(vertx.createHttpClient(), vertx.fileSystem(), schemaRouterOptions);
   }
 
-  static SchemaRouter create(HttpClient client, FileSystem fs) {
-    return new SchemaRouterImpl(client, fs);
+  static SchemaRouter create(HttpClient client, FileSystem fs, SchemaRouterOptions schemaRouterOptions) {
+    return new SchemaRouterImpl(client, fs, schemaRouterOptions);
   }
 
 }
