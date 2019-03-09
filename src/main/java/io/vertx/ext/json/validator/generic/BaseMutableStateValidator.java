@@ -6,16 +6,14 @@ import io.vertx.ext.json.validator.NoSyncValidationException;
 import io.vertx.ext.json.validator.ValidationException;
 import io.vertx.ext.json.validator.ValidatorPriority;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public abstract class BaseMutableStateValidator implements MutableStateValidator {
 
-  final AtomicBoolean isSync;
-  private MutableStateValidator parent;
+  boolean isSync;
+  final private MutableStateValidator parent;
 
   public BaseMutableStateValidator(MutableStateValidator parent) {
     this.parent = parent;
-    this.isSync = new AtomicBoolean(false);
+    this.isSync = false;
   }
 
   public abstract boolean calculateIsSync();
@@ -31,13 +29,14 @@ public abstract class BaseMutableStateValidator implements MutableStateValidator
   }
 
   protected void initializeIsSync() {
-    isSync.set(calculateIsSync());
+    isSync = calculateIsSync();
   }
 
   @Override
   public void triggerUpdateIsSync() {
     boolean calculated = calculateIsSync();
-    boolean previous = isSync.getAndSet(calculated);
+    boolean previous = isSync;
+    isSync = calculated;
     if (calculated != previous && getParent() != null)
       getParent().triggerUpdateIsSync();
   }
@@ -46,12 +45,12 @@ public abstract class BaseMutableStateValidator implements MutableStateValidator
   public MutableStateValidator getParent() { return parent; }
 
   protected void checkSync() throws ValidationException, NoSyncValidationException {
-    if (!isSync()) throw new NoSyncValidationException("Trying to execute validateSync() for a Validator in asynchronous state", this);
+    if (!isSync) throw new NoSyncValidationException("Trying to execute validateSync() for a Validator in asynchronous state", this);
   }
 
   @Override
   public boolean isSync() {
-    return isSync.get();
+    return isSync;
   }
 
   @Override

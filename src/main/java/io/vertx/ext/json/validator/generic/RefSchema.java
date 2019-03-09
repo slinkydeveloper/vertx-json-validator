@@ -35,7 +35,7 @@ public class RefSchema extends SchemaImpl {
     }
   }
 
-  private synchronized void registerCachedSchema(Schema s) {
+  private void registerCachedSchema(Schema s) {
     this.cachedSchema = s;
     if (s instanceof SchemaImpl)
       ((SchemaImpl)s).registerReferredSchema(this);
@@ -83,7 +83,7 @@ public class RefSchema extends SchemaImpl {
 
   @Override
   protected void initializeIsSync() {
-    isSync.set(false);
+    isSync = false;
   }
 
   @Override
@@ -128,14 +128,14 @@ public class RefSchema extends SchemaImpl {
     } else return Future.succeededFuture(cachedSchema);
   }
 
-  synchronized void prePropagateSyncState() {
-    isSync.set(true);
+  void prePropagateSyncState() {
+    isSync = true;
     if (getParent() != null)
       getParent().triggerUpdateIsSync();
   }
 
   void setIsSync(boolean s) {
-    isSync.set(s);
+    isSync = s;
     if (getParent() != null)
       getParent().triggerUpdateIsSync();
   }

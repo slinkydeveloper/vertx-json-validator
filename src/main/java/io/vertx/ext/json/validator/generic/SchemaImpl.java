@@ -65,9 +65,10 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
   }
 
   @Override
-  public synchronized void triggerUpdateIsSync() {
+  public void triggerUpdateIsSync() {
     boolean calculated = calculateIsSync();
-    boolean previous = isSync.getAndSet(calculated);
+    boolean previous = isSync;
+    isSync = calculated;
     if (calculated != previous) {
       if (!referringSchemas.isEmpty())
         referringSchemas.forEach(r -> r.setIsSync(calculated));
@@ -142,7 +143,7 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
     }
   }
 
-  synchronized void registerReferredSchema(RefSchema ref) {
+  void registerReferredSchema(RefSchema ref) {
       referringSchemas.add(ref);
       if (log.isDebugEnabled()) {
         log.debug("Ref schema {} reefers to schema {}",  ref, this);
@@ -154,7 +155,7 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
       //    this schema isSync = true, otherwise is still false
       // 2. for each ref schema we set the isSync calculated and propagate to upper levels of refs
       referringSchemas.forEach(RefSchema::prePropagateSyncState);
-      referringSchemas.forEach(r -> r.setIsSync(this.isSync.get()));
+      referringSchemas.forEach(r -> r.setIsSync(this.isSync));
 
   }
 }
