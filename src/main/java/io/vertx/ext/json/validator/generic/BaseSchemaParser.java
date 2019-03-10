@@ -4,9 +4,10 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -35,7 +36,7 @@ public abstract class BaseSchemaParser implements SchemaParser {
     if (jsonSchema instanceof Map) jsonSchema = new JsonObject((Map<String, Object>) jsonSchema);
     if (jsonSchema instanceof JsonObject) {
       JsonObject json = (JsonObject) jsonSchema;
-      ConcurrentSkipListSet<Validator> validators = new ConcurrentSkipListSet<>(ValidatorPriority.VALIDATOR_COMPARATOR);
+      Set<Validator> validators = new HashSet<>();
 
       SchemaImpl s = createSchema(json, scope, parent);
       router.addSchema(s);

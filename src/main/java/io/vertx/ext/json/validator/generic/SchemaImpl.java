@@ -2,7 +2,6 @@ package io.vertx.ext.json.validator.generic;
 
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
-import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -10,10 +9,7 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.validator.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.*;
 
 import static io.vertx.ext.json.validator.ValidationException.createException;
 
@@ -23,15 +19,15 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
 
   private final JsonObject schema;
   private final JsonPointer scope;
-  ConcurrentSkipListSet<Validator> validators;
+  private Validator[] validators;
 
-  private final ConcurrentHashSet<RefSchema> referringSchemas;
+  private final Set<RefSchema> referringSchemas;
 
   SchemaImpl(JsonObject schema, JsonPointer scope, MutableStateValidator parent) {
     super(parent);
     this.schema = schema;
     this.scope = scope;
-    referringSchemas = new ConcurrentHashSet<>();
+    referringSchemas = new HashSet<>();
   }
 
   @Override
@@ -120,15 +116,12 @@ public class SchemaImpl extends BaseMutableStateValidator implements Schema {
 
   @Override
   public boolean calculateIsSync() {
-    return validators.isEmpty() || validators.stream().map(Validator::isSync).reduce(true, Boolean::logicalAnd);
+    return validators.length == 0 || Arrays.stream(validators).map(Validator::isSync).reduce(true, Boolean::logicalAnd);
   }
 
-  public Set<Validator> getValidators() {
-    return validators;
-  }
-
-  void setValidators(ConcurrentSkipListSet<Validator> validators) {
-    this.validators = validators;
+  void setValidators(Set<Validator> validators) {
+    this.validators = validators.toArray(new Validator[0]);
+    Arrays.sort(this.validators, ValidatorPriority.VALIDATOR_COMPARATOR);
     this.initializeIsSync();
   }
 

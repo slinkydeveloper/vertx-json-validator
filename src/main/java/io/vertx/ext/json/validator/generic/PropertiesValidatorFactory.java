@@ -142,19 +142,18 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
       if (in instanceof JsonObject) {
         JsonObject obj = (JsonObject) in;
         List<Future> futs = new ArrayList<>();
-        for (Map.Entry<String, Object> entry : obj) {
+        for (String key : obj.fieldNames()) {
           boolean found = false;
-          String key = entry.getKey();
           if (properties != null && properties.containsKey(key)) {
             Schema s = properties.get(key);
             if (s.isSync()) {
               try {
-                s.validateSync(entry.getValue());
+                s.validateSync(obj.getValue(key));
               } catch (ValidationException e) {
                 return Future.failedFuture(e);
               }
             } else {
-              futs.add(s.validateAsync(entry.getValue()));
+              futs.add(s.validateAsync(obj.getValue(key)));
             }
             found = true;
           }
@@ -164,12 +163,12 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
                 Schema s = patternProperty.getValue();
                 if (s.isSync()) {
                   try {
-                    s.validateSync(entry.getValue());
+                    s.validateSync(obj.getValue(key));
                   } catch (ValidationException e) {
                     return Future.failedFuture(e);
                   }
                 } else {
-                  futs.add(s.validateAsync(entry.getValue()));
+                  futs.add(s.validateAsync(obj.getValue(key)));
                 }
                 found = true;
               }
@@ -180,12 +179,12 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
               if (additionalPropertiesSchema != null) {
                 if (additionalPropertiesSchema.isSync()) {
                   try {
-                    additionalPropertiesSchema.validateSync(entry.getValue());
+                    additionalPropertiesSchema.validateSync(obj.getValue(key));
                   } catch (ValidationException e) {
                     return fillAdditionalPropertyException(e, in);
                   }
                 } else {
-                  futs.add(additionalPropertiesSchema.validateAsync(entry.getValue()).recover(t -> fillAdditionalPropertyException(t, in)));
+                  futs.add(additionalPropertiesSchema.validateAsync(obj.getValue(key)).recover(t -> fillAdditionalPropertyException(t, in)));
                 }
               }
             } else {
@@ -203,19 +202,18 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
       this.checkSync();
       if (in instanceof JsonObject) {
         JsonObject obj = (JsonObject) in;
-        for (Map.Entry<String, Object> entry : obj) {
+        for (String key : obj.fieldNames()) {
           boolean found = false;
-          String key = entry.getKey();
           if (properties != null && properties.containsKey(key)) {
             Schema s = properties.get(key);
-            s.validateSync(entry.getValue());
+            s.validateSync(obj.getValue(key));
             found = true;
           }
           if (patternProperties != null) {
             for (Map.Entry<Pattern, Schema> patternProperty : patternProperties.entrySet()) {
               if (patternProperty.getKey().matcher(key).find()) {
                 Schema s = patternProperty.getValue();
-                s.validateSync(entry.getValue());
+                s.validateSync(obj.getValue(key));
                 found = true;
               }
             }
@@ -223,7 +221,7 @@ public class PropertiesValidatorFactory implements ValidatorFactory {
           if (!found) {
             if (allowAdditionalProperties) {
               if (additionalPropertiesSchema != null) {
-                additionalPropertiesSchema.validateSync(entry.getValue());
+                additionalPropertiesSchema.validateSync(obj.getValue(key));
               }
             } else {
               throw createException("provided object should not contain additional properties", "additionalProperties", in);
