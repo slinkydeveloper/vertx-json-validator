@@ -1,7 +1,10 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
+
 import java.util.Comparator;
 
+@VertxGen
 public enum ValidatorPriority {
   MAX_PRIORITY(0),
   MIN_PRIORITY(Integer.MAX_VALUE);

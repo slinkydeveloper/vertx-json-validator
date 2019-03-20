@@ -1,17 +1,17 @@
 package io.vertx.ext.json.validator.draft7;
 
 import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
+import io.vertx.ext.json.validator.FormatPredicate;
 import io.vertx.ext.json.validator.generic.BaseFormatValidatorFactory;
 import io.vertx.ext.json.validator.generic.RegularExpressions;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Predicate;
 
 public class FormatValidatorFactory extends BaseFormatValidatorFactory {
   @Override
-  public Map<String, Predicate<String>> initFormatsMap() {
-    Map<String, Predicate<String>> predicates = new HashMap<>();
+  public Map<String, FormatPredicate> initFormatsMap() {
+    Map<String, FormatPredicate> predicates = new HashMap<>();
     predicates.put("byte", createPredicateFromPattern(RegularExpressions.BASE64));
     predicates.put("date", createPredicateFromPattern(RegularExpressions.DATE));
     predicates.put("date-time", createPredicateFromPattern(RegularExpressions.DATETIME));

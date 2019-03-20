@@ -2,7 +2,7 @@ package io.vertx.ext.json.validator;
 
 import io.vertx.codegen.annotations.VertxGen;
 
-@VertxGen
+@VertxGen(concrete = false)
 public interface Validator {
 
   /**

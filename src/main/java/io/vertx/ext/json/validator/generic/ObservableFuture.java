@@ -37,6 +37,11 @@ public class ObservableFuture<T> implements Future<T> {
   }
 
   @Override
+  public Handler<AsyncResult<T>> getHandler() {
+    return handlers.peek();
+  }
+
+  @Override
   public void complete(T result) {
     delegate.complete(result);
   }

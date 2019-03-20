@@ -7,7 +7,6 @@ import io.vertx.ext.json.validator.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.function.Predicate;
 
 /**
  * @author Francesco Guardiani @slinkydeveloper
@@ -70,7 +69,7 @@ public abstract class BaseSchemaParser implements SchemaParser {
   }
 
   @Override
-  public SchemaParser withStringFormatValidator(String formatName, Predicate<String> predicate) {
+  public SchemaParser withStringFormatValidator(String formatName, FormatPredicate predicate) {
     BaseFormatValidatorFactory f = (BaseFormatValidatorFactory) validatorFactories
         .stream()
         .filter(factory -> factory instanceof BaseFormatValidatorFactory)

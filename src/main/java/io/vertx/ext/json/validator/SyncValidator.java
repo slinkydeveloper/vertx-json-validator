@@ -1,5 +1,8 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
+
+@VertxGen(concrete = false)
 public interface SyncValidator extends Validator {
 
   /**

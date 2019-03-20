@@ -1,14 +1,17 @@
 package io.vertx.ext.json.validator;
 
 import io.vertx.codegen.annotations.DataObject;
-import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.json.JsonObject;
 
-@VertxGen
-@DataObject
+@DataObject(generateConverter = true)
 public class SchemaParserOptions {
 
   // TODO should i remove it?
 
   public SchemaParserOptions() { }
+
+  public SchemaParserOptions(JsonObject json) {}
+
+  public JsonObject toJson() { return new JsonObject(); }
 
 }

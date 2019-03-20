@@ -1,6 +1,8 @@
 package io.vertx.ext.json.validator;
 
-public class NoSyncValidationException extends RuntimeException {
+import io.vertx.core.VertxException;
+
+public class NoSyncValidationException extends VertxException {
 
   MutableStateValidator validator;
 

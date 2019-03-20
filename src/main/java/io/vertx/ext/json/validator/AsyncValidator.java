@@ -1,7 +1,9 @@
 package io.vertx.ext.json.validator;
 
+import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Future;
 
+@VertxGen(concrete = false)
 public interface AsyncValidator extends Validator {
 
   /**

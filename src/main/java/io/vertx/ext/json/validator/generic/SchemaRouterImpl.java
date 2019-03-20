@@ -139,10 +139,12 @@ public class SchemaRouterImpl implements SchemaRouter {
 
   private Future<String> solveRemoteRef(final URI ref) {
     Future<String> fut = Future.future();
-    client.getAbs(ref.toString(), res -> {
-      res.exceptionHandler(fut::fail);
-      if (res.statusCode() == 200) {
-        res.bodyHandler(buf -> {
+    client.getAbs(ref.toString(), ar -> {
+      if (ar.failed()) fut.fail(ar.cause());
+
+      ar.result().exceptionHandler(fut::fail);
+      if (ar.result().statusCode() == 200) {
+        ar.result().bodyHandler(buf -> {
           try {
             fut.complete(buf.toString());
           } catch (SchemaException e) {
@@ -150,7 +152,7 @@ public class SchemaRouterImpl implements SchemaRouter {
           }
         });
       } else {
-        fut.fail(new IllegalStateException("Wrong status code " + res.statusCode() + "received while resolving remote ref"));
+        fut.fail(new IllegalStateException("Wrong status code " + ar.result().statusCode() + "received while resolving remote ref"));
       }
     }).putHeader(HttpHeaders.ACCEPT.toString(), "application/json, application/schema+json").end();
     return fut;
