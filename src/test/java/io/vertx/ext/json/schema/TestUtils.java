@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 
 
 public class TestUtils {
@@ -16,6 +17,10 @@ public class TestUtils {
 
   public static URI buildBaseUri(String... filename) {
     return Paths.get("src", "test").resolve(Paths.get("resources", filename)).toAbsolutePath().toUri();
+  }
+
+  public static AbstractMap.SimpleImmutableEntry<String, Object> entry(String key, Object value) {
+    return new AbstractMap.SimpleImmutableEntry<>(key, value);
   }
 
 }
