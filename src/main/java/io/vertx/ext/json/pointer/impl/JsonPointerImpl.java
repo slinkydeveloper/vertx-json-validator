@@ -13,7 +13,7 @@ package io.vertx.ext.json.pointer.impl;
 
 import io.vertx.ext.json.pointer.JsonPointer;
 import io.vertx.ext.json.pointer.JsonPointerIterator;
-import io.vertx.ext.json.validator.generic.URIUtils;
+import io.vertx.ext.json.schema.generic.URIUtils;
 
 import java.net.URI;
 import java.util.ArrayList;
