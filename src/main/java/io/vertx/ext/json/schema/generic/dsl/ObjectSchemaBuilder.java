@@ -62,7 +62,7 @@ public final class ObjectSchemaBuilder extends SchemaBuilder<ObjectSchemaBuilder
     if (!requiredProperties.isEmpty())
       this.keywords.put("required", () -> new JsonArray(new ArrayList<>(requiredProperties)));
     if (!patternProperties.isEmpty())
-      this.keywords.put("properties", () ->
+      this.keywords.put("patternProperties", () ->
           patternProperties
               .entrySet()
               .stream()

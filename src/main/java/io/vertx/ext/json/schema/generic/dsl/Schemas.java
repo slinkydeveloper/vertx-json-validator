@@ -20,6 +20,8 @@ public class Schemas {
 
     public static StringSchemaBuilder stringSchema() { return new StringSchemaBuilder(); }
 
+    public static BooleanSchemaBuilder booleanSchema() { return new BooleanSchemaBuilder(); }
+
     public static ArraySchemaBuilder arraySchema() { return new ArraySchemaBuilder(); }
 
     public static ObjectSchemaBuilder objectSchema() { return new ObjectSchemaBuilder(); }
@@ -37,9 +39,9 @@ public class Schemas {
         return new GenericSchemaBuilder().with(new Keyword("$ref", pointer.buildURI().toString()));
     }
 
-    public static GenericSchemaBuilder refToId(String id) {
-        Objects.requireNonNull(id);
-        return ref(new SchemaURNId(id).toPointer());
+    public static GenericSchemaBuilder refToAlias(String alias) {
+        Objects.requireNonNull(alias);
+        return ref(new SchemaURNId(alias).toPointer());
     }
 
     public static GenericSchemaBuilder allOf(SchemaBuilder... allOf) {

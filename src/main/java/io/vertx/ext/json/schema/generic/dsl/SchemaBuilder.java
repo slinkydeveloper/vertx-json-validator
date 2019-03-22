@@ -7,6 +7,7 @@ import io.vertx.ext.json.schema.Schema;
 import io.vertx.ext.json.schema.SchemaParser;
 import io.vertx.ext.json.schema.generic.SchemaURNId;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -15,29 +16,35 @@ public abstract class SchemaBuilder<T extends SchemaBuilder<?, ?>, K extends Key
 
     protected SchemaType type;
     protected Map<String, Supplier<Object>> keywords;
-    protected SchemaURNId id;
+    protected URI id;
     T self;
 
     @SuppressWarnings("unchecked")
     public SchemaBuilder(SchemaType type) {
         this.type = type;
         this.keywords = new HashMap<>();
-        this.id = new SchemaURNId();
+        this.id = new SchemaURNId().toURI();
         this.self = (T)this;
         if (type != null)
             type(type);
     }
 
     @Fluent
-    public T as(String id) {
-        this.id = new SchemaURNId(id);
+    public T alias(String alias) {
+        this.id = new SchemaURNId(alias).toURI();
+        return self;
+    }
+
+    @Fluent
+    public T id(URI id) {
+        this.id = id;
         return self;
     }
 
     @Fluent
     public T with(K... keywords) { //TODO choose another cooler name
         for (Keyword k: keywords) {
-            this.keywords.put(k.getKeyword(), k::getValueSupplier);
+            this.keywords.put(k.getKeyword(), k.getValueSupplier());
         }
         return self;
     }
@@ -72,12 +79,12 @@ public abstract class SchemaBuilder<T extends SchemaBuilder<?, ?>, K extends Key
                 .entrySet()
                 .stream()
                 .collect(JsonObject::new, (jo, e) -> jo.put(e.getKey(), e.getValue().get()), JsonObject::mergeIn);
-        res.put("$id", id.toURI().toString());
+        res.put("$id", id.toString());
         return res;
     }
 
     public final Schema build(SchemaParser parser) {
-        return parser.parse(toJson(), id.toPointer());
+        return parser.parse(toJson(), id);
     }
 
 }

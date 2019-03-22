@@ -6,6 +6,7 @@ import io.vertx.ext.json.pointer.JsonPointer;
 import org.assertj.core.api.AbstractAssert;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,6 +52,15 @@ public class JsonAssert extends AbstractAssert<JsonAssert, Object> {
     return this;
   }
 
+  public JsonAssert containsEntrySatisfying(String keyword, Consumer<Object> requirement) {
+    isJsonObject();
+
+    JsonObject jo = (JsonObject) actual;
+    assertThat(jo.getValue(keyword)).satisfies(requirement);
+
+    return this;
+  }
+
   public JsonAssert containsKey(String keyword) {
     isJsonObject();
 
@@ -66,6 +76,25 @@ public class JsonAssert extends AbstractAssert<JsonAssert, Object> {
     JsonArray ja = (JsonArray) actual;
 
     assertThat(ja.contains(value)).isTrue();
+
+    return this;
+
+  }
+
+  public JsonAssert containsItemSatisfying(Consumer<Object> requirement) {
+    isJsonArray();
+
+    JsonArray ja = (JsonArray) actual;
+
+    boolean found = false;
+    for (Object obj : ja) {
+      try {
+        requirement.accept(obj);
+        found = true;
+      } catch (AssertionError a) {}
+    }
+
+    if (!found) failWithMessage("Cannot find an element in the array satisfying the requirement");
 
     return this;
 
