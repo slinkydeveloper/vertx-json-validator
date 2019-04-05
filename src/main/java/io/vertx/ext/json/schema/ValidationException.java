@@ -3,7 +3,7 @@ package io.vertx.ext.json.schema;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.VertxException;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 
 /**
  * This is the main class for every Validation flow related errors

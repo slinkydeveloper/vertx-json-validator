@@ -40,24 +40,33 @@
     </build>
 
     <properties>
-        <vertx.version>3.6.3</vertx.version>
+        <vertx.version>4.0.0-SNAPSHOT</vertx.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-dependencies</artifactId>
+                <version>${vertx.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-core</artifactId>
-            <version>${vertx.version}</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-codegen</artifactId>
-            <version>${vertx.version}</version>
         </dependency>
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-web</artifactId>
-            <version>${vertx.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -69,7 +78,6 @@
         <dependency>
             <groupId>io.vertx</groupId>
             <artifactId>vertx-junit5</artifactId>
-            <version>${vertx.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

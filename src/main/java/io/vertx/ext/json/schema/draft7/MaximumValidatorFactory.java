@@ -1,7 +1,7 @@
 package io.vertx.ext.json.schema.draft7;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.*;
 import io.vertx.ext.json.schema.generic.MaximumValidator;
 

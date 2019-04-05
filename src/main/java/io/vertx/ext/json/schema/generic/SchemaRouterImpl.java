@@ -7,12 +7,13 @@ import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpHeaders;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.*;
 
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,7 +46,7 @@ public class SchemaRouterImpl implements SchemaRouter {
   @Override
   public Schema resolveCachedSchema(JsonPointer refPointer, JsonPointer scope, final SchemaParser parser) {
     return resolveParentNode(refPointer, scope).flatMap(parentNode -> {
-      Optional<RouterNode> resultNode = Optional.ofNullable((RouterNode) refPointer.query(new RouterNodeJsonPointerIterator(parentNode)));
+      Optional<RouterNode> resultNode = Optional.ofNullable((RouterNode) refPointer.query(parentNode, new RouterNodeJsonPointerIterator(parentNode)));
       if (resultNode.isPresent())
         return resultNode.map(RouterNode::getSchema);
       if (parentNode.getSchema() instanceof SchemaImpl) // Maybe the schema that we are searching was not parsed yet!
@@ -74,11 +75,15 @@ public class SchemaRouterImpl implements SchemaRouter {
 
     RouterNode parentNode = absolutePaths.get(schemaScopeWithoutFragment);
     RouterNodeJsonPointerIterator iterator = new RouterNodeJsonPointerIterator(parentNode);
-    schema.getScope().write(
-        iterator,
-        schema,
-        true
-    );
+    if (schema.getScope().isRootPointer()) {
+      parentNode.setSchema(schema);
+    } else
+      schema.getScope().write(
+              parentNode,
+              iterator,
+              schema,
+              true
+      );
 
     // Handle $id keyword
     if (schema instanceof SchemaImpl && ((SchemaImpl) schema).getJson().containsKey("$id")) {
@@ -101,7 +106,7 @@ public class SchemaRouterImpl implements SchemaRouter {
         }
         // Write the alias down the tree
         if (!idPointer.isRootPointer())
-          idPointer.write(new RouterNodeJsonPointerIterator(parentNode), iterator.getCurrentValue(), true);
+          idPointer.write(parentNode, new RouterNodeJsonPointerIterator(parentNode), iterator.getCurrentValue(), true);
       } catch (IllegalArgumentException e) {
         throw new SchemaException(schema, "$id keyword should be a valid URI", e);
       }
@@ -112,9 +117,8 @@ public class SchemaRouterImpl implements SchemaRouter {
   private Stream<URI> getScopeParentAliases(JsonPointer scope) {
     Stream.Builder<URI> uriStreamBuilder = Stream.builder();
     RouterNode startingNode = absolutePaths.get(scope.getURIWithoutFragment());
-    scope.query(new RouterNodeJsonPointerIterator(startingNode, node ->
-        absolutePaths.forEach((uri, n) -> { if (n == node) uriStreamBuilder.accept(uri); })
-    ));
+    Consumer<RouterNode> addToStreamCb = (node) -> absolutePaths.forEach((uri, n) -> { if (n == node) uriStreamBuilder.accept(uri); });
+    scope.query(startingNode, new RouterNodeJsonPointerIterator(startingNode, addToStreamCb));
     return uriStreamBuilder.build();
   }
 
@@ -146,14 +150,18 @@ public class SchemaRouterImpl implements SchemaRouter {
       options.getAuthQueryParams().forEach(encoder::addParam);
       uri = encoder.toString();
     }
-    HttpClientRequest req = client.getAbs(uri, res -> {
-      res.exceptionHandler(fut::fail);
-      if (res.statusCode() == 200) {
-        res.bodyHandler(buf -> {
+    HttpClientRequest req = client.getAbs(uri, ar -> {
+      if (ar.failed()) {
+        fut.fail(ar.cause());
+        return;
+      }
+      ar.result().exceptionHandler(fut::fail);
+      if (ar.result().statusCode() == 200) {
+        ar.result().bodyHandler(buf -> {
           fut.complete(buf.toString());
         });
       } else {
-        fut.fail(new IllegalStateException("Wrong status code " + res.statusCode() + " " + res.statusMessage() + " received while resolving remote ref"));
+        fut.fail(new IllegalStateException("Wrong status code " + ar.result().statusCode() + " " + ar.result().statusMessage() + " received while resolving remote ref"));
       }
     }).putHeader(HttpHeaders.ACCEPT.toString(), "application/json, application/schema+json");
     options.getAuthHeaders().forEach(req::putHeader);
@@ -207,7 +215,7 @@ public class SchemaRouterImpl implements SchemaRouter {
           .compose(s -> (s != schema) ? solveAllSchemaReferences(s).map(schema) : Future.succeededFuture(schema));
     } else {
       RouterNode node = absolutePaths.get(schema.getScope().getURIWithoutFragment());
-      node = (RouterNode) schema.getScope().query(new RouterNodeJsonPointerIterator(node));
+      node = (RouterNode) schema.getScope().query(node, new RouterNodeJsonPointerIterator(node));
       return CompositeFuture.all(
           node
               .reverseFlattened()

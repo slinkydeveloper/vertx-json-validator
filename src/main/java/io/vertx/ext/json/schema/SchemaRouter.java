@@ -6,7 +6,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpClient;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.generic.SchemaRouterImpl;
 
 import java.util.List;

@@ -2,7 +2,7 @@ package io.vertx.ext.json.schema.generic.dsl;
 
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.json.JsonArray;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.generic.SchemaURNId;
 
 import java.util.Arrays;

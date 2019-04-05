@@ -3,7 +3,7 @@ package io.vertx.ext.json.schema.draft7.dsl;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
 
-import static io.vertx.ext.json.pointer.JsonPointer.create;
+import static io.vertx.core.json.pointer.JsonPointer.create;
 import static io.vertx.ext.json.schema.TestUtils.entry;
 import static io.vertx.ext.json.schema.asserts.MyAssertions.assertThat;
 import static io.vertx.ext.json.schema.draft7.dsl.Keywords.*;

@@ -1,6 +1,6 @@
 package io.vertx.ext.json.schema.draft7;
 
-import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
+import io.vertx.core.json.pointer.impl.JsonPointerImpl;
 import io.vertx.ext.json.schema.generic.BaseFormatValidatorFactory;
 import io.vertx.ext.json.schema.generic.RegularExpressions;
 

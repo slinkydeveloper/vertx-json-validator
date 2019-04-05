@@ -2,7 +2,7 @@ package io.vertx.ext.json.schema.asserts;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import org.assertj.core.api.AbstractAssert;
 
 import java.util.Map;

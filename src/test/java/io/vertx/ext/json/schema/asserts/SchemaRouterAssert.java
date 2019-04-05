@@ -1,6 +1,6 @@
 package io.vertx.ext.json.schema.asserts;
 
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.SchemaParser;
 import io.vertx.ext.json.schema.SchemaRouter;
 import io.vertx.ext.json.schema.generic.SchemaImpl;

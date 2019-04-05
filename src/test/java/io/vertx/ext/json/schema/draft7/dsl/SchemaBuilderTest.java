@@ -2,7 +2,7 @@ package io.vertx.ext.json.schema.draft7.dsl;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.generic.dsl.GenericSchemaBuilder;
 import io.vertx.ext.json.schema.generic.dsl.SchemaBuilder;
 import io.vertx.ext.json.schema.generic.dsl.SchemaType;

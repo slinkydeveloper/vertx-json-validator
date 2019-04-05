@@ -1,6 +1,6 @@
 package io.vertx.ext.json.schema.generic;
 
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 
 import java.net.URI;
 import java.net.URISyntaxException;

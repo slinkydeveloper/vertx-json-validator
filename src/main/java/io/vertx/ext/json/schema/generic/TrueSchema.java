@@ -1,7 +1,7 @@
 package io.vertx.ext.json.schema.generic;
 
 import io.vertx.core.Future;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.*;
 
 public class TrueSchema implements Schema {

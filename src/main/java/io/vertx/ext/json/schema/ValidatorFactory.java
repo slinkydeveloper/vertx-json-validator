@@ -2,7 +2,7 @@ package io.vertx.ext.json.schema;
 
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 
 @VertxGen
 public interface ValidatorFactory {

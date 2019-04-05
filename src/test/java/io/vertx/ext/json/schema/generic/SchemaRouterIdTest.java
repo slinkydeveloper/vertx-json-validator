@@ -2,8 +2,7 @@ package io.vertx.ext.json.schema.generic;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
-import io.vertx.ext.json.pointer.impl.JsonPointerImpl;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.SchemaParser;
 import io.vertx.ext.json.schema.SchemaParserOptions;
 import io.vertx.ext.json.schema.SchemaRouter;
@@ -38,7 +37,7 @@ public class SchemaRouterIdTest {
   @Test
   public void testNoIdKeyword() throws Exception {
     URI baseURI = buildBaseUri("id_test", "no_id_keyword.json");
-    JsonPointer basePointer = new JsonPointerImpl(baseURI);
+    JsonPointer basePointer = JsonPointer.fromURI(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     parser.parse(baseSchemaJson, baseURI);
 
@@ -61,7 +60,7 @@ public class SchemaRouterIdTest {
   @Test
   public void testIdURNKeywordFromBaseScope() throws Exception {
     URI baseURI = buildBaseUri("id_test", "id_urn_keyword.json");
-    JsonPointer basePointer = new JsonPointerImpl(baseURI);
+    JsonPointer basePointer = JsonPointer.fromURI(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     parser.parse(baseSchemaJson, baseURI);
 
@@ -118,7 +117,7 @@ public class SchemaRouterIdTest {
   @Test
   public void testRFCIDKeywordFromBaseScope() throws Exception {
     URI baseURI = buildBaseUri("id_test", "rfc_id_keyword.json");
-    JsonPointer basePointer = new JsonPointerImpl(baseURI);
+    JsonPointer basePointer = JsonPointer.fromURI(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     parser.parse(baseSchemaJson, baseURI);
 
@@ -146,7 +145,7 @@ public class SchemaRouterIdTest {
   @Test
   public void testRFCIDKeywordFromInnerScope() throws Exception {
     URI baseURI = buildBaseUri("id_test", "rfc_id_keyword.json");
-    JsonPointer basePointer = new JsonPointerImpl(baseURI);
+    JsonPointer basePointer = JsonPointer.fromURI(baseURI);
     JsonObject baseSchemaJson = loadJson(baseURI);
     parser.parse(baseSchemaJson, baseURI);
     JsonPointer scope = schemaRouter.resolveCachedSchema(createJsonPointerFromURI(URI.create("http://example.com/other.json")), basePointer, parser).getScope();

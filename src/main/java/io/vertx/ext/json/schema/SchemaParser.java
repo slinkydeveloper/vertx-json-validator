@@ -2,7 +2,7 @@ package io.vertx.ext.json.schema;
 
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 
 import java.net.URI;
 import java.util.function.Predicate;

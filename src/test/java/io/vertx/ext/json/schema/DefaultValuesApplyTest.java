@@ -3,7 +3,7 @@ package io.vertx.ext.json.schema;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.draft7.Draft7SchemaParser;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;

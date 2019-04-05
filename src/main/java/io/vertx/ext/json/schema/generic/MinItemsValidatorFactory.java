@@ -2,7 +2,7 @@ package io.vertx.ext.json.schema.generic;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.*;
 
 import static io.vertx.ext.json.schema.ValidationException.createException;

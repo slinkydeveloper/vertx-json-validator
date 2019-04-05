@@ -2,7 +2,7 @@ package io.vertx.ext.json.schema.generic;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.json.pointer.JsonPointer;
+import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.*;
 import io.vertx.ext.json.schema.openapi3.OpenAPI3SchemaParser;
 import io.vertx.junit5.VertxExtension;
