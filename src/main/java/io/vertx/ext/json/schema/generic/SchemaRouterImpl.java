@@ -13,7 +13,6 @@ import io.vertx.ext.json.schema.*;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,7 +45,7 @@ public class SchemaRouterImpl implements SchemaRouter {
   @Override
   public Schema resolveCachedSchema(JsonPointer refPointer, JsonPointer scope, final SchemaParser parser) {
     return resolveParentNode(refPointer, scope).flatMap(parentNode -> {
-      Optional<RouterNode> resultNode = Optional.ofNullable((RouterNode) refPointer.query(parentNode, new RouterNodeJsonPointerIterator(parentNode)));
+      Optional<RouterNode> resultNode = Optional.ofNullable((RouterNode) refPointer.query(parentNode, RouterNodeJsonPointerIterator.INSTANCE));
       if (resultNode.isPresent())
         return resultNode.map(RouterNode::getSchema);
       if (parentNode.getSchema() instanceof SchemaImpl) // Maybe the schema that we are searching was not parsed yet!
@@ -74,26 +73,26 @@ public class SchemaRouterImpl implements SchemaRouter {
     absolutePaths.putIfAbsent(schemaScopeWithoutFragment, new RouterNode());
 
     RouterNode parentNode = absolutePaths.get(schemaScopeWithoutFragment);
-    RouterNodeJsonPointerIterator iterator = new RouterNodeJsonPointerIterator(parentNode);
     if (schema.getScope().isRootPointer()) {
       parentNode.setSchema(schema);
     } else
       schema.getScope().write(
               parentNode,
-              iterator,
+              RouterNodeJsonPointerIterator.INSTANCE,
               schema,
               true
       );
 
     // Handle $id keyword
     if (schema instanceof SchemaImpl && ((SchemaImpl) schema).getJson().containsKey("$id")) {
+      RouterNode wroteNode = (RouterNode) schema.getScope().query(parentNode, RouterNodeJsonPointerIterator.INSTANCE);
       try {
         String unparsedId = ((SchemaImpl) schema).getJson().getString("$id");
         URI id = URI.create(unparsedId);
         JsonPointer idPointer = URIUtils.createJsonPointerFromURI(id);
         // Create parent node aliases if needed
         if (id.isAbsolute()) { // Absolute id
-          absolutePaths.putIfAbsent(URIUtils.removeFragment(id), iterator.getCurrentValue()); // id and inferredScope can match!
+          absolutePaths.putIfAbsent(URIUtils.removeFragment(id), wroteNode); // id and inferredScope can match!
         } else if (id.getPath() != null && !id.getPath().isEmpty()) {
           // If a path is relative you should solve the path/paths. The paths will be solved against aliases of base node of inferred scope
           List<URI> paths = absolutePaths
@@ -102,11 +101,11 @@ public class SchemaRouterImpl implements SchemaRouter {
               .filter(e -> e.getValue().equals(parentNode))
               .map(e -> URIUtils.resolvePath(e.getKey(), id.getPath()))
               .collect(Collectors.toList());
-          paths.forEach(u -> absolutePaths.put(u, iterator.getCurrentValue()));
+          paths.forEach(u -> absolutePaths.put(u, wroteNode));
         }
         // Write the alias down the tree
         if (!idPointer.isRootPointer())
-          idPointer.write(parentNode, new RouterNodeJsonPointerIterator(parentNode), iterator.getCurrentValue(), true);
+          idPointer.write(parentNode, RouterNodeJsonPointerIterator.INSTANCE, wroteNode, true);
       } catch (IllegalArgumentException e) {
         throw new SchemaException(schema, "$id keyword should be a valid URI", e);
       }
@@ -117,8 +116,8 @@ public class SchemaRouterImpl implements SchemaRouter {
   private Stream<URI> getScopeParentAliases(JsonPointer scope) {
     Stream.Builder<URI> uriStreamBuilder = Stream.builder();
     RouterNode startingNode = absolutePaths.get(scope.getURIWithoutFragment());
-    Consumer<RouterNode> addToStreamCb = (node) -> absolutePaths.forEach((uri, n) -> { if (n == node) uriStreamBuilder.accept(uri); });
-    scope.query(startingNode, new RouterNodeJsonPointerIterator(startingNode, addToStreamCb));
+    scope.tracedQuery(startingNode, RouterNodeJsonPointerIterator.INSTANCE)
+            .forEach((node) -> absolutePaths.forEach((uri, n) -> { if (n == node) uriStreamBuilder.accept(uri); }));
     return uriStreamBuilder.build();
   }
 
@@ -215,7 +214,7 @@ public class SchemaRouterImpl implements SchemaRouter {
           .compose(s -> (s != schema) ? solveAllSchemaReferences(s).map(schema) : Future.succeededFuture(schema));
     } else {
       RouterNode node = absolutePaths.get(schema.getScope().getURIWithoutFragment());
-      node = (RouterNode) schema.getScope().query(node, new RouterNodeJsonPointerIterator(node));
+      node = (RouterNode) schema.getScope().query(node, RouterNodeJsonPointerIterator.INSTANCE);
       return CompositeFuture.all(
           node
               .reverseFlattened()

@@ -4,23 +4,9 @@ import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.json.pointer.JsonPointerIterator;
 import io.vertx.ext.json.schema.Schema;
 
-import java.util.function.Consumer;
-
-// I know I'm violating the contract of the JsonPointerIterator and I'm keeping the internal state
 class RouterNodeJsonPointerIterator implements JsonPointerIterator {
 
-  RouterNode actualNode;
-  final Consumer<RouterNode> onNext;
-
-  public RouterNodeJsonPointerIterator(RouterNode actualNode) {
-    this(actualNode, null);
-  }
-
-  public RouterNodeJsonPointerIterator(RouterNode actualNode, Consumer<RouterNode> onNext) {
-    this.actualNode = actualNode;
-    this.onNext = onNext;
-    invokeOnNext();
-  }
+  public final static RouterNodeJsonPointerIterator INSTANCE = new RouterNodeJsonPointerIterator();
 
   @Override
   public boolean isObject(Object value) {
@@ -45,18 +31,15 @@ class RouterNodeJsonPointerIterator implements JsonPointerIterator {
   @Override
   public Object getObjectParameter(Object value, String key, boolean createOnMissing) {
     if (isObject(value)) {
-      if (!objectContainsKey(value, key)) {
+      if (!objectContainsKey(value, key) && createOnMissing) {
         if (createOnMissing) {
           RouterNode node = new RouterNode();
-          this.actualNode.getChilds().put(key, node);
+          ((RouterNode)value).getChilds().put(key, node);
         } else {
           return null;
         }
       }
-
-      actualNode = actualNode.getChilds().get(key);
-      invokeOnNext();
-      return actualNode;
+      return ((RouterNode)value).getChilds().get(key);
     }
     return null;
   }
@@ -66,26 +49,15 @@ class RouterNodeJsonPointerIterator implements JsonPointerIterator {
     return null;
   }
 
-  public RouterNode getCurrentValue() {
-    return actualNode;
-  }
-
-  public void setCurrentValue(Object value) {
-    if (value instanceof Schema) {
-      this.actualNode.setSchema((Schema) value);
-    } else if (value instanceof RouterNode) {
-      this.actualNode = (RouterNode) value;
-    }
-  }
-
   @Override
   public boolean writeObjectParameter(Object value, String key, Object newElement) {
     if (newElement instanceof Schema) {
-      this.getObjectParameter(value, key, true);
-      this.actualNode.setSchema((Schema) newElement);
+      value = this.getObjectParameter(value, key, true);
+      if (value != null)
+        ((RouterNode)value).setSchema((Schema) newElement);
       return true;
     } else if (newElement instanceof RouterNode) {
-      this.actualNode.getChilds().put(key, (RouterNode) newElement);
+      ((RouterNode)value).getChilds().put(key, (RouterNode) newElement);
       return true;
     }
     return false;
@@ -101,7 +73,4 @@ class RouterNodeJsonPointerIterator implements JsonPointerIterator {
     return false;
   }
 
-  private void invokeOnNext() {
-    if (onNext != null) onNext.accept(this.actualNode);
-  }
 }

@@ -100,6 +100,7 @@ public class JsonAssert extends AbstractAssert<JsonAssert, Object> {
 
   }
 
+  @SuppressWarnings("unchecked")
   public JsonAssert containsAllAndOnlyEntries(Map.Entry... entries) {
     isJsonObject();
 
