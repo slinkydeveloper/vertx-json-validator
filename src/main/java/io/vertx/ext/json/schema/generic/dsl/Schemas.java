@@ -36,7 +36,7 @@ public class Schemas {
 
     public static GenericSchemaBuilder ref(JsonPointer pointer) {
         Objects.requireNonNull(pointer);
-        return new GenericSchemaBuilder().with(new Keyword("$ref", pointer.buildURI().toString()));
+        return new GenericSchemaBuilder().with(new Keyword("$ref", pointer.toURI().toString()));
     }
 
     public static GenericSchemaBuilder refToAlias(String alias) {

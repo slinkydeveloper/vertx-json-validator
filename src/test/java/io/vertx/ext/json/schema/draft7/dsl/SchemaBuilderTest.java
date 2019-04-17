@@ -129,7 +129,7 @@ public class SchemaBuilderTest {
     assertThat(
         ref(JsonPointer.create()).toJson()
     )
-        .containsEntry("$ref", JsonPointer.create().buildURI().toString());
+        .containsEntry("$ref", JsonPointer.create().toURI().toString());
   }
 
   @Test

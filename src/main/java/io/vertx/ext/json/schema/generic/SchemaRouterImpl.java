@@ -50,7 +50,7 @@ public class SchemaRouterImpl implements SchemaRouter {
         return resultNode.map(RouterNode::getSchema);
       if (parentNode.getSchema() instanceof SchemaImpl) // Maybe the schema that we are searching was not parsed yet!
         return Optional.ofNullable(refPointer.queryJson(parentNode.getSchema().getJson()))
-          .map(queryResult -> parser.parse(queryResult, URIUtils.replaceFragment(parentNode.getSchema().getScope().getURIWithoutFragment(), refPointer.build())));
+          .map(queryResult -> parser.parse(queryResult, URIUtils.replaceFragment(parentNode.getSchema().getScope().getURIWithoutFragment(), refPointer.toString())));
       return Optional.empty();
     }).orElse(null);
   }

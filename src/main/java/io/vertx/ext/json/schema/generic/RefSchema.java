@@ -48,7 +48,7 @@ public class RefSchema extends SchemaImpl {
       return FutureUtils.andThen(
           schemaParser.getSchemaRouter().resolveRef(refPointer, this.getScope(), schemaParser),
           s -> {
-            if (s == null) return Future.failedFuture(createException("Cannot resolve reference " + this.refPointer.buildURI(), "$ref", in));
+            if (s == null) return Future.failedFuture(createException("Cannot resolve reference " + this.refPointer.toURI(), "$ref", in));
             registerCachedSchema(s);
             if (log.isDebugEnabled()) log.debug("Solved ref {} as {} in ref schema {}", refPointer, s.getScope(), this.getScope());
             if (s instanceof RefSchema) {
@@ -62,7 +62,7 @@ public class RefSchema extends SchemaImpl {
               return s.validateAsync(in);
             }
           },
-          err -> Future.failedFuture(createException("Error while resolving reference " + this.refPointer.buildURI(), "$ref", in, err))
+          err -> Future.failedFuture(createException("Error while resolving reference " + this.refPointer.toURI(), "$ref", in, err))
           );
     } else {
       return cachedSchema.validateAsync(in);
@@ -109,7 +109,7 @@ public class RefSchema extends SchemaImpl {
       return FutureUtils.andThen(
           schemaParser.getSchemaRouter().resolveRef(refPointer, this.getScope(), schemaParser),
           s -> {
-            if (s == null) return Future.failedFuture(createException("Cannot resolve reference " + this.refPointer.buildURI(), "$ref", null));
+            if (s == null) return Future.failedFuture(createException("Cannot resolve reference " + this.refPointer.toURI(), "$ref", null));
             registerCachedSchema(s);
             if (log.isDebugEnabled()) log.debug("Solved ref {} as {} in ref schema {}", refPointer, s.getScope(), this.getScope());
             if (s instanceof RefSchema) {
@@ -123,7 +123,7 @@ public class RefSchema extends SchemaImpl {
               return Future.succeededFuture(cachedSchema);
             }
           },
-          err -> Future.failedFuture(createException("Error while resolving reference " + this.refPointer.buildURI(), "$ref", null, err))
+          err -> Future.failedFuture(createException("Error while resolving reference " + this.refPointer.toURI(), "$ref", null, err))
       );
     } else return Future.succeededFuture(cachedSchema);
   }
