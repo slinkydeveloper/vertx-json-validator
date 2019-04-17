@@ -18,7 +18,7 @@ public class Keywords {
     public static NumberKeyword multipleOf(double multipleOf) {
         return new NumberKeyword("multipleOf", multipleOf);
     }
-    
+
     public static StringKeyword maxLength(int maxLength) { return new StringKeyword("maxLength", maxLength); }
 
     public static StringKeyword minLength(int minLength) { return new StringKeyword("minLength", minLength); }

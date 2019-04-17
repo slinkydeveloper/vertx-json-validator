@@ -12,6 +12,7 @@ public final class ArraySchemaBuilder extends SchemaBuilder<ArraySchemaBuilder, 
 
   // For items keyword as list of schemas
   private List<SchemaBuilder> itemList;
+  private SchemaBuilder additionalItems;
 
   ArraySchemaBuilder() {
     super(SchemaType.ARRAY);
@@ -21,7 +22,7 @@ public final class ArraySchemaBuilder extends SchemaBuilder<ArraySchemaBuilder, 
   @Fluent
   public ArraySchemaBuilder items(SchemaBuilder schemaBuilder) {
     Objects.requireNonNull(schemaBuilder);
-    if (itemList.size() != 0) throw new IllegalStateException("You can build or an item by item array schema or a same type items array schema");
+    if (itemList.size() > 0) throw new IllegalStateException("You can build or an item by item array schema or a same type items array schema");
     this.keywords.put("items", schemaBuilder::toJson);
     return this;
   }
@@ -38,14 +39,28 @@ public final class ArraySchemaBuilder extends SchemaBuilder<ArraySchemaBuilder, 
   public ArraySchemaBuilder additionalItems(SchemaBuilder schemaBuilder) {
     Objects.requireNonNull(schemaBuilder);
     if (this.keywords.containsKey("items")) throw new IllegalStateException("You can build or an item by item array schema or a same type items array schema");
-    this.keywords.put("additionalItems", schemaBuilder::toJson);
+    this.additionalItems = schemaBuilder;
     return this;
+  }
+
+  public List<SchemaBuilder> getItemList() {
+    return itemList;
+  }
+
+  public SchemaBuilder getAdditionalItems() {
+    return additionalItems;
+  }
+
+  public boolean isItemByItemArraySchema() {
+    return additionalItems != null || itemList.size() > 0;
   }
 
   @Override
   public JsonObject toJson() {
     if (!itemList.isEmpty())
       this.keywords.put("items", () -> itemList.stream().collect(JsonArray::new, (ja, s) -> ja.add(s.toJson()), JsonArray::addAll));
+    if (additionalItems != null)
+      this.keywords.put("additionalItems", additionalItems::toJson);
     return super.toJson();
   }
 }

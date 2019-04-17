@@ -30,6 +30,18 @@ public final class ObjectSchemaBuilder extends SchemaBuilder<ObjectSchemaBuilder
     return property(name, schemaBuilder);
   }
 
+  public Map<String, SchemaBuilder> getProperties() {
+    return properties;
+  }
+
+  public Map<Pattern, SchemaBuilder> getPatternProperties() {
+    return patternProperties;
+  }
+
+  public boolean isPropertyRequired(String property) {
+    return this.requiredProperties.contains(property);
+  }
+
   public ObjectSchemaBuilder requiredProperty(String name, SchemaBuilder schemaBuilder) {
     Objects.requireNonNull(name);
     Objects.requireNonNull(schemaBuilder);
@@ -47,6 +59,11 @@ public final class ObjectSchemaBuilder extends SchemaBuilder<ObjectSchemaBuilder
   public ObjectSchemaBuilder additionalProperties(SchemaBuilder schemaBuilder) {
     Objects.requireNonNull(schemaBuilder);
     this.keywords.put("additionalProperties", schemaBuilder::toJson);
+    return this;
+  }
+
+  public ObjectSchemaBuilder allowAdditionalProperties(boolean allow) {
+    this.keywords.put("additionalProperties", () -> allow);
     return this;
   }
 

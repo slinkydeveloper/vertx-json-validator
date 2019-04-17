@@ -50,6 +50,12 @@ public abstract class SchemaBuilder<T extends SchemaBuilder<?, ?>, K extends Key
     }
 
     @Fluent
+    public T withKeyword(String key, Object value) {
+        this.keywords.put(key, () -> value);
+        return self;
+    }
+
+    @Fluent
     public T defaultValue(Object defaultValue) {
         keywords.put("default", () -> defaultValue);
         return self;
@@ -72,6 +78,10 @@ public abstract class SchemaBuilder<T extends SchemaBuilder<?, ?>, K extends Key
         this.type = type;
         keywords.put("type", type::getName);
         return self;
+    }
+
+    public SchemaType getType() {
+        return type;
     }
 
     public JsonObject toJson() {

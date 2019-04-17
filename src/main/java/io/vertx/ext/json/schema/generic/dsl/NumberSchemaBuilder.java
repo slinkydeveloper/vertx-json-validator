@@ -14,4 +14,8 @@ public final class NumberSchemaBuilder extends SchemaBuilder<NumberSchemaBuilder
         return this;
     }
 
+    public boolean isIntegerSchema() {
+        return this.type.equals(SchemaType.INT);
+    }
+
 }
