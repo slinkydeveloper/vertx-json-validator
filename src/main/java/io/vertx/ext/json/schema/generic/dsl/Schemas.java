@@ -22,6 +22,8 @@ public class Schemas {
 
     public static BooleanSchemaBuilder booleanSchema() { return new BooleanSchemaBuilder(); }
 
+    public static TupleSchemaBuilder tupleSchema() { return new TupleSchemaBuilder(); }
+
     public static ArraySchemaBuilder arraySchema() { return new ArraySchemaBuilder(); }
 
     public static ObjectSchemaBuilder objectSchema() { return new ObjectSchemaBuilder(); }
