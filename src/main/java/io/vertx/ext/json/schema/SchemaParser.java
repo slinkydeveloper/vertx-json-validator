@@ -10,6 +10,8 @@ import java.util.function.Predicate;
 @VertxGen
 public interface SchemaParser {
 
+  //TODO add parse from file/url
+
   /**
    * Build a schema from provided json. This method registers the parsed schema (and relative subschemas) to the schema router
    *
@@ -107,6 +109,8 @@ public interface SchemaParser {
    * @return
    */
   SchemaRouter getSchemaRouter();
+
+  //TODO document
 
   @Fluent
   SchemaParser withValidatorFactory(ValidatorFactory factory);

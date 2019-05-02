@@ -11,6 +11,7 @@ import io.vertx.core.json.pointer.JsonPointer;
 import io.vertx.ext.json.schema.*;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -18,11 +19,11 @@ import java.util.stream.Stream;
 
 public class SchemaRouterImpl implements SchemaRouter {
 
-  final Map<URI, RouterNode> absolutePaths;
-  final HttpClient client;
-  final FileSystem fs;
-  final Map<URI, ObservableFuture<Schema>> externalSchemasSolving;
-  final SchemaRouterOptions options;
+  private final Map<URI, RouterNode> absolutePaths;
+  private final HttpClient client;
+  private final FileSystem fs;
+  private final Map<URI, ObservableFuture<Schema>> externalSchemasSolving;
+  private final SchemaRouterOptions options;
 
   public SchemaRouterImpl(HttpClient client, FileSystem fs, SchemaRouterOptions options) {
     this.client = client;
@@ -126,11 +127,13 @@ public class SchemaRouterImpl implements SchemaRouter {
     if (!refURI.isAbsolute()) {
       if (refURI.getPath() != null && !refURI.getPath().isEmpty()) {
         // Path pointer
-        return getScopeParentAliases(scope)
-            .map(e -> URIUtils.resolvePath(e, refURI.getPath()))
-            .map(absolutePaths::get)
-            .filter(Objects::nonNull)
-            .findFirst();
+        return Stream.concat(
+                getScopeParentAliases(scope).map(e -> URIUtils.resolvePath(e, refURI.getPath())),
+                Stream.of(getResourceAbsoluteURIFromClasspath(refURI))
+        )
+                .map(absolutePaths::get)
+                .filter(Objects::nonNull)
+                .findFirst();
       } else {
         // Fragment pointer, fallback to scope
         return Optional.ofNullable(absolutePaths.get(scope.getURIWithoutFragment()));
@@ -188,13 +191,17 @@ public class SchemaRouterImpl implements SchemaRouter {
       if (refURI.isAbsolute()) // $ref uri is absolute, just solve it
         candidatesURIs = Stream.of(refURI);
       else // $ref is relative, so it should resolve all aliases of scope and then relativize
-        candidatesURIs = getScopeParentAliases(scope)
+        candidatesURIs = Stream.concat(
+          getScopeParentAliases(scope)
             .map(u -> URIUtils.resolvePath(u, refURI.getPath()))
             .filter(u -> URIUtils.isRemoteURI(u) || URIUtils.isLocalURI(u)) // Remove aliases not resolvable
-            .sorted((u1, u2) -> (URIUtils.isLocalURI(u1) && !URIUtils.isLocalURI(u2)) ? 1 : (u1.equals(u2)) ? 0 : -1); // Try to solve local refs before
+            .sorted((u1, u2) -> (URIUtils.isLocalURI(u1) && !URIUtils.isLocalURI(u2)) ? 1 : (u1.equals(u2)) ? 0 : -1), // Try to solve local refs before
+          Stream.of(getResourceAbsoluteURIFromClasspath(refURI)) // Last hope: try to solve as is
+        );
       return ObservableFuture.wrap(
           CompositeFuture.any(
             candidatesURIs
+              .filter(Objects::nonNull)
               .map(u ->
                   ((URIUtils.isRemoteURI(u)) ? solveRemoteRef(u) : solveLocalRef(u))
                       .map(s -> schemaParser.parseSchemaFromString(s, JsonPointer.fromURI(u)))
@@ -204,6 +211,29 @@ public class SchemaRouterImpl implements SchemaRouter {
           )
       );
     });
+  }
+
+  private URI getResourceAbsoluteURIFromClasspath(URI u) {
+    try {
+      return getClassLoader().getResource(u.toString()).toURI();
+    } catch (NullPointerException | URISyntaxException e) {
+      return null;
+    }
+  }
+
+  private ClassLoader getClassLoader() {
+    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    if (cl == null) {
+      cl = getClass().getClassLoader();
+    }
+    // when running on substratevm (graal) the access to class loaders
+    // is very limited and might be only available from compile time
+    // known classes. (Object is always known, so we do a final attempt
+    // to get it here).
+    if (cl == null) {
+      cl = Object.class.getClassLoader();
+    }
+    return cl;
   }
 
   @Override
