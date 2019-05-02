@@ -17,6 +17,7 @@ import static io.vertx.ext.json.schema.draft7.dsl.Keywords.exclusiveMaximum;
 import static io.vertx.ext.json.schema.draft7.dsl.Keywords.multipleOf;
 import static io.vertx.ext.json.schema.draft7.dsl.Schemas.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static io.vertx.ext.json.schema.asserts.MyAssertions.assertThat;
 
 @ExtendWith(VertxExtension.class)
 public class BuildedSchemaParsingTest {
